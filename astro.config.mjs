@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
-import cloudflare from "@astrojs/cloudflare";
+import cloudProviderFetchAdapter from "@wix/cloud-provider-fetch-adapter";
 import wix from "@wix/astro";
 import monitoring from "@wix/monitoring-astro";
 import react from "@astrojs/react";
@@ -50,7 +50,7 @@ export default defineConfig({
       customErrorOverlayPlugin(),
     ],
   },
-  adapter: isBuild ? cloudflare() : undefined,
+  adapter: isBuild ? cloudProviderFetchAdapter({}) : undefined,
   devToolbar: {
     enabled: false,
   },
