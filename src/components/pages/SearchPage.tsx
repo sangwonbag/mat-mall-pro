@@ -207,7 +207,7 @@ export default function SearchPage() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                 {filteredProducts.map((product) => (
                   <motion.div
                     key={product._id}
@@ -216,7 +216,7 @@ export default function SearchPage() {
                     whileHover={{ y: -5 }}
                     className="bg-white rounded-2xl shadow-lg overflow-hidden border hover:shadow-xl transition-all duration-300"
                   >
-                    <div className="aspect-square overflow-hidden">
+                    <div className="aspect-[4/5] overflow-hidden">
                       <Image
                         src={product.productImage || 'https://static.wixstatic.com/media/9f8727_d3600c65e02d403caed35c117b5d44fc~mv2.png?originWidth=384&originHeight=384'}
                         alt={product.productName || '제품 이미지'}
