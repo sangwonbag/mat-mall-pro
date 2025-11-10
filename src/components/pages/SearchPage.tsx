@@ -214,7 +214,11 @@ export default function SearchPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     whileHover={{ y: -5 }}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden border hover:shadow-xl transition-all duration-300"
+                    className="bg-white rounded-2xl shadow-lg overflow-hidden border hover:shadow-xl transition-all duration-300 product-card"
+                    style={{
+                      fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
+                      lineHeight: '1.3'
+                    }}
                   >
                     <div className="aspect-[4/5] overflow-hidden">
                       <Image
@@ -224,30 +228,77 @@ export default function SearchPage() {
                         width={400}
                       />
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-paragraph font-semibold text-primary mb-2">
+                    <div className="p-3" style={{ padding: '12px' }}>
+                      <h3 
+                        className="font-semibold text-primary mb-1"
+                        style={{
+                          fontSize: '15px',
+                          fontWeight: '600',
+                          marginBottom: '4px',
+                          lineHeight: '1.3'
+                        }}
+                      >
                         {product.productName}
                       </h3>
-                      <p className="text-secondary font-paragraph text-sm mb-1">
-                        브랜드: {product.brandName}
-                      </p>
-                      <p className="text-secondary font-paragraph text-sm mb-3">
-                        자재코드: {product.materialCode}
-                      </p>
-                      <p className="text-2xl font-paragraph font-bold text-primary mb-4">
+                      <div className="space-y-0.5">
+                        <p 
+                          className="text-secondary brand"
+                          style={{
+                            fontSize: '12px',
+                            color: '#777',
+                            lineHeight: '1.2',
+                            marginBottom: '2px'
+                          }}
+                        >
+                          브랜드: {product.brandName}
+                        </p>
+                        <p 
+                          className="text-secondary code"
+                          style={{
+                            fontSize: '12px',
+                            color: '#777',
+                            lineHeight: '1.2',
+                            marginBottom: '2px'
+                          }}
+                        >
+                          자재코드: {product.materialCode}
+                        </p>
+                      </div>
+                      <p 
+                        className="font-bold text-primary price"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: '700',
+                          color: '#222',
+                          marginTop: '6px',
+                          marginBottom: '8px'
+                        }}
+                      >
                         {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <Button
                           onClick={() => navigate(`/product/${product._id}`)}
                           variant="outline"
-                          className="flex-1 rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                          className="flex-1 border-2 border-primary text-primary hover:bg-primary hover:text-white btn"
+                          style={{
+                            fontSize: '12px',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            height: 'auto'
+                          }}
                         >
                           상세보기
                         </Button>
                         <Button
                           onClick={() => handleQuoteRequest(product)}
-                          className="flex-1 rounded-full bg-gold-accent hover:bg-primary"
+                          className="flex-1 bg-gold-accent hover:bg-primary btn"
+                          style={{
+                            fontSize: '12px',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            height: 'auto'
+                          }}
                         >
                           견적요청
                         </Button>
