@@ -47,6 +47,76 @@ export default function SearchPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
 
+  // 브랜드 메뉴 스타일 CSS
+  const brandMenuStyles = `
+    .brand-menu-item {
+      position: relative;
+      color: #222;
+      text-decoration: none;
+      transition: color 0.25s ease;
+      display: block;
+      padding: 12px 0;
+    }
+    
+    .brand-menu-item:hover {
+      color: #e60012;
+    }
+    
+    .brand-menu-item::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: #e60012;
+      transition: width 0.25s ease;
+    }
+    
+    .brand-menu-item:hover::after,
+    .brand-menu-item.active::after {
+      width: 100%;
+    }
+    
+    .brand-menu-item.active {
+      color: #e60012;
+    }
+    
+    .brand-sub-menu-item {
+      position: relative;
+      color: #222;
+      text-decoration: none;
+      transition: color 0.25s ease;
+      display: block;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+    
+    .brand-sub-menu-item:hover {
+      color: #e60012;
+    }
+    
+    .brand-sub-menu-item::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: #e60012;
+      transition: width 0.25s ease;
+    }
+    
+    .brand-sub-menu-item:hover::after,
+    .brand-sub-menu-item.active::after {
+      width: 100%;
+    }
+    
+    .brand-sub-menu-item.active {
+      color: #e60012;
+    }
+  `;
+
   useEffect(() => {
     loadData();
   }, []);
@@ -149,6 +219,7 @@ export default function SearchPage() {
   // 브랜드 사이드바 컴포넌트
   const BrandSidebar = ({ isMobile = false }) => (
     <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto`}>
+      <style dangerouslySetInnerHTML={{ __html: brandMenuStyles }} />
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-black">{"브랜드"}</h3>
@@ -168,34 +239,31 @@ export default function SearchPage() {
           {Object.entries(brandStructure).map(([category, brands]) => (
             <div key={category}>
               <div
-                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                  selectedCategory === category 
-                    ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
-                    : 'hover:bg-gray-50 text-black'
+                className={`brand-menu-item cursor-pointer ${
+                  selectedCategory === category ? 'active' : ''
                 }`}
                 onClick={() => handleCategorySelect(category)}
               >
-                <div className="flex items-center space-x-2">
-                  <span className="text-[#bfa365]">⬦</span>
+                <div className="flex items-center justify-between">
                   <span className="font-medium">{category}</span>
+                  {brands.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCategory(category);
+                      }}
+                      className="p-1 hover:bg-[#e60012] hover:text-white transition-colors duration-200"
+                    >
+                      {expandedCategories.includes(category) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
                 </div>
-                {brands.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCategory(category);
-                    }}
-                    className="p-1 hover:bg-[#bfa365] hover:text-white"
-                  >
-                    {expandedCategories.includes(category) ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </Button>
-                )}
               </div>
               
               <AnimatePresence>
@@ -211,15 +279,12 @@ export default function SearchPage() {
                       {brands.map((brand) => (
                         <div
                           key={brand}
-                          className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-all duration-200 ${
-                            selectedBrand === brand 
-                              ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
-                              : 'hover:bg-gray-50 text-gray-700'
+                          className={`brand-sub-menu-item cursor-pointer ${
+                            selectedBrand === brand ? 'active' : ''
                           }`}
                           onClick={() => handleBrandSelect(brand, category)}
                         >
-                          <span className="text-[#bfa365] text-sm">⬦</span>
-                          <span className="text-sm">{brand}</span>
+                          <span>{brand}</span>
                         </div>
                       ))}
                     </div>
