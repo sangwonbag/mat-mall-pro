@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Home } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ProductCategories } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+// 브랜드 사이드바 구조 정의
+const brandStructure = {
+  '전체': [],
+  '데코타일': ['KCC', '동신', 'LX', '녹수', '재영', '현대'],
+  '장판': ['LX 1.8T', 'LX 2.0T', 'LX 3.0T', 'LX 4.0T', 'LX 5.0T'],
+  '마루': ['이건', '동화', '구정'],
+  '벽지': ['LX', '개나리', '서울', '제일', '디아이디', '신한(KCC)']
+};
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -20,6 +29,8 @@ export default function SearchPage() {
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
 
   useEffect(() => {
     loadData();
@@ -68,16 +79,39 @@ export default function SearchPage() {
     }
 
     // Filter by category
-    if (selectedCategory) {
+    if (selectedCategory && selectedCategory !== '전체') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
 
     // Filter by brand
-    if (selectedBrand) {
+    if (selectedBrand && selectedBrand !== '전체') {
       filtered = filtered.filter(product => product.brandName === selectedBrand);
     }
 
     setFilteredProducts(filtered);
+  };
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedBrand('');
+    if (category !== '전체') {
+      setExpandedCategories(prev => 
+        prev.includes(category) ? prev : [...prev, category]
+      );
+    }
+  };
+
+  const handleBrandSelect = (brand: string, category: string) => {
+    setSelectedBrand(brand);
+    setSelectedCategory(category);
   };
 
   const handleSearch = () => {
@@ -96,6 +130,93 @@ export default function SearchPage() {
     navigate('/search');
   };
 
+  // 브랜드 사이드바 컴포넌트
+  const BrandSidebar = ({ isMobile = false }) => (
+    <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto`}>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-black">브랜드 필터</h3>
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-1"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          {Object.entries(brandStructure).map(([category, brands]) => (
+            <div key={category}>
+              <div
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                  selectedCategory === category 
+                    ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
+                    : 'hover:bg-gray-50 text-black'
+                }`}
+                onClick={() => handleCategorySelect(category)}
+              >
+                <div className="flex items-center space-x-2">
+                  <span className="text-[#bfa365]">⬦</span>
+                  <span className="font-medium">{category}</span>
+                </div>
+                {brands.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCategory(category);
+                    }}
+                    className="p-1 hover:bg-[#bfa365] hover:text-white"
+                  >
+                    {expandedCategories.includes(category) ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              
+              <AnimatePresence>
+                {expandedCategories.includes(category) && brands.length > 0 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="ml-6 space-y-1 mt-2">
+                      {brands.map((brand) => (
+                        <div
+                          key={brand}
+                          className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-all duration-200 ${
+                            selectedBrand === brand 
+                              ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
+                              : 'hover:bg-gray-50 text-gray-700'
+                          }`}
+                          onClick={() => handleBrandSelect(brand, category)}
+                        >
+                          <span className="text-[#bfa365] text-sm">⬦</span>
+                          <span className="text-sm">{brand}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ko-KR').format(price);
   };
@@ -105,207 +226,226 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white font-['Pretendard']">
       {/* Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-[120rem] mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-heading font-bold text-primary">
+            <Link to="/" className="text-2xl font-bold text-black">
               동경바닥재
             </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-foreground hover:text-primary transition-colors">홈</Link>
-              <Link to="/search" className="text-primary font-semibold">제품검색</Link>
-              <Link to="/quote" className="text-foreground hover:text-primary transition-colors">견적요청</Link>
-              <Link to="/admin" className="text-foreground hover:text-primary transition-colors">관리자</Link>
-            </nav>
+            <div className="flex items-center space-x-4">
+              {/* 모바일 햄버거 메뉴 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSidebarOpen(true)}
+                className="md:hidden p-2 hover:bg-gray-100"
+              >
+                <Menu className="h-5 w-5 text-black" />
+              </Button>
+              
+              <nav className="hidden md:flex space-x-8">
+                <Link to="/" className="text-black hover:text-[#bfa365] transition-colors">홈</Link>
+                <Link to="/search" className="text-[#bfa365] font-semibold">제품검색</Link>
+                <Link to="/quote" className="text-black hover:text-[#bfa365] transition-colors">견적요청</Link>
+                <Link to="/admin" className="text-black hover:text-[#bfa365] transition-colors">관리자</Link>
+              </nav>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Search Section */}
-      <section className="bg-light-gray py-12">
-        <div className="max-w-[120rem] mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-heading font-bold text-primary text-center mb-8">
-              제품 검색
-            </h1>
-            
-            {/* Search Bar */}
-            <div className="relative mb-6">
-              <Input
-                type="text"
-                placeholder="제품명, 브랜드명, 자재코드로 검색하세요."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full h-14 pl-6 pr-16 text-lg rounded-full border-2 border-gray-200 focus:border-primary"
-              />
-              <Button
-                onClick={handleSearch}
-                className="absolute right-2 top-2 h-10 w-10 rounded-full bg-primary hover:bg-gold-accent"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="rounded-full">
-                  <SelectValue placeholder="카테고리 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 카테고리</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category._id} value={category.categorySlug || ''}>
-                      {category.categoryName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                <SelectTrigger className="rounded-full">
-                  <SelectValue placeholder="브랜드 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 브랜드</SelectItem>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand} value={brand}>
-                      {brand}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                onClick={clearFilters}
-                variant="outline"
-                className="rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                필터 초기화
-              </Button>
-            </div>
-          </div>
+      <div className="flex">
+        {/* 데스크톱 사이드바 */}
+        <div className="hidden md:block">
+          <BrandSidebar />
         </div>
-      </section>
 
-      {/* Results Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-[120rem] mx-auto px-4">
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-secondary font-paragraph">검색 중...</p>
-            </div>
-          ) : filteredProducts.length > 0 ? (
-            <>
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-heading font-bold text-primary">
-                  검색 결과 ({filteredProducts.length}개)
-                </h2>
+        {/* 모바일 사이드바 오버레이 */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <motion.div
+                initial={{ x: -300 }}
+                animate={{ x: 0 }}
+                exit={{ x: -300 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="w-80 h-full bg-white shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <BrandSidebar isMobile={true} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 메인 콘텐츠 */}
+        <div className="flex-1 min-h-screen">
+          {/* Search Section */}
+          <section className="bg-gray-50 py-12">
+            <div className="max-w-6xl mx-auto px-4">
+              <h1 className="text-3xl font-bold text-black text-center mb-8">
+                제품 검색
+              </h1>
+              
+              {/* Search Bar */}
+              <div className="relative mb-6 max-w-2xl mx-auto">
+                <Input
+                  type="text"
+                  placeholder="제품명, 브랜드명, 자재코드로 검색하세요."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="w-full h-14 pl-6 pr-16 text-lg rounded-full border-2 border-gray-200 focus:border-[#bfa365]"
+                />
+                <Button
+                  onClick={handleSearch}
+                  className="absolute right-2 top-2 h-10 w-10 rounded-full bg-black hover:bg-[#bfa365]"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
               </div>
 
-              {/* 그리드 컨테이너에 중앙 정렬과 더 큰 여백 추가 */}
-              <div className="bg-light-gray px-16 py-12 rounded-3xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-[90rem] mx-auto">
-                {filteredProducts.map((product) => (
-                  <motion.div
-                    key={product._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ y: -5 }}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden border hover:shadow-xl transition-all duration-300"
-                  >
-                    <div className="aspect-[4/5] overflow-hidden">
-                      {/* 데코타일 제품은 원본 이미지 그대로 표시 */}
-                      {product.category === '데코타일' ? (
-                        <Image src={product.productImage || 'https://static.wixstatic.com/media/9f8727_d3600c65e02d403caed35c117b5d44fc~mv2.png?originWidth=384&originHeight=384'} alt={product.productName || '제품 이미지'} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" style={{ 
-                            imageRendering: 'crisp-edges',
-                            filter: 'none',
-                            transform: 'none'
-                          }} />
-                      ) : (
-                        <Image
-                          src={product.productImage || 'https://static.wixstatic.com/media/9f8727_d3600c65e02d403caed35c117b5d44fc~mv2.png?originWidth=384&originHeight=384'}
-                          alt={product.productName || '제품 이미지'}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                          width={450}
-                        />
-                      )}
+              {/* 선택된 필터 표시 */}
+              {(selectedCategory || selectedBrand) && (
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  {selectedCategory && (
+                    <div className="bg-[#bfa365] text-white px-4 py-2 rounded-full text-sm">
+                      카테고리: {selectedCategory}
                     </div>
-                    <div className="p-8">
-                      <h3 className="text-2xl font-paragraph font-semibold text-primary mb-3">
-                        {product.productName}
-                      </h3>
-                      <p className="text-secondary font-paragraph text-base mb-2">
-                        브랜드: {product.brandName}
-                      </p>
-                      <p className="text-3xl font-paragraph font-bold text-primary mb-6">
-                        {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
-                      </p>
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={() => navigate(`/product/${product._id}`)}
-                          variant="outline"
-                          className="flex-1 rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white h-12 text-base"
-                        >
-                          상세보기
-                        </Button>
-                        <Button
-                          onClick={() => handleQuoteRequest(product)}
-                          className="flex-1 rounded-full bg-gold-accent hover:bg-primary h-12 text-base"
-                        >
-                          견적요청
-                        </Button>
-                      </div>
+                  )}
+                  {selectedBrand && (
+                    <div className="bg-[#bfa365] text-white px-4 py-2 rounded-full text-sm">
+                      브랜드: {selectedBrand}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-            </>
-          ) : (
-            <div className="text-center py-20">
-              <div className="max-w-md mx-auto">
-                <div className="w-24 h-24 bg-light-gray rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Search className="h-12 w-12 text-secondary" />
-                </div>
-                <h3 className="text-2xl font-heading font-bold text-primary mb-4">
-                  검색 결과가 없습니다
-                </h3>
-                <p className="text-secondary font-paragraph mb-8">
-                  다른 검색어를 시도하거나 필터를 조정해보세요.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  )}
                   <Button
                     onClick={clearFilters}
                     variant="outline"
-                    className="rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                    size="sm"
+                    className="rounded-full border-2 border-black text-black hover:bg-black hover:text-white"
                   >
                     필터 초기화
                   </Button>
-                  <Button
-                    onClick={() => navigate('/')}
-                    className="rounded-full bg-primary hover:bg-gold-accent"
-                  >
-                    <Home className="h-4 w-4 mr-2" />
-                    홈으로 돌아가기
-                  </Button>
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          </section>
+
+          {/* Results Section */}
+          <section className="py-12 bg-white">
+            <div className="max-w-6xl mx-auto px-4">
+              {loading ? (
+                <div className="text-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bfa365] mx-auto"></div>
+                  <p className="mt-4 text-gray-600">검색 중...</p>
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                <>
+                  <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-bold text-black">
+                      검색 결과 ({filteredProducts.length}개)
+                    </h2>
+                  </div>
+
+                  {/* 제품 그리드 - 230x230 카드 크기 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredProducts.map((product) => (
+                      <motion.div
+                        key={product._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ y: -5 }}
+                        className="bg-white rounded-lg shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300"
+                        style={{ width: '230px', height: '230px' }}
+                      >
+                        <div className="h-32 overflow-hidden">
+                          <Image
+                            src={product.productImage || 'https://static.wixstatic.com/media/9f8727_d3600c65e02d403caed35c117b5d44fc~mv2.png?originWidth=384&originHeight=384'}
+                            alt={product.productName || '제품 이미지'}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            width={230}
+                          />
+                        </div>
+                        <div className="p-3 h-24 flex flex-col justify-between">
+                          <div>
+                            <h3 className="text-sm font-semibold text-black mb-1 line-clamp-2">
+                              {product.productName}
+                            </h3>
+                            <p className="text-xs text-gray-600 mb-1">
+                              {product.brandName}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              onClick={() => navigate(`/product/${product._id}`)}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs rounded border border-black text-black hover:bg-black hover:text-white"
+                            >
+                              상세
+                            </Button>
+                            <Button
+                              onClick={() => handleQuoteRequest(product)}
+                              size="sm"
+                              className="flex-1 text-xs rounded bg-[#bfa365] hover:bg-black text-white"
+                            >
+                              견적
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-20">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Search className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-black mb-4">
+                      검색 결과가 없습니다
+                    </h3>
+                    <p className="text-gray-600 mb-8">
+                      다른 검색어를 시도하거나 필터를 조정해보세요.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button
+                        onClick={clearFilters}
+                        variant="outline"
+                        className="rounded-full border-2 border-black text-black hover:bg-black hover:text-white"
+                      >
+                        필터 초기화
+                      </Button>
+                      <Button
+                        onClick={() => navigate('/')}
+                        className="rounded-full bg-black hover:bg-[#bfa365]"
+                      >
+                        <Home className="h-4 w-4 mr-2" />
+                        홈으로 돌아가기
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       {/* Fixed Quote Button */}
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           onClick={() => navigate('/quote')}
-          className="px-6 py-4 rounded-full bg-gold-accent hover:bg-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-paragraph font-semibold"
+          className="px-6 py-4 rounded-full bg-[#bfa365] hover:bg-black text-white shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-semibold"
         >
           전문시공 자동견적 바로가기
         </Button>
