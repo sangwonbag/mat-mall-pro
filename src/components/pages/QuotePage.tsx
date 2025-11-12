@@ -489,7 +489,7 @@ export default function QuotePage() {
                         }
                       />
                       <label htmlFor="subMaterials" className="font-paragraph text-sm">
-                        부자재 (+5천원/평)
+                        부자재 포함
                       </label>
                     </div>
                     
@@ -502,7 +502,7 @@ export default function QuotePage() {
                         }
                       />
                       <label htmlFor="elevator" className="font-paragraph text-sm">
-                        엘리베이터 (+5만원)
+                        엘리베이터 사용
                       </label>
                     </div>
                     
@@ -515,7 +515,7 @@ export default function QuotePage() {
                         }
                       />
                       <label htmlFor="parking" className="font-paragraph text-sm">
-                        주차비 (+3만원)
+                        주차 공간 필요
                       </label>
                     </div>
                   </CardContent>
