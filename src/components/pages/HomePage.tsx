@@ -223,12 +223,32 @@ export default function HomePage() {
                       <p className="text-2xl font-paragraph font-bold text-primary mb-4">
                         {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                       </p>
-                      <Button
-                        onClick={() => navigate(`/product/${product._id}`)}
-                        className="w-full rounded-full bg-primary hover:bg-gold-accent transition-colors"
-                      >
-                        자세히 보기
-                      </Button>
+                      
+                      {/* 데코타일 제품인 경우 특별한 버튼 레이아웃 */}
+                      {product.category === '데코타일' ? (
+                        <div className="space-y-3">
+                          <Button
+                            onClick={() => navigate(`/product/${product._id}`)}
+                            variant="outline"
+                            className="w-full rounded-full border-2 border-gold-accent text-gold-accent hover:bg-gold-accent hover:text-white transition-colors"
+                          >
+                            시공사례 보기
+                          </Button>
+                          <Button
+                            onClick={() => navigate(`/quote?product=${product._id}`)}
+                            className="w-full rounded-full bg-primary hover:bg-gold-accent transition-colors"
+                          >
+                            구매
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => navigate(`/product/${product._id}`)}
+                          className="w-full rounded-full bg-primary hover:bg-gold-accent transition-colors"
+                        >
+                          자세히 보기
+                        </Button>
+                      )}
                     </div>
                   </motion.div>
                 ))}
