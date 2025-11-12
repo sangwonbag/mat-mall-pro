@@ -199,66 +199,94 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* 제품 그리드 - 검색 페이지와 동일한 스타일 (PC 6열, 태블릿 3열, 모바일 2열) */}
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-8">
                 {categoryProducts.slice(0, 6).map((product) => (
                   <motion.div
                     key={product._id}
-                    whileHover={{ y: -5 }}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden border hover:shadow-xl transition-all duration-300"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white group cursor-pointer"
+                    onClick={() => navigate(`/product/${product._id}`)}
                   >
-                    <div className="aspect-square overflow-hidden">
-                      {/* 데코타일 제품은 원본 이미지 그대로 표시 */}
-                      {product.category === '데코타일' ? (
-                        <Image src={product.productImage || 'https://static.wixstatic.com/media/9f8727_fc33272e0f724d2482683044d95730ca~mv2.png?originWidth=384&originHeight=384'} alt={product.productName || '제품 이미지'} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" style={{ 
-                            imageRendering: 'crisp-edges',
-                            filter: 'none',
-                            transform: 'none'
-                          }} />
-                      ) : (
-                        <Image
-                          src={product.productImage || 'https://static.wixstatic.com/media/9f8727_fc33272e0f724d2482683044d95730ca~mv2.png?originWidth=384&originHeight=384'}
-                          alt={product.productName || '제품 이미지'}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                          width={400}
-                        />
-                      )}
+                    {/* 제품 이미지 - 240x240px 정사각형 */}
+                    <div className="w-full aspect-square border border-gray-200 rounded-lg overflow-hidden mb-6">
+                      <Image
+                        src={product.productImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=192&originHeight=192'}
+                        alt={product.productName || '제품 이미지'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        width={240}
+                      />
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-paragraph font-semibold text-primary mb-2">
+                    
+                    {/* 제품 정보 */}
+                    <div className="space-y-2">
+                      {/* 제품명 */}
+                      <h3 className="text-sm font-bold text-[#2E2E2E] line-clamp-2 leading-tight">
                         {product.productName}
                       </h3>
-                      <p className="text-secondary font-paragraph mb-2">
-                        {product.specifications}
-                      </p>
-                      <p className="text-2xl font-paragraph font-bold text-primary mb-4">
-                        {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
+                      
+                      {/* 카테고리/브랜드 */}
+                      <p className="text-xs text-[#A0A0A0] font-normal">
+                        {product.category === 'deco-tile' ? '데코타일' : product.category} / {product.brandName}
                       </p>
                       
-                      {/* 데코타일 제품인 경우 특별한 버튼 레이아웃 */}
-                      {product.category === '데코타일' ? (
-                        <div className="space-y-3">
-                          <Button
-                            onClick={() => navigate(`/product/${product._id}`)}
-                            variant="outline"
-                            className="w-full rounded-full border-2 border-gold-accent text-gold-accent hover:bg-gold-accent hover:text-white transition-colors"
-                          >
-                            시공사례 보기
-                          </Button>
-                          <Button
-                            onClick={() => navigate(`/quote?product=${product._id}`)}
-                            className="w-full rounded-full bg-primary hover:bg-gold-accent transition-colors"
-                          >
-                            구매
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={() => navigate(`/product/${product._id}`)}
-                          className="w-full rounded-full bg-primary hover:bg-gold-accent transition-colors"
-                        >
-                          자세히 보기
-                        </Button>
-                      )}
+                      {/* 자재코드 */}
+                      <p className="text-xs text-[#A0A0A0] font-normal">
+                        {product.materialCode || product.specifications || 'N/A'}
+                      </p>
+                      
+                      {/* 가격 */}
+                      <p className="text-base font-semibold text-[#3C3C3C] mt-1 hover:text-[#BFA365] transition-colors duration-200" style={{ fontSize: '16px', fontWeight: 600 }}>
+                        ₩{product.price?.toLocaleString() || '0'}원
+                      </p>
+                      
+                      {/* 버튼들 */}
+                      <div className="flex gap-2" style={{ marginTop: '16px' }}>
+                        {product.category === 'deco-tile' ? (
+                          <>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/product/${product._id}`);
+                              }}
+                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
+                            >
+                              시공사례
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/quote?product=${product._id}`);
+                              }}
+                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
+                            >
+                              구매
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('비교하기:', product.productName);
+                              }}
+                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
+                            >
+                              비교하기
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/quote?product=${product._id}`);
+                              }}
+                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
+                            >
+                              견적요청
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
