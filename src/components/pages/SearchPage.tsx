@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, GitCompare, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ProductCategories } from '@/entities';
@@ -170,7 +170,7 @@ export default function SearchPage() {
       <style dangerouslySetInnerHTML={{ __html: brandMenuStyles }} />
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-black">{"브랜드"}</h3>
+          <h3 className="text-xl font-bold text-[#2E2E2E]">{"브랜드"}</h3>
           {isMobile && (
             <Button
               variant="ghost"
@@ -200,7 +200,7 @@ export default function SearchPage() {
                         e.stopPropagation();
                         toggleCategory(category);
                       }}
-                      className="p-1 hover:bg-[#e60012] hover:text-white transition-colors duration-200"
+                      className="p-1 hover:bg-[#B89C7D] hover:text-white transition-colors duration-200"
                     >
                       {expandedCategories.includes(category) ? (
                         <ChevronDown className="h-4 w-4" />
@@ -256,7 +256,7 @@ export default function SearchPage() {
       <header className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-[120rem] mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold text-black">
+            <Link to="/" className="text-2xl font-bold text-[#2E2E2E]">
               동경바닥재
             </Link>
             <div className="flex items-center space-x-4">
@@ -267,14 +267,14 @@ export default function SearchPage() {
                 onClick={() => setIsSidebarOpen(true)}
                 className="md:hidden p-2 hover:bg-gray-100"
               >
-                <Menu className="h-5 w-5 text-black" />
+                <Menu className="h-5 w-5 text-[#2E2E2E]" />
               </Button>
               
               <nav className="hidden md:flex space-x-8">
-                <Link to="/" className="text-black hover:text-[#bfa365] transition-colors">홈</Link>
-                <Link to="/search" className="text-[#bfa365] font-semibold">제품검색</Link>
-                <Link to="/quote" className="text-black hover:text-[#bfa365] transition-colors">견적요청</Link>
-                <Link to="/admin" className="text-black hover:text-[#bfa365] transition-colors">관리자</Link>
+                <Link to="/" className="text-[#2E2E2E] hover:text-[#B89C7D] transition-colors">홈</Link>
+                <Link to="/search" className="text-[#B89C7D] font-semibold">제품검색</Link>
+                <Link to="/quote" className="text-[#2E2E2E] hover:text-[#B89C7D] transition-colors">견적요청</Link>
+                <Link to="/admin" className="text-[#2E2E2E] hover:text-[#B89C7D] transition-colors">관리자</Link>
               </nav>
             </div>
           </div>
@@ -313,10 +313,32 @@ export default function SearchPage() {
 
         {/* 메인 콘텐츠 */}
         <div className="flex-1 min-h-screen">
+          {/* 상단 고정 카테고리 바 */}
+          <div className="sticky top-[73px] z-30 bg-white border-b border-gray-200 py-4">
+            <div className="max-w-[120rem] mx-auto px-4">
+              <div className="flex items-center gap-4 overflow-x-auto">
+                <span className="text-sm font-medium text-[#A0A0A0] whitespace-nowrap">카테고리:</span>
+                {Object.keys(brandStructure).map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => handleCategorySelect(category)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                      selectedCategory === category
+                        ? 'bg-[#B89C7D] text-white'
+                        : 'bg-gray-100 text-[#2E2E2E] hover:bg-[#EAE3D8]'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Search Section */}
           <section className="bg-gray-50 py-12">
-            <div className="max-w-6xl mx-auto px-4">
-              <h1 className="text-3xl font-bold text-black text-center mb-8">
+            <div className="max-w-[120rem] mx-auto px-4">
+              <h1 className="text-3xl font-bold text-[#2E2E2E] text-center mb-8">
                 제품 검색
               </h1>
               
@@ -328,11 +350,11 @@ export default function SearchPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full h-14 pl-6 pr-16 text-lg rounded-full border-2 border-gray-200 focus:border-[#bfa365]"
+                  className="w-full h-14 pl-6 pr-16 text-lg rounded-full border-2 border-gray-200 focus:border-[#B89C7D]"
                 />
                 <Button
                   onClick={handleSearch}
-                  className="absolute right-2 top-2 h-10 w-10 rounded-full bg-black hover:bg-[#bfa365]"
+                  className="absolute right-2 top-2 h-10 w-10 rounded-full bg-[#2E2E2E] hover:bg-[#B89C7D]"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
@@ -342,12 +364,12 @@ export default function SearchPage() {
               {(selectedCategory || selectedBrand) && (
                 <div className="flex items-center justify-center gap-4 mb-6">
                   {selectedCategory && (
-                    <div className="bg-[#bfa365] text-white px-4 py-2 rounded-full text-sm">
+                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
                       카테고리: {getCategoryDisplayName(selectedCategory)}
                     </div>
                   )}
                   {selectedBrand && (
-                    <div className="bg-[#bfa365] text-white px-4 py-2 rounded-full text-sm">
+                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
                       브랜드: {selectedBrand}
                     </div>
                   )}
@@ -355,7 +377,7 @@ export default function SearchPage() {
                     onClick={clearFilters}
                     variant="outline"
                     size="sm"
-                    className="rounded-full border-2 border-black text-black hover:bg-black hover:text-white"
+                    className="rounded-full border-2 border-[#2E2E2E] text-[#2E2E2E] hover:bg-[#2E2E2E] hover:text-white"
                   >
                     필터 초기화
                   </Button>
@@ -366,63 +388,79 @@ export default function SearchPage() {
 
           {/* Results Section */}
           <section className="py-12 bg-white">
-            <div className="max-w-6xl mx-auto px-4">
+            <div className="max-w-[120rem] mx-auto px-4">
               {loading ? (
                 <div className="text-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bfa365] mx-auto"></div>
-                  <p className="mt-4 text-gray-600">검색 중...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B89C7D] mx-auto"></div>
+                  <p className="mt-4 text-[#A0A0A0]">검색 중...</p>
                 </div>
               ) : filteredProducts.length > 0 ? (
                 <>
                   <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-bold text-black">
+                    <h2 className="text-2xl font-bold text-[#2E2E2E]">
                       검색 결과 ({filteredProducts.length}개)
                     </h2>
                   </div>
 
-                  {/* 제품 그리드 - 230x230 카드 크기 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {/* 제품 그리드 - LX Z:IN 스타일 (PC 6열, 태블릿 3열, 모바일 2열) */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-8">
                     {filteredProducts.map((product) => (
                       <motion.div
                         key={product._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ y: -5 }}
-                        className="bg-white rounded-lg shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300"
-                        style={{ width: '230px', height: '230px' }}
+                        className="bg-white group cursor-pointer"
+                        onClick={() => navigate(`/product/${product._id}`)}
                       >
-                        <div className="h-32 overflow-hidden">
+                        {/* 제품 이미지 - 240x240px 정사각형 */}
+                        <div className="w-full aspect-square border border-gray-200 rounded-lg overflow-hidden mb-6">
                           <Image
-                            src={product.productImage || 'https://static.wixstatic.com/media/9f8727_d3600c65e02d403caed35c117b5d44fc~mv2.png?originWidth=384&originHeight=384'}
+                            src={product.productImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=192&originHeight=192'}
                             alt={product.productName || '제품 이미지'}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            width={230}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            width={240}
                           />
                         </div>
-                        <div className="p-3 h-24 flex flex-col justify-between">
-                          <div>
-                            <h3 className="text-sm font-semibold text-black mb-1 line-clamp-2">
-                              {product.productName}
-                            </h3>
-                            <p className="text-xs text-gray-600 mb-1">
-                              {product.brandName}
-                            </p>
-                          </div>
-                          <div className="flex gap-1">
+                        
+                        {/* 제품 정보 */}
+                        <div className="space-y-2">
+                          {/* 소분류/브랜드 */}
+                          <p className="text-xs text-[#A0A0A0] font-normal">
+                            {getCategoryDisplayName(product.category || '')} / {product.brandName}
+                          </p>
+                          
+                          {/* 자재명 */}
+                          <h3 className="text-sm font-bold text-[#2E2E2E] line-clamp-2 leading-tight">
+                            {product.productName}
+                          </h3>
+                          
+                          {/* 자재코드 */}
+                          <p className="text-xs text-[#A0A0A0] font-normal">
+                            {product.materialCode || 'N/A'}
+                          </p>
+                          
+                          {/* 버튼들 */}
+                          <div className="flex gap-2 pt-2">
                             <Button
-                              onClick={() => navigate(`/product/${product._id}`)}
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 text-xs rounded border border-black text-black hover:bg-black hover:text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // 비교하기 기능 (향후 구현)
+                                console.log('비교하기:', product.productName);
+                              }}
+                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
                             >
-                              상세
+                              <GitCompare className="h-3 w-3 mr-1" />
+                              비교하기
                             </Button>
                             <Button
-                              onClick={() => handleQuoteRequest(product)}
-                              size="sm"
-                              className="flex-1 text-xs rounded bg-black hover:bg-gray-800 text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuoteRequest(product);
+                              }}
+                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
                             >
-                              견적
+                              <FileText className="h-3 w-3 mr-1" />
+                              견적요청
                             </Button>
                           </div>
                         </div>
@@ -436,23 +474,23 @@ export default function SearchPage() {
                     <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Search className="h-12 w-12 text-gray-400" />
                     </div>
-                    <h3 className="text-2xl font-bold text-black mb-4">
+                    <h3 className="text-2xl font-bold text-[#2E2E2E] mb-4">
                       검색 결과가 없습니다
                     </h3>
-                    <p className="text-gray-600 mb-8">
+                    <p className="text-[#A0A0A0] mb-8">
                       다른 검색어를 시도하거나 필터를 조정해보세요.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <Button
                         onClick={clearFilters}
                         variant="outline"
-                        className="rounded-full border-2 border-black text-black hover:bg-black hover:text-white"
+                        className="rounded-full border-2 border-[#2E2E2E] text-[#2E2E2E] hover:bg-[#2E2E2E] hover:text-white"
                       >
                         필터 초기화
                       </Button>
                       <Button
                         onClick={() => navigate('/')}
-                        className="rounded-full bg-black hover:bg-[#bfa365]"
+                        className="rounded-full bg-[#2E2E2E] hover:bg-[#B89C7D]"
                       >
                         <Home className="h-4 w-4 mr-2" />
                         홈으로 돌아가기
@@ -465,8 +503,6 @@ export default function SearchPage() {
           </section>
         </div>
       </div>
-
-
     </div>
   );
 }
