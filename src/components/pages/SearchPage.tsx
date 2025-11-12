@@ -148,8 +148,8 @@ export default function SearchPage() {
 
   // 브랜드 사이드바 컴포넌트
   const BrandSidebar = ({ isMobile = false }) => (
-    <div className={`lnb ${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto`}>
-      <div className="lnb-box p-6">
+    <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto`}>
+      <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-black">{"브랜드"}</h3>
           {isMobile && (
@@ -164,29 +164,20 @@ export default function SearchPage() {
           )}
         </div>
         
-        <ul className="space-y-2">
+        <div className="space-y-2">
           {Object.entries(brandStructure).map(([category, brands]) => (
-            <li key={category}>
-              <a
-                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 block ${
+            <div key={category}>
+              <div
+                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                   selectedCategory === category 
                     ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
                     : 'hover:bg-gray-50 text-black'
                 }`}
                 onClick={() => handleCategorySelect(category)}
-                style={{
-                  fontSize: '15px',
-                  letterSpacing: '-1px',
-                  fontWeight: '700',
-                  color: '#000',
-                  lineHeight: '1',
-                  display: 'block',
-                  textDecoration: 'none'
-                }}
               >
                 <div className="flex items-center space-x-2">
                   <span className="text-[#bfa365]">⬦</span>
-                  <span>{category}</span>
+                  <span className="font-medium">{category}</span>
                 </div>
                 {brands.length > 0 && (
                   <Button
@@ -205,7 +196,7 @@ export default function SearchPage() {
                     )}
                   </Button>
                 )}
-              </a>
+              </div>
               
               <AnimatePresence>
                 {expandedCategories.includes(category) && brands.length > 0 && (
@@ -216,38 +207,28 @@ export default function SearchPage() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <ul className="ml-6 space-y-1 mt-2">
+                    <div className="ml-6 space-y-1 mt-2">
                       {brands.map((brand) => (
-                        <li key={brand}>
-                          <a
-                            className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-all duration-200 block ${
-                              selectedBrand === brand 
-                                ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
-                                : 'hover:bg-gray-50 text-gray-700'
-                            }`}
-                            onClick={() => handleBrandSelect(brand, category)}
-                            style={{
-                              fontSize: '15px',
-                              letterSpacing: '-1px',
-                              fontWeight: '700',
-                              color: '#000',
-                              lineHeight: '1',
-                              display: 'block',
-                              textDecoration: 'none'
-                            }}
-                          >
-                            <span className="text-[#bfa365] text-sm">⬦</span>
-                            <span className="text-sm">{brand}</span>
-                          </a>
-                        </li>
+                        <div
+                          key={brand}
+                          className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-all duration-200 ${
+                            selectedBrand === brand 
+                              ? 'bg-white border-l-4 border-[#bfa365] font-bold text-black' 
+                              : 'hover:bg-gray-50 text-gray-700'
+                          }`}
+                          onClick={() => handleBrandSelect(brand, category)}
+                        >
+                          <span className="text-[#bfa365] text-sm">⬦</span>
+                          <span className="text-sm">{brand}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );
