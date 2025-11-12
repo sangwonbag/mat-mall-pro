@@ -448,15 +448,7 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Fixed Quote Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={() => navigate('/quote')}
-          className="px-6 py-4 rounded-full bg-[#bfa365] hover:bg-black text-white shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-semibold"
-        >
-          전문시공 자동견적 바로가기
-        </Button>
-      </div>
+
     </div>
   );
 }
