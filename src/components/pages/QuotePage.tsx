@@ -257,7 +257,7 @@ export default function QuotePage() {
                         <p className="text-secondary font-paragraph">시공 면적: {formData.area}평</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-paragraph font-bold text-primary">
+                        <p className="text-xl font-paragraph font-bold text-primary price-font">
                           {formData.selectedProduct?.price ? `${formatPrice(formData.selectedProduct.price)}원` : '가격 문의'}
                         </p>
                       </div>
@@ -273,14 +273,14 @@ export default function QuotePage() {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
                       <span className="font-paragraph">자재비</span>
-                      <span className="font-paragraph font-semibold">
+                      <span className="font-paragraph font-semibold price-font">
                         {formatPrice((formData.selectedProduct?.price || 0) * (formData.selectedProduct?.quantity || 1) * parseFloat(formData.area || '0'))}원
                       </span>
                     </div>
                     {formData.includeSubMaterials && (
                       <div className="flex justify-between">
                         <span className="font-paragraph">부자재비</span>
-                        <span className="font-paragraph font-semibold">
+                        <span className="font-paragraph font-semibold price-font">
                           {formatPrice(parseFloat(formData.area || '0') * 5000)}원
                         </span>
                       </div>
@@ -288,19 +288,19 @@ export default function QuotePage() {
                     {formData.includeElevator && (
                       <div className="flex justify-between">
                         <span className="font-paragraph">엘리베이터 사용료</span>
-                        <span className="font-paragraph font-semibold">50,000원</span>
+                        <span className="font-paragraph font-semibold price-font">50,000원</span>
                       </div>
                     )}
                     {formData.includeParking && (
                       <div className="flex justify-between">
                         <span className="font-paragraph">주차비</span>
-                        <span className="font-paragraph font-semibold">30,000원</span>
+                        <span className="font-paragraph font-semibold price-font">30,000원</span>
                       </div>
                     )}
                     <div className="border-t pt-4">
                       <div className="flex justify-between text-lg">
                         <span className="font-paragraph font-bold">총 견적 금액</span>
-                        <span className="font-paragraph font-bold text-primary">
+                        <span className="font-paragraph font-bold text-primary price-font">
                           {formatPrice(calculateTotalPrice())}원
                         </span>
                       </div>

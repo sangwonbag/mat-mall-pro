@@ -182,7 +182,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="mb-8">
-                <p className="text-4xl font-paragraph font-bold text-primary">
+                <p className="text-4xl font-paragraph font-bold text-primary price-font">
                   {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                 </p>
                 {product.price && (

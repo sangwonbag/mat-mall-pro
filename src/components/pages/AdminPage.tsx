@@ -346,7 +346,7 @@ export default function AdminPage() {
                     <SelectContent>
                       {categories.map((category) => (
                         <SelectItem key={category._id} value={category.categorySlug || ''}>
-                          {category.categoryName}
+                          {category.categorySlug === 'deco-tile' ? '데코타일' : category.categoryName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -444,7 +444,7 @@ export default function AdminPage() {
                             {product.materialCode}
                           </p>
                           {product.price && (
-                            <p className="text-sm font-medium text-primary">
+                            <p className="text-sm font-medium text-primary price-font">
                               {formatPrice(product.price)}원
                             </p>
                           )}
