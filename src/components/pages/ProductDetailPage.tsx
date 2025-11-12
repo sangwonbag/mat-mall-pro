@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, ShoppingCart, Heart, Share2, Star, ChevronDown, ChevronUp, Info, Truck, Shield, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products } from '@/entities';
+import { Products, ConstructionCaseStudies } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +20,7 @@ export default function ProductDetailPage() {
   const [showDetailDescription, setShowDetailDescription] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Products[]>([]);
+  const [caseStudy, setCaseStudy] = useState<ConstructionCaseStudies | null>(null);
 
   // 썸네일 이미지들 (실제로는 같은 이미지를 여러 각도로 보여주는 것처럼 구성)
   const thumbnailImages = [
@@ -34,6 +35,7 @@ export default function ProductDetailPage() {
     if (id) {
       loadProduct();
       loadRelatedProducts();
+      loadCaseStudy();
     }
   }, [id]);
 
@@ -51,10 +53,25 @@ export default function ProductDetailPage() {
       setLoading(true);
       const productData = await BaseCrudService.getById<Products>('products', id!);
       setProduct(productData);
+      // 제품 로드 후 케이스 스터디 다시 로드
+      setTimeout(() => {
+        loadCaseStudy();
+      }, 100);
     } catch (error) {
       console.error('Error loading product:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCaseStudy = async () => {
+    try {
+      const { items } = await BaseCrudService.getAll<ConstructionCaseStudies>('constructioncasestudies');
+      // 현재 제품과 일치하는 케이스 스터디 찾기
+      const matchingCaseStudy = items.find(cs => cs.productName === product?.productName);
+      setCaseStudy(matchingCaseStudy || null);
+    } catch (error) {
+      console.error('Error loading case study:', error);
     }
   };
 
@@ -85,7 +102,7 @@ export default function ProductDetailPage() {
   const calculateEstimate = () => {
     if (!product?.price) return 0;
     const materialCost = product.price * quantity;
-    const laborCost = area * 15000; // 평당 시공비 15,000원
+    const laborCost = area * 12000; // 평당 시공비 12,000원
     return materialCost + laborCost;
   };
 
@@ -378,7 +395,7 @@ export default function ProductDetailPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>시공비 ({area}평)</span>
-                      <span>{formatPrice(area * 15000)}원</span>
+                      <span>{formatPrice(area * 12000)}원</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
                       <span>예상 총액</span>
@@ -490,32 +507,49 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="aspect-video rounded-xl overflow-hidden shadow-lg">
                 <Image
-                  src={product?.productImage || 'https://static.wixstatic.com/media/9f8727_5f2c3af5bb144d5db69a59fc5899a306~mv2.png?originWidth=576&originHeight=576'}
+                  src={caseStudy?.descriptionImage || product?.productImage || 'https://static.wixstatic.com/media/9f8727_5f2c3af5bb144d5db69a59fc5899a306~mv2.png?originWidth=576&originHeight=576'}
                   alt="제품 상세 이미지"
                   className="w-full h-full object-cover"
                   width={400}
                 />
               </div>
               <div className="flex flex-col justify-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">제품 특징</h3>
-                <ul className="space-y-3 text-gray-700">
-                  <li className="flex items-start">
-                    <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>뛰어난 내구성과 품질</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>친환경 소재 사용</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>간편한 설치 및 유지보수</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span>다양한 디자인 옵션</span>
-                  </li>
-                </ul>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  {caseStudy?.caseStudyTitle || '제품 특징'}
+                </h3>
+                {caseStudy?.detailedDescription ? (
+                  <p className="text-gray-700 mb-4">{caseStudy.detailedDescription}</p>
+                ) : null}
+                
+                {caseStudy?.productFeatures ? (
+                  <ul className="space-y-3 text-gray-700">
+                    {caseStudy.productFeatures.split('\n').filter(feature => feature.trim()).map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span>{feature.trim()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-3 text-gray-700">
+                    <li className="flex items-start">
+                      <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>뛰어난 내구성과 품질</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>친환경 소재 사용</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>간편한 설치 및 유지보수</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Star className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>다양한 디자인 옵션</span>
+                    </li>
+                  </ul>
+                )}
               </div>
             </div>
           </div>

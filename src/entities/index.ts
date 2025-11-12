@@ -4,6 +4,31 @@
  */
 
 /**
+ * Collection ID: constructioncasestudies
+ * Interface for ConstructionCaseStudies
+ */
+export interface ConstructionCaseStudies {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  productName?: string;
+  /** @wixFieldType text */
+  caseStudyTitle?: string;
+  /** @wixFieldType text */
+  detailedDescription?: string;
+  /** @wixFieldType image */
+  descriptionImage?: string;
+  /** @wixFieldType image */
+  projectExampleImage?: string;
+  /** @wixFieldType text */
+  productFeatures?: string;
+  /** @wixFieldType date */
+  completionDate?: Date | string;
+}
+
+
+/**
  * Collection ID: popularsearches
  * Interface for PopularSearches
  */
