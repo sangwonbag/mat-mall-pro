@@ -507,6 +507,63 @@ export default function SearchPage() {
           </section>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-[#2E2E2E] text-white py-16">
+        <div className="max-w-[120rem] mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-2xl font-bold mb-4">동경바닥재</h3>
+              <p className="text-gray-300 mb-4 text-sm">
+                데코타일/장판/마루/벽지<br />
+                시공·자재 전문<br />
+                B2C/B2B/현장 납품
+              </p>
+              <p className="text-gray-300 text-sm">
+                사업자등록번호: 890-88-02243
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">주요 서비스</h4>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>자재 판매 (KCC/LX/동신/재영/녹수/우성/현대 등)</li>
+                <li>시공 견적</li>
+                <li>업자 전용 자동 견적</li>
+                <li>시공사례</li>
+                <li>빠른 상담/방문 견적</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">고객센터</h4>
+              <div className="text-gray-300 text-sm space-y-1">
+                <p>전화: 02-487-9775</p>
+                <p>팩스: 02-487-9787</p>
+                <p>이메일: dongk3089@naver.com</p>
+                <p className="mt-3">
+                  운영시간:<br />
+                  평일 07:00~18:00<br />
+                  주말 07:00~12:00
+                </p>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold mb-4">회사 정보</h4>
+              <div className="text-gray-300 text-sm space-y-1">
+                <p>주소: 경기 하남시 서하남로 37</p>
+                <div className="mt-4">
+                  <Link to="/search" className="hover:text-white transition-colors block mb-2">제품검색</Link>
+                  <Link to="/quote" className="hover:text-white transition-colors block">견적요청</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-600 mt-12 pt-8 text-center">
+            <p className="text-gray-400">
+              ⓒ 2025 DongKyung Flooring. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
