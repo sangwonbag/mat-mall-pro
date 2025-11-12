@@ -122,12 +122,21 @@ export default function ProductDetailPage() {
               transition={{ duration: 0.6 }}
               className="aspect-square rounded-2xl overflow-hidden shadow-lg"
             >
-              <Image
-                src={product.productImage || 'https://static.wixstatic.com/media/9f8727_5f2c3af5bb144d5db69a59fc5899a306~mv2.png?originWidth=576&originHeight=576'}
-                alt={product.productName || '제품 이미지'}
-                className="w-full h-full object-cover"
-                width={600}
-              />
+              {/* 데코타일 제품은 원본 이미지 그대로 표시 */}
+              {product.category === '데코타일' ? (
+                <Image src={product.productImage || 'https://static.wixstatic.com/media/9f8727_5f2c3af5bb144d5db69a59fc5899a306~mv2.png?originWidth=576&originHeight=576'} alt={product.productName || '제품 이미지'} className="w-full h-full object-cover" style={{ 
+                    imageRendering: 'crisp-edges',
+                    filter: 'none',
+                    transform: 'none'
+                  }} />
+              ) : (
+                <Image
+                  src={product.productImage || 'https://static.wixstatic.com/media/9f8727_5f2c3af5bb144d5db69a59fc5899a306~mv2.png?originWidth=576&originHeight=576'}
+                  alt={product.productName || '제품 이미지'}
+                  className="w-full h-full object-cover"
+                  width={600}
+                />
+              )}
             </motion.div>
 
             {/* Product Info */}

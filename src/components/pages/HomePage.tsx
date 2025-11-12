@@ -206,12 +206,21 @@ export default function HomePage() {
                     className="bg-white rounded-2xl shadow-lg overflow-hidden border hover:shadow-xl transition-all duration-300"
                   >
                     <div className="aspect-square overflow-hidden">
-                      <Image
-                        src={product.productImage || 'https://static.wixstatic.com/media/9f8727_fc33272e0f724d2482683044d95730ca~mv2.png?originWidth=384&originHeight=384'}
-                        alt={product.productName || '제품 이미지'}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        width={400}
-                      />
+                      {/* 데코타일 제품은 원본 이미지 그대로 표시 */}
+                      {product.category === '데코타일' ? (
+                        <Image src={product.productImage || 'https://static.wixstatic.com/media/9f8727_fc33272e0f724d2482683044d95730ca~mv2.png?originWidth=384&originHeight=384'} alt={product.productName || '제품 이미지'} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" style={{ 
+                            imageRendering: 'crisp-edges',
+                            filter: 'none',
+                            transform: 'none'
+                          }} />
+                      ) : (
+                        <Image
+                          src={product.productImage || 'https://static.wixstatic.com/media/9f8727_fc33272e0f724d2482683044d95730ca~mv2.png?originWidth=384&originHeight=384'}
+                          alt={product.productName || '제품 이미지'}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          width={400}
+                        />
+                      )}
                     </div>
                     <div className="p-6">
                       <h3 className="text-xl font-paragraph font-semibold text-primary mb-2">
