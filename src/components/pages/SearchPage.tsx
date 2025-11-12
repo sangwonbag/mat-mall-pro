@@ -50,70 +50,18 @@ export default function SearchPage() {
   // 브랜드 메뉴 스타일 CSS
   const brandMenuStyles = `
     .brand-menu-item {
-      position: relative;
       color: #222;
       text-decoration: none;
-      transition: color 0.25s ease;
       display: block;
       padding: 12px 0;
     }
     
-    .brand-menu-item:hover {
-      color: #e60012;
-    }
-    
-    .brand-menu-item::after {
-      content: '';
-      position: absolute;
-      bottom: 8px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background-color: #e60012;
-      transition: width 0.25s ease;
-    }
-    
-    .brand-menu-item:hover::after,
-    .brand-menu-item.active::after {
-      width: 100%;
-    }
-    
-    .brand-menu-item.active {
-      color: #e60012;
-    }
-    
     .brand-sub-menu-item {
-      position: relative;
       color: #222;
       text-decoration: none;
-      transition: color 0.25s ease;
       display: block;
       padding: 8px 0;
       font-size: 14px;
-    }
-    
-    .brand-sub-menu-item:hover {
-      color: #e60012;
-    }
-    
-    .brand-sub-menu-item::after {
-      content: '';
-      position: absolute;
-      bottom: 4px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background-color: #e60012;
-      transition: width 0.25s ease;
-    }
-    
-    .brand-sub-menu-item:hover::after,
-    .brand-sub-menu-item.active::after {
-      width: 100%;
-    }
-    
-    .brand-sub-menu-item.active {
-      color: #e60012;
     }
   `;
 
@@ -239,9 +187,7 @@ export default function SearchPage() {
           {Object.entries(brandStructure).map(([category, brands]) => (
             <div key={category}>
               <div
-                className={`brand-menu-item cursor-pointer ${
-                  selectedCategory === category ? 'active' : ''
-                }`}
+                className={`brand-menu-item cursor-pointer`}
                 onClick={() => handleCategorySelect(category)}
               >
                 <div className="flex items-center justify-between">
@@ -279,9 +225,7 @@ export default function SearchPage() {
                       {brands.map((brand) => (
                         <div
                           key={brand}
-                          className={`brand-sub-menu-item cursor-pointer ${
-                            selectedBrand === brand ? 'active' : ''
-                          }`}
+                          className={`brand-sub-menu-item cursor-pointer`}
                           onClick={() => handleBrandSelect(brand, category)}
                         >
                           <span>{brand}</span>
