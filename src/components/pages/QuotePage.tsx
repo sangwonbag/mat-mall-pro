@@ -100,6 +100,27 @@ export default function QuotePage() {
     }
   };
 
+  // 평수 변경 시 자재 갯수 자동 계산
+  const handleAreaChange = (area: string) => {
+    setFormData(prev => {
+      const newFormData = { ...prev, area };
+      
+      // 평수가 있고 제품이 선택되어 있을 때 자재 갯수 자동 계산
+      if (area && prev.selectedProduct && parseFloat(area) > 0) {
+        const areaValue = parseFloat(area);
+        // 1평당 1개 기준으로 계산 (필요에 따라 조정 가능)
+        const calculatedQuantity = Math.ceil(areaValue);
+        
+        newFormData.selectedProduct = {
+          ...prev.selectedProduct,
+          quantity: calculatedQuantity
+        };
+      }
+      
+      return newFormData;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -446,7 +467,7 @@ export default function QuotePage() {
                         type="number"
                         placeholder="예: 25"
                         value={formData.area}
-                        onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                        onChange={(e) => handleAreaChange(e.target.value)}
                         className="rounded-full"
                         required
                       />
@@ -458,8 +479,8 @@ export default function QuotePage() {
                   <CardHeader>
                     <CardTitle className="font-heading">추가 옵션</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-2">
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center space-x-3">
                       <Checkbox
                         id="subMaterials"
                         checked={formData.includeSubMaterials}
@@ -467,12 +488,12 @@ export default function QuotePage() {
                           setFormData(prev => ({ ...prev, includeSubMaterials: checked as boolean }))
                         }
                       />
-                      <label htmlFor="subMaterials" className="font-paragraph">
-                        부자재 포함 (+5,000원/평)
+                      <label htmlFor="subMaterials" className="font-paragraph text-sm">
+                        부자재 (+5천원/평)
                       </label>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       <Checkbox
                         id="elevator"
                         checked={formData.includeElevator}
@@ -480,12 +501,12 @@ export default function QuotePage() {
                           setFormData(prev => ({ ...prev, includeElevator: checked as boolean }))
                         }
                       />
-                      <label htmlFor="elevator" className="font-paragraph">
-                        엘리베이터 사용 (+50,000원)
+                      <label htmlFor="elevator" className="font-paragraph text-sm">
+                        엘리베이터 (+5만원)
                       </label>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3">
                       <Checkbox
                         id="parking"
                         checked={formData.includeParking}
@@ -493,8 +514,8 @@ export default function QuotePage() {
                           setFormData(prev => ({ ...prev, includeParking: checked as boolean }))
                         }
                       />
-                      <label htmlFor="parking" className="font-paragraph">
-                        주차 공간 필요 (+30,000원)
+                      <label htmlFor="parking" className="font-paragraph text-sm">
+                        주차비 (+3만원)
                       </label>
                     </div>
                   </CardContent>
