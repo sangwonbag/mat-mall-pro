@@ -438,8 +438,13 @@ export default function SearchPage() {
                             {product.materialCode || 'N/A'}
                           </p>
                           
+                          {/* 가격 */}
+                          <p className="text-base font-semibold text-[#3C3C3C] mt-1 hover:text-[#BFA365] transition-colors duration-200" style={{ fontSize: '16px', fontWeight: 600 }}>
+                            ₩{product.price?.toLocaleString() || '0'}원
+                          </p>
+                          
                           {/* 버튼들 */}
-                          <div className="flex gap-2 pt-2">
+                          <div className="flex gap-2" style={{ marginTop: '16px' }}>
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
