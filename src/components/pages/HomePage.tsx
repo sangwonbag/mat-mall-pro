@@ -199,100 +199,41 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 제품 그리드 - 검색 페이지와 동일한 스타일 (PC 6열, 태블릿 3열, 모바일 2열) */}
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-8">
-                {categoryProducts.slice(0, 6).map((product) => (
-                  <motion.div
-                    key={product._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white group cursor-pointer"
-                    onClick={() => navigate(`/product/${product._id}`)}
-                  >
-                    {/* 제품 이미지 - 240x240px 정사각형 */}
-                    <div className="w-full aspect-square border border-gray-200 rounded-lg overflow-hidden mb-6">
-                      <Image
-                        src={product.productImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=192&originHeight=192'}
-                        alt={product.productName || '제품 이미지'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        width={240}
-                      />
-                    </div>
-                    
-                    {/* 제품 정보 */}
-                    <div className="space-y-2">
-                      {/* 제품명 */}
-                      <h3 className="text-sm font-bold text-[#2E2E2E] line-clamp-2 leading-tight">
-                        {product.productName}
-                      </h3>
-                      
-                      {/* 카테고리/브랜드 */}
-                      <p className="text-xs text-[#A0A0A0] font-normal">
-                        {product.category === 'deco-tile' ? '데코타일' : product.category} / {product.brandName}
-                      </p>
-                      
-                      {/* 자재코드 */}
-                      <p className="text-xs text-[#A0A0A0] font-normal">
-                        {product.materialCode || product.specifications || 'N/A'}
-                      </p>
-                      
-                      {/* 가격 */}
-                      <p className="text-base font-semibold text-[#3C3C3C] mt-1 hover:text-[#BFA365] transition-colors duration-200" style={{ fontSize: '16px', fontWeight: 600 }}>
-                        ₩{product.price?.toLocaleString() || '0'}원
-                      </p>
-                      
-                      {/* 버튼들 */}
-                      <div className="flex gap-2" style={{ marginTop: '16px' }}>
-                        {product.category === 'deco-tile' ? (
-                          <>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/product/${product._id}`);
-                              }}
-                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
-                            >
-                              시공사례
-                            </Button>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/quote?product=${product._id}`);
-                              }}
-                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
-                            >
-                              구매
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log('비교하기:', product.productName);
-                              }}
-                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
-                            >
-                              비교하기
-                            </Button>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/quote?product=${product._id}`);
-                              }}
-                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
-                            >
-                              견적요청
-                            </Button>
-                          </>
-                        )}
+              {/* 제품 그리드 - 4개 제품 중앙 정렬 (PC 4열, 태블릿 2열, 모바일 2열) */}
+              <div className="flex justify-center">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl">
+                  {categoryProducts.slice(0, 4).map((product) => (
+                    <motion.div
+                      key={product._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                    >
+                      <div className="aspect-square relative">
+                        <Image
+                          src={product.productImage || '/placeholder-product.jpg'}
+                          alt={product.productName || ''}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className="p-6">
+                        <h3 className="text-lg font-paragraph font-semibold text-primary mb-2">
+                          {product.productName}
+                        </h3>
+                        <p className="text-sm font-paragraph text-secondary mb-3">
+                          {product.brandName}
+                        </p>
+                        <p className="text-xl font-paragraph font-bold text-primary">
+                          {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
 
-              {categoryProducts.length > 6 && (
+              {categoryProducts.length > 4 && (
                 <div className="text-center mt-12">
                   <Button
                     onClick={() => navigate(`/search?category=${category.categorySlug}`)}
