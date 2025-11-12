@@ -151,7 +151,7 @@ export default function SearchPage() {
     <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto`}>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-black">브랜드 필터</h3>
+          <h3 className="text-xl font-bold text-black">{"브랜드"}</h3>
           {isMobile && (
             <Button
               variant="ghost"
