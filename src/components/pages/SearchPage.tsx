@@ -193,7 +193,7 @@ export default function SearchPage() {
       </section>
 
       {/* Results Section */}
-      <section className="py-12">
+      <section className="py-12 bg-white">
         <div className="max-w-[120rem] mx-auto px-4">
           {loading ? (
             <div className="text-center py-20">
@@ -208,7 +208,9 @@ export default function SearchPage() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+              {/* 그리드 컨테이너에 중앙 정렬과 여백 추가 */}
+              <div className="bg-light-gray px-8 py-8 rounded-3xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-[100rem] mx-auto">
                 {filteredProducts.map((product) => (
                   <motion.div
                     key={product._id}
@@ -241,9 +243,6 @@ export default function SearchPage() {
                       <p className="text-secondary font-paragraph text-sm mb-1">
                         브랜드: {product.brandName}
                       </p>
-                      <p className="text-secondary font-paragraph text-sm mb-3">
-                        자재코드: {product.materialCode}
-                      </p>
                       <p className="text-2xl font-paragraph font-bold text-primary mb-4">
                         {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                       </p>
@@ -266,6 +265,7 @@ export default function SearchPage() {
                   </motion.div>
                 ))}
               </div>
+            </div>
             </>
           ) : (
             <div className="text-center py-20">
