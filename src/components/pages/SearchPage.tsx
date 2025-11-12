@@ -280,7 +280,6 @@ export default function SearchPage() {
           </div>
         </div>
       </header>
-
       <div className="flex">
         {/* 데스크톱 사이드바 */}
         <div className="hidden md:block">
@@ -317,7 +316,7 @@ export default function SearchPage() {
           <div className="sticky top-[73px] z-30 bg-white border-b border-gray-200 py-4">
             <div className="max-w-[120rem] mx-auto px-4">
               <div className="flex items-center gap-4 overflow-x-auto">
-                <span className="text-sm font-medium text-[#A0A0A0] whitespace-nowrap">카테고리:</span>
+
                 {Object.keys(brandStructure).map((category) => (
                   <button
                     key={category}
@@ -425,15 +424,15 @@ export default function SearchPage() {
                         {/* 제품 정보 */}
                         <div className="space-y-2">
                           {/* 소분류/브랜드 */}
+                          <h3 className="text-sm font-bold text-[#2E2E2E] line-clamp-2 leading-tight">
+                            {product.productName}
+                          </h3>
+                          
                           <p className="text-xs text-[#A0A0A0] font-normal">
                             {getCategoryDisplayName(product.category || '')} / {product.brandName}
                           </p>
                           
                           {/* 자재명 */}
-                          <h3 className="text-sm font-bold text-[#2E2E2E] line-clamp-2 leading-tight">
-                            {product.productName}
-                          </h3>
-                          
                           {/* 자재코드 */}
                           <p className="text-xs text-[#A0A0A0] font-normal">
                             {product.materialCode || 'N/A'}
