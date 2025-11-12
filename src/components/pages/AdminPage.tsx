@@ -19,7 +19,6 @@ interface ProductForm {
   brandName: string;
   specifications: string;
   price: string;
-  materialCode: string;
   category: string;
   productImage: string;
 }
@@ -54,7 +53,6 @@ export default function AdminPage() {
     brandName: '',
     specifications: '',
     price: '',
-    materialCode: '',
     category: '',
     productImage: ''
   });
@@ -142,7 +140,6 @@ export default function AdminPage() {
       brandName: '',
       specifications: '',
       price: '',
-      materialCode: '',
       category: '',
       productImage: ''
     });
@@ -187,7 +184,6 @@ export default function AdminPage() {
         brandName: formData.brandName,
         specifications: formData.specifications,
         price: formData.price ? parseFloat(formData.price) : undefined,
-        materialCode: formData.materialCode,
         category: formData.category,
         productImage: formData.productImage
       };
@@ -285,7 +281,6 @@ export default function AdminPage() {
       brandName: product.brandName || '',
       specifications: product.specifications || '',
       price: product.price?.toString() || '',
-      materialCode: product.materialCode || '',
       category: product.category || '',
       productImage: product.productImage || ''
     });
@@ -483,16 +478,6 @@ export default function AdminPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="materialCode">자재코드</Label>
-                        <Input
-                          id="materialCode"
-                          value={formData.materialCode}
-                          onChange={(e) => handleInputChange('materialCode', e.target.value)}
-                          placeholder="자재코드를 입력하세요"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
                         <Label htmlFor="price">가격 (원)</Label>
                         <Input
                           id="price"
@@ -601,17 +586,14 @@ export default function AdminPage() {
                             </div>
                             
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-primary truncate price-font">
+                              <h3 className="font-semibold text-primary truncate">
                                 {product.productName}
                               </h3>
                               <p className="text-sm text-gray-600">
                                 {product.brandName} • {getCategoryDisplayName(product.category || '')}
                               </p>
-                              <p className="text-sm text-gray-500">
-                                {product.materialCode}
-                              </p>
                               {product.price && (
-                                <p className="text-sm font-medium text-primary price-font">
+                                <p className="text-sm font-medium text-gray-900">
                                   {formatPrice(product.price)}원
                                 </p>
                               )}
