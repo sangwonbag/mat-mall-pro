@@ -79,7 +79,6 @@ export default function SearchPage() {
       filtered = filtered.filter(product =>
         product.productName?.toLowerCase().includes(term) ||
         product.brandName?.toLowerCase().includes(term) ||
-        product.materialCode?.toLowerCase().includes(term) ||
         product.specifications?.toLowerCase().includes(term)
       );
     }
@@ -307,7 +306,7 @@ export default function SearchPage() {
               <div className="relative mb-6 max-w-2xl mx-auto">
                 <Input
                   type="text"
-                  placeholder="제품명, 브랜드명, 자재코드로 검색하세요."
+                  placeholder="제품명, 브랜드명으로 검색하세요."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -384,7 +383,7 @@ export default function SearchPage() {
                         </div>
                         <div className="p-3 h-24 flex flex-col justify-between">
                           <div>
-                            <h3 className="text-sm font-semibold text-black mb-1 line-clamp-2 price-font">
+                            <h3 className="text-sm font-semibold text-black mb-1 line-clamp-2">
                               {product.productName}
                             </h3>
                             <p className="text-xs text-gray-600 mb-1">
@@ -403,7 +402,7 @@ export default function SearchPage() {
                             <Button
                               onClick={() => handleQuoteRequest(product)}
                               size="sm"
-                              className="flex-1 text-xs rounded bg-[#bfa365] hover:bg-black text-white"
+                              className="flex-1 text-xs rounded bg-black hover:bg-gray-800 text-white"
                             >
                               견적
                             </Button>

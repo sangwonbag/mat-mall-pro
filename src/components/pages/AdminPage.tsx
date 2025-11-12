@@ -33,6 +33,14 @@ interface CaseStudyForm {
   completionDate: string;
 }
 
+// 기본 규격 옵션들
+const DEFAULT_SPECIFICATIONS = [
+  '450*450*3',
+  '600*600*3',
+  '300*300*2',
+  '300*300*3'
+];
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -47,6 +55,11 @@ export default function AdminPage() {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [descImagePreview, setDescImagePreview] = useState<string>('');
   const [projectImagePreview, setProjectImagePreview] = useState<string>('');
+  
+  // 규격 관련 상태
+  const [customSpecifications, setCustomSpecifications] = useState<string[]>([]);
+  const [newSpecification, setNewSpecification] = useState<string>('');
+  const [showAddSpecification, setShowAddSpecification] = useState(false);
   
   const [formData, setFormData] = useState<ProductForm>({
     productName: '',
@@ -71,6 +84,33 @@ export default function AdminPage() {
   const getCategoryDisplayName = (categorySlug: string) => {
     if (categorySlug === 'deco-tile') return '데코타일';
     return categorySlug;
+  };
+
+  // 규격 추가 함수
+  const addCustomSpecification = () => {
+    if (newSpecification.trim() && !customSpecifications.includes(newSpecification.trim())) {
+      setCustomSpecifications(prev => [...prev, newSpecification.trim()]);
+      setNewSpecification('');
+      setShowAddSpecification(false);
+      toast({
+        title: "성공",
+        description: "새 규격이 추가되었습니다.",
+      });
+    }
+  };
+
+  // 규격 삭제 함수
+  const removeCustomSpecification = (spec: string) => {
+    setCustomSpecifications(prev => prev.filter(s => s !== spec));
+    toast({
+      title: "성공",
+      description: "규격이 삭제되었습니다.",
+    });
+  };
+
+  // 전체 규격 목록 가져오기 (기본 + 커스텀)
+  const getAllSpecifications = () => {
+    return [...DEFAULT_SPECIFICATIONS, ...customSpecifications];
   };
 
   useEffect(() => {
@@ -505,15 +545,89 @@ export default function AdminPage() {
                       </Select>
                     </div>
 
+                    {/* 규격 선택 섹션 */}
                     <div className="space-y-2">
-                      <Label htmlFor="specifications">제품 설명</Label>
-                      <Textarea
-                        id="specifications"
-                        value={formData.specifications}
-                        onChange={(e) => handleInputChange('specifications', e.target.value)}
-                        placeholder="제품 설명을 입력하세요"
-                        rows={4}
-                      />
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="specifications">규격 선택</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddSpecification(!showAddSpecification)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          규격 추가
+                        </Button>
+                      </div>
+                      
+                      <Select value={formData.specifications} onValueChange={(value) => handleInputChange('specifications', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="규격을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getAllSpecifications().map((spec) => (
+                            <SelectItem key={spec} value={spec}>
+                              {spec}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* 커스텀 규격 추가 폼 */}
+                      {showAddSpecification && (
+                        <div className="flex gap-2 p-3 bg-gray-50 rounded-lg">
+                          <Input
+                            placeholder="새 규격 입력 (예: 800*800*4)"
+                            value={newSpecification}
+                            onChange={(e) => setNewSpecification(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && addCustomSpecification()}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={addCustomSpecification}
+                          >
+                            추가
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setShowAddSpecification(false);
+                              setNewSpecification('');
+                            }}
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* 커스텀 규격 목록 */}
+                      {customSpecifications.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="text-sm text-gray-600">추가된 규격:</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {customSpecifications.map((spec) => (
+                              <div
+                                key={spec}
+                                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm"
+                              >
+                                <span>{spec}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0 hover:bg-blue-200"
+                                  onClick={() => removeCustomSpecification(spec)}
+                                >
+                                  ×
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-4">

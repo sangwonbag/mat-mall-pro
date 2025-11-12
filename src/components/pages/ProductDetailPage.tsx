@@ -166,8 +166,8 @@ export default function ProductDetailPage() {
                     />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 price-font">{product.productName}</h3>
-                    <p className="text-2xl font-bold text-[#1f6fff] price-font">
+                    <h3 className="font-bold text-gray-900">{product.productName}</h3>
+                    <p className="text-2xl font-bold text-black">
                       {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                     </p>
                   </div>
@@ -281,7 +281,7 @@ export default function ProductDetailPage() {
             {/* Right Info Section - 55% (720px) */}
             <div className="lg:col-span-7">
               {/* Product Name */}
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 price-font">
+              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
                 {product?.productName}
               </h1>
 
@@ -298,10 +298,6 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-gray-600 w-20 text-sm">코드</span>
-                  <span className="font-semibold text-gray-900">{product?.materialCode}</span>
-                </div>
-                <div className="flex items-center">
                   <span className="text-gray-600 w-20 text-sm">규격</span>
                   <span className="font-semibold text-gray-900">{product?.specifications}</span>
                 </div>
@@ -309,7 +305,7 @@ export default function ProductDetailPage() {
 
               {/* Price */}
               <div className="mb-6">
-                <p className="text-4xl font-bold text-[#1f6fff] price-font">
+                <p className="text-4xl font-bold text-black">
                   {product?.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                   <span className="text-lg text-gray-600 ml-2">/ 개</span>
                 </p>
@@ -399,7 +395,7 @@ export default function ProductDetailPage() {
                     </div>
                     <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
                       <span>예상 총액</span>
-                      <span className="text-[#1f6fff] price-font">{formatPrice(calculateEstimate())}원</span>
+                      <span className="text-black">{formatPrice(calculateEstimate())}원</span>
                     </div>
                   </div>
                 </div>
@@ -574,11 +570,11 @@ export default function ProductDetailPage() {
                     />
                   </div>
                   <div className="p-3">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 price-font">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
                       {relatedProduct.productName}
                     </h3>
                     <p className="text-xs text-gray-600 mb-2">{relatedProduct.brandName}</p>
-                    <p className="text-sm font-bold text-[#1f6fff] price-font">
+                    <p className="text-sm font-bold text-black">
                       {relatedProduct.price ? `${formatPrice(relatedProduct.price)}원` : '가격 문의'}
                     </p>
                   </div>
