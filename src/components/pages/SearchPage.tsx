@@ -208,9 +208,9 @@ export default function SearchPage() {
                 </h2>
               </div>
 
-              {/* 그리드 컨테이너에 중앙 정렬과 여백 추가 */}
-              <div className="bg-light-gray px-8 py-8 rounded-3xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-[100rem] mx-auto">
+              {/* 그리드 컨테이너에 중앙 정렬과 더 큰 여백 추가 */}
+              <div className="bg-light-gray px-16 py-12 rounded-3xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-[90rem] mx-auto">
                 {filteredProducts.map((product) => (
                   <motion.div
                     key={product._id}
@@ -232,31 +232,31 @@ export default function SearchPage() {
                           src={product.productImage || 'https://static.wixstatic.com/media/9f8727_d3600c65e02d403caed35c117b5d44fc~mv2.png?originWidth=384&originHeight=384'}
                           alt={product.productName || '제품 이미지'}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                          width={400}
+                          width={450}
                         />
                       )}
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-paragraph font-semibold text-primary mb-2">
+                    <div className="p-8">
+                      <h3 className="text-2xl font-paragraph font-semibold text-primary mb-3">
                         {product.productName}
                       </h3>
-                      <p className="text-secondary font-paragraph text-sm mb-1">
+                      <p className="text-secondary font-paragraph text-base mb-2">
                         브랜드: {product.brandName}
                       </p>
-                      <p className="text-2xl font-paragraph font-bold text-primary mb-4">
+                      <p className="text-3xl font-paragraph font-bold text-primary mb-6">
                         {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <Button
                           onClick={() => navigate(`/product/${product._id}`)}
                           variant="outline"
-                          className="flex-1 rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                          className="flex-1 rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white h-12 text-base"
                         >
                           상세보기
                         </Button>
                         <Button
                           onClick={() => handleQuoteRequest(product)}
-                          className="flex-1 rounded-full bg-gold-accent hover:bg-primary"
+                          className="flex-1 rounded-full bg-gold-accent hover:bg-primary h-12 text-base"
                         >
                           견적요청
                         </Button>
