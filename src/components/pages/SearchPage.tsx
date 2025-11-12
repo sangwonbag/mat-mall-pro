@@ -20,8 +20,17 @@ const brandStructure = {
 
 // 카테고리 표시명 매핑
 const getCategoryDisplayName = (categorySlug: string) => {
-  if (categorySlug === 'deco-tile') return '데코타일';
-  return categorySlug;
+  const categoryMap: { [key: string]: string } = {
+    'deco-tile': '데코타일',
+    'flooring': '장판',
+    'wood-flooring': '마루',
+    'wallpaper': '벽지',
+    'vinyl': '장판',
+    'laminate': '마루',
+    'tile': '타일'
+  };
+  
+  return categoryMap[categorySlug] || categorySlug;
 };
 
 export default function SearchPage() {
