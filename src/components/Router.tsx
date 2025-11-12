@@ -6,6 +6,7 @@ import HomePage from '@/components/pages/HomePage';
 import SearchPage from '@/components/pages/SearchPage';
 import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import QuotePage from '@/components/pages/QuotePage';
+import AdminPage from '@/components/pages/AdminPage';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
       {
         path: "quote",
         element: <QuotePage />,
+      },
+      {
+        path: "admin",
+        element: <AdminPage />,
       },
       {
         path: "*",

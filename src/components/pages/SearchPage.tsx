@@ -117,6 +117,7 @@ export default function SearchPage() {
               <Link to="/" className="text-foreground hover:text-primary transition-colors">홈</Link>
               <Link to="/search" className="text-primary font-semibold">제품검색</Link>
               <Link to="/quote" className="text-foreground hover:text-primary transition-colors">견적요청</Link>
+              <Link to="/admin" className="text-foreground hover:text-primary transition-colors">관리자</Link>
             </nav>
           </div>
         </div>
