@@ -251,7 +251,7 @@ export default function QuotePage() {
                         width={80}
                       />
                       <div className="flex-1">
-                        <h3 className="font-paragraph font-semibold text-lg">{formData.selectedProduct?.productName}</h3>
+                        <h3 className="font-paragraph font-semibold text-lg price-font">{formData.selectedProduct?.productName}</h3>
                         <p className="text-secondary font-paragraph">자재코드: {formData.selectedProduct?.materialCode}</p>
                         <p className="text-secondary font-paragraph">수량: {formData.selectedProduct?.quantity}개</p>
                         <p className="text-secondary font-paragraph">시공 면적: {formData.area}평</p>

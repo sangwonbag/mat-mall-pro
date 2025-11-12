@@ -44,6 +44,12 @@ export default function AdminPage() {
     productImage: ''
   });
 
+  // 카테고리 표시명 매핑 함수
+  const getCategoryDisplayName = (categorySlug: string) => {
+    if (categorySlug === 'deco-tile') return '데코타일';
+    return categorySlug;
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -346,7 +352,7 @@ export default function AdminPage() {
                     <SelectContent>
                       {categories.map((category) => (
                         <SelectItem key={category._id} value={category.categorySlug || ''}>
-                          {category.categorySlug === 'deco-tile' ? '데코타일' : category.categoryName}
+                          {getCategoryDisplayName(category.categorySlug || '')}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -434,11 +440,11 @@ export default function AdminPage() {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-primary truncate">
+                          <h3 className="font-semibold text-primary truncate price-font">
                             {product.productName}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {product.brandName} • {product.category}
+                            {product.brandName} • {getCategoryDisplayName(product.category || '')}
                           </p>
                           <p className="text-sm text-gray-500">
                             {product.materialCode}

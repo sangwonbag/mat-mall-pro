@@ -147,7 +147,7 @@ export default function ProductDetailPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="flex flex-col justify-center"
             >
-              <h1 className="text-4xl font-heading font-bold text-primary mb-4">
+              <h1 className="text-4xl font-heading font-bold text-primary mb-4 price-font">
                 {product.productName}
               </h1>
 
@@ -176,7 +176,7 @@ export default function ProductDetailPage() {
                 <div className="flex items-center">
                   <span className="text-secondary font-paragraph w-24">카테고리:</span>
                   <span className="font-paragraph text-foreground">
-                    {product.category}
+                    {product.category === 'deco-tile' ? '데코타일' : product.category}
                   </span>
                 </div>
               </div>

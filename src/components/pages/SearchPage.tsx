@@ -18,6 +18,12 @@ const brandStructure = {
   '벽지': ['LX', '개나리', '서울', '제일', '디아이디', '신한(KCC)']
 };
 
+// 카테고리 표시명 매핑
+const getCategoryDisplayName = (categorySlug: string) => {
+  if (categorySlug === 'deco-tile') return '데코타일';
+  return categorySlug;
+};
+
 export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -80,7 +86,9 @@ export default function SearchPage() {
 
     // Filter by category
     if (selectedCategory && selectedCategory !== '전체') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      // 데코타일 선택 시 deco-tile 카테고리와 매칭
+      const categoryToMatch = selectedCategory === '데코타일' ? 'deco-tile' : selectedCategory;
+      filtered = filtered.filter(product => product.category === categoryToMatch);
     }
 
     // Filter by brand
@@ -318,7 +326,7 @@ export default function SearchPage() {
                 <div className="flex items-center justify-center gap-4 mb-6">
                   {selectedCategory && (
                     <div className="bg-[#bfa365] text-white px-4 py-2 rounded-full text-sm">
-                      카테고리: {selectedCategory}
+                      카테고리: {getCategoryDisplayName(selectedCategory)}
                     </div>
                   )}
                   {selectedBrand && (
@@ -376,7 +384,7 @@ export default function SearchPage() {
                         </div>
                         <div className="p-3 h-24 flex flex-col justify-between">
                           <div>
-                            <h3 className="text-sm font-semibold text-black mb-1 line-clamp-2">
+                            <h3 className="text-sm font-semibold text-black mb-1 line-clamp-2 price-font">
                               {product.productName}
                             </h3>
                             <p className="text-xs text-gray-600 mb-1">
