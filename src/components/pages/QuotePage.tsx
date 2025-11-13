@@ -632,18 +632,15 @@ export default function QuotePage() {
                 시공·자재 전문<br />
                 B2C/B2B/현장 납품
               </p>
-              <p className="font-paragraph text-gray-300 text-sm">
-                사업자등록번호: 890-88-02243
-              </p>
             </div>
             <div>
               <h4 className="text-lg font-paragraph font-semibold mb-4">주요 서비스</h4>
               <ul className="space-y-2 font-paragraph text-gray-300 text-sm">
-                <li>자재 판매 (KCC/LX/동신/재영/녹수/우성/현대 등)</li>
                 <li>시공 견적</li>
-                <li>업자 전용 자동 견적</li>
                 <li>시공사례</li>
                 <li>빠른 상담/방문 견적</li>
+                <li><Link to="/search" className="hover:text-white transition-colors">제품검색</Link></li>
+                <li><Link to="/quote" className="hover:text-white transition-colors">견적요청</Link></li>
               </ul>
             </div>
             <div>
@@ -663,10 +660,7 @@ export default function QuotePage() {
               <h4 className="text-lg font-paragraph font-semibold mb-4">회사 정보</h4>
               <div className="font-paragraph text-gray-300 text-sm space-y-1">
                 <p>주소: 경기 하남시 서하남로 37</p>
-                <div className="mt-4">
-                  <Link to="/search" className="hover:text-white transition-colors block mb-2">제품검색</Link>
-                  <Link to="/quote" className="hover:text-white transition-colors block">견적요청</Link>
-                </div>
+                <p>사업자등록번호: 890-88-02243</p>
               </div>
             </div>
           </div>
