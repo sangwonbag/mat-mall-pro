@@ -267,18 +267,18 @@ export default function ProductDetailPage() {
               <div className="space-y-3">
                 <div className="flex space-x-3">
                   <Button
-                    onClick={handleQuoteRequest}
-                    className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    즉시 견적요청
-                  </Button>
-                  <Button
                     onClick={handlePhoneOrder}
                     className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     <Phone className="h-4 w-4 mr-2" />
                     전화주문
+                  </Button>
+                  <Button
+                    onClick={handleQuoteRequest}
+                    className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    즉시 견적요청
                   </Button>
                 </div>
               </div>
