@@ -8,6 +8,7 @@ import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/ui/header';
+import ChatSupport from '@/components/ui/chat-support';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -343,6 +344,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* 채팅상담 컴포넌트 */}
+      <ChatSupport />
     </div>
   );
 }

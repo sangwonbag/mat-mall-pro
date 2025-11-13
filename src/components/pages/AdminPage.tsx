@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/ui/header';
+import ChatSupport from '@/components/ui/chat-support';
 
 interface ProductForm {
   productName: string;
@@ -1083,6 +1084,9 @@ export default function AdminPage() {
           </div>
         </div>
       </footer>
+
+      {/* 채팅상담 컴포넌트 */}
+      <ChatSupport />
     </div>
   );
 }
