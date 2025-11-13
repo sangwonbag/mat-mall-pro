@@ -201,29 +201,34 @@ export default function HomePage() {
 
               {/* 제품 그리드 - PC 5열, 태블릿 2열, 모바일 2열 */}
               <div className="flex justify-center">
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-4 max-w-7xl">
                   {categoryProducts.slice(0, 5).map((product) => (
                     <motion.div
                       key={product._id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6 }}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 hover:border-gray-300"
                     >
-                      <div className="aspect-[4/3] relative">
+                      <div className="aspect-square relative bg-gray-50">
                         <Image
                           src={product.productImage || '/placeholder-product.jpg'}
                           alt={product.productName || ''}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="p-6">
-                        <h3 className="text-lg font-paragraph font-semibold text-primary mb-2">
+                      <div className="p-3">
+                        <h3 className="text-sm font-paragraph font-medium text-gray-900 mb-1 line-clamp-2">
                           {product.productName}
                         </h3>
-                        <p className="text-sm font-paragraph text-secondary mb-3">
+                        <p className="text-xs font-paragraph text-gray-500">
                           {product.brandName}
                         </p>
+                        {product.materialCode && (
+                          <p className="text-xs font-paragraph text-gray-400 mt-1">
+                            {product.materialCode}
+                          </p>
+                        )}
                       </div>
                     </motion.div>
                   ))}

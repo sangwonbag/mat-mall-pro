@@ -401,57 +401,62 @@ export default function SearchPage() {
                     </h2>
                   </div>
 
-                  {/* 제품 그리드 - LX Z:IN 스타일 (PC 6열, 태블릿 3열, 모바일 2열) */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-8">
+                  {/* 제품 그리드 - 첨부 이미지 스타일 적용 (PC 6열, 태블릿 3열, 모바일 2열) */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                     {filteredProducts.map((product) => (
                       <motion.div
                         key={product._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white group cursor-pointer"
+                        className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 hover:border-gray-300 cursor-pointer"
                         onClick={() => navigate(`/product/${product._id}`)}
                       >
-                        {/* 제품 이미지 - 240x240px 정사각형 */}
-                        <div className="w-full aspect-square border border-gray-200 rounded-lg overflow-hidden mb-6">
+                        {/* 제품 이미지 - 정사각형 */}
+                        <div className="w-full aspect-square bg-gray-50 relative">
                           <Image
                             src={product.productImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=192&originHeight=192'}
                             alt={product.productName || '제품 이미지'}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover"
                             width={240}
                           />
                         </div>
                         
                         {/* 제품 정보 */}
-                        <div className="space-y-2">
-                          {/* 소분류/브랜드 */}
-                          <h3 className="text-sm font-bold text-[#2E2E2E] line-clamp-2 leading-tight">
+                        <div className="p-3">
+                          {/* 제품명 */}
+                          <h3 className="text-sm font-paragraph font-medium text-gray-900 mb-1 line-clamp-2">
                             {product.productName}
                           </h3>
                           
-                          <p className="text-xs text-[#A0A0A0] font-normal">
-                            {getCategoryDisplayName(product.category || '')} / {product.brandName}
+                          {/* 브랜드 */}
+                          <p className="text-xs font-paragraph text-gray-500">
+                            {product.brandName}
                           </p>
                           
-                          {/* 자재명 */}
                           {/* 자재코드 */}
-                          <p className="text-xs text-[#A0A0A0] font-normal">
-                            {product.materialCode || 'N/A'}
-                          </p>
+                          {product.materialCode && (
+                            <p className="text-xs font-paragraph text-gray-400 mt-1">
+                              {product.materialCode}
+                            </p>
+                          )}
                           
                           {/* 가격 */}
-                          <p className="text-base font-semibold text-[#3C3C3C] mt-1 hover:text-[#BFA365] transition-colors duration-200" style={{ fontSize: '16px', fontWeight: 600 }}>
-                            ₩{product.price?.toLocaleString() || '0'}원
-                          </p>
+                          {product.price && (
+                            <p className="text-sm font-paragraph font-semibold text-gray-900 mt-2">
+                              ₩{product.price.toLocaleString()}원
+                            </p>
+                          )}
                           
                           {/* 버튼들 */}
-                          <div className="flex gap-2" style={{ marginTop: '16px' }}>
+                          <div className="flex gap-2 mt-3">
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // 비교하기 기능 (향후 구현)
                                 console.log('비교하기:', product.productName);
                               }}
-                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 h-7 text-xs rounded border-gray-300 text-gray-600 hover:bg-gray-50"
                             >
                               <GitCompare className="h-3 w-3 mr-1" />
                               비교하기
@@ -461,7 +466,9 @@ export default function SearchPage() {
                                 e.stopPropagation();
                                 handleQuoteRequest(product);
                               }}
-                              className="flex-1 h-8 text-xs rounded-[10px] bg-[#EAE3D8] text-[#7A6652] hover:bg-[#7A6652] hover:text-[#EAE3D8] transition-colors duration-200 font-medium"
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 h-7 text-xs rounded border-gray-300 text-gray-600 hover:bg-gray-50"
                             >
                               <FileText className="h-3 w-3 mr-1" />
                               견적요청
