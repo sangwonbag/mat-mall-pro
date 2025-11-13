@@ -88,7 +88,7 @@ export default function ChatSupport() {
     <>
       {/* 채팅 버튼 - 고정 위치 */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-24 right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -117,8 +117,8 @@ export default function ChatSupport() {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={`fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 ${
               isMinimized 
-                ? 'bottom-6 right-6 w-80 h-16' 
-                : 'bottom-6 right-6 w-80 sm:w-96 h-[500px]'
+                ? 'bottom-24 right-6 w-80 h-16' 
+                : 'bottom-24 right-6 w-80 sm:w-96 h-[500px]'
             }`}
           >
             {/* 헤더 */}
