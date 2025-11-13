@@ -4,6 +4,73 @@
  */
 
 /**
+ * Collection ID: adminusers
+ * Interface for AdminUsers
+ */
+export interface AdminUsers {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType text */
+  passwordHash?: string;
+  /** @wixFieldType text */
+  displayName?: string;
+  /** @wixFieldType text */
+  role?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType datetime */
+  lastLoginDate?: Date | string;
+}
+
+
+/**
+ * Collection ID: chatconsultations
+ * Interface for ChatConsultations
+ */
+export interface ChatConsultations {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  visitorName?: string;
+  /** @wixFieldType text */
+  visitorContact?: string;
+  /** @wixFieldType text */
+  initialInquiry?: string;
+  /** @wixFieldType text */
+  status?: string;
+  /** @wixFieldType text */
+  sessionId?: string;
+  /** @wixFieldType datetime */
+  startTime?: Date | string;
+}
+
+
+/**
+ * Collection ID: chatmessages
+ * Interface for ChatMessages
+ */
+export interface ChatMessages {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  consultationSessionId?: string;
+  /** @wixFieldType text */
+  senderType?: string;
+  /** @wixFieldType text */
+  messageContent?: string;
+  /** @wixFieldType datetime */
+  sentAt?: Date | string;
+  /** @wixFieldType boolean */
+  isRead?: boolean;
+}
+
+
+/**
  * Collection ID: constructioncasestudies
  * Interface for ConstructionCaseStudies
  */
@@ -92,4 +159,71 @@ export interface Products {
   materialCode?: string;
   /** @wixFieldType text */
   category?: string;
+}
+
+
+/**
+ * Collection ID: chatconsultations
+ * Interface for ChatConsultations
+ */
+export interface ChatConsultations {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  visitorName?: string;
+  /** @wixFieldType text */
+  visitorContact?: string;
+  /** @wixFieldType text */
+  initialInquiry?: string;
+  /** @wixFieldType text */
+  status?: string;
+  /** @wixFieldType text */
+  sessionId?: string;
+  /** @wixFieldType datetime */
+  startTime?: Date | string;
+}
+
+
+/**
+ * Collection ID: chatmessages
+ * Interface for ChatMessages
+ */
+export interface ChatMessages {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  consultationSessionId?: string;
+  /** @wixFieldType text */
+  senderType?: string;
+  /** @wixFieldType text */
+  messageContent?: string;
+  /** @wixFieldType datetime */
+  sentAt?: Date | string;
+  /** @wixFieldType boolean */
+  isRead?: boolean;
+}
+
+
+/**
+ * Collection ID: adminusers
+ * Interface for AdminUsers
+ */
+export interface AdminUsers {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType text */
+  passwordHash?: string;
+  /** @wixFieldType text */
+  displayName?: string;
+  /** @wixFieldType text */
+  role?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType datetime */
+  lastLoginDate?: Date | string;
 }

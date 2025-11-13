@@ -8,7 +8,7 @@ import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/ui/header';
-import ChatSupport from '@/components/ui/chat-support';
+import { ChatWidget } from '@/components/ui/chat-widget';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -289,7 +289,7 @@ export default function HomePage() {
       })}
 
       {/* Fixed Quote Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-6 left-6 z-40">
         <Button
           onClick={() => navigate('/quote')}
           className="px-6 py-4 rounded-full bg-gold-accent hover:bg-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-paragraph font-semibold"
@@ -345,8 +345,8 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* 채팅상담 컴포넌트 */}
-      <ChatSupport />
+      {/* 채팅상담 위젯 */}
+      <ChatWidget />
     </div>
   );
 }
