@@ -210,7 +210,7 @@ export default function HomePage() {
                       transition={{ duration: 0.6 }}
                       className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
                     >
-                      <div className="aspect-square relative">
+                      <div className="aspect-[4/3] relative">
                         <Image
                           src={product.productImage || '/placeholder-product.jpg'}
                           alt={product.productName || ''}
