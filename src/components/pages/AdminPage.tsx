@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/ui/header';
 
 interface ProductForm {
   productName: string;
@@ -413,24 +414,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-[120rem] mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-heading font-bold text-primary">
-              동경바닥재 관리자
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-foreground hover:text-primary transition-colors">
-                <Home className="h-4 w-4 inline mr-2" />
-                홈으로
-              </Link>
-              <Link to="/search" className="text-foreground hover:text-primary transition-colors">제품검색</Link>
-              <Link to="/quote" className="text-foreground hover:text-primary transition-colors">견적요청</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <div className="max-w-[120rem] mx-auto px-4 py-8">
         <Tabs defaultValue="products" className="w-full">

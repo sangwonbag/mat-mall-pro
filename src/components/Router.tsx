@@ -7,6 +7,8 @@ import SearchPage from '@/components/pages/SearchPage';
 import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import QuotePage from '@/components/pages/QuotePage';
 import AdminPage from '@/components/pages/AdminPage';
+import ProfilePage from '@/components/pages/ProfilePage';
+import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -43,6 +45,14 @@ const router = createBrowserRouter([
       {
         path: "admin",
         element: <AdminPage />,
+      },
+      {
+        path: "profile",
+        element: (
+          <MemberProtectedRoute>
+            <ProfilePage />
+          </MemberProtectedRoute>
+        ),
       },
       {
         path: "*",

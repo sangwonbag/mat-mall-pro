@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Header from '@/components/ui/header';
 
 interface QuoteFormData {
   selectedProduct?: Products & { quantity?: number };
@@ -185,22 +186,8 @@ export default function QuotePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-[120rem] mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-heading font-bold text-primary">
-              동경바닥재
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-foreground hover:text-primary transition-colors">홈</Link>
-              <Link to="/search" className="text-foreground hover:text-primary transition-colors">제품검색</Link>
-              <Link to="/quote" className="text-primary font-semibold">견적요청</Link>
-              <Link to="/admin" className="text-foreground hover:text-primary transition-colors">관리자</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
+      
       {/* Breadcrumb */}
       <div className="bg-light-gray py-4">
         <div className="max-w-[120rem] mx-auto px-4">

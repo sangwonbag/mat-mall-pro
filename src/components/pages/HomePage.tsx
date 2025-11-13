@@ -7,6 +7,7 @@ import { Products, ProductCategories, PopularSearches } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Header from '@/components/ui/header';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -92,22 +93,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-[120rem] mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-heading font-bold text-primary">
-              동경바닥재
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-foreground hover:text-primary transition-colors">홈</Link>
-              <Link to="/search" className="text-foreground hover:text-primary transition-colors">제품검색</Link>
-              <Link to="/quote" className="text-foreground hover:text-primary transition-colors">견적요청</Link>
-              <Link to="/admin" className="text-foreground hover:text-primary transition-colors">관리자</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="h-screen flex items-center justify-center relative overflow-hidden">

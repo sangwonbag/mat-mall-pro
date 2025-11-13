@@ -8,6 +8,7 @@ import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Header from '@/components/ui/header';
 
 // 브랜드 사이드바 구조 정의
 const brandStructure = {
@@ -252,34 +253,8 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-white font-['Pretendard']">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-[120rem] mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold text-[#2E2E2E]">
-              동경바닥재
-            </Link>
-            <div className="flex items-center space-x-4">
-              {/* 모바일 햄버거 메뉴 */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSidebarOpen(true)}
-                className="md:hidden p-2 hover:bg-gray-100"
-              >
-                <Menu className="h-5 w-5 text-[#2E2E2E]" />
-              </Button>
-              
-              <nav className="hidden md:flex space-x-8">
-                <Link to="/" className="text-[#2E2E2E] hover:text-[#B89C7D] transition-colors">홈</Link>
-                <Link to="/search" className="text-[#B89C7D] font-semibold">제품검색</Link>
-                <Link to="/quote" className="text-[#2E2E2E] hover:text-[#B89C7D] transition-colors">견적요청</Link>
-                <Link to="/admin" className="text-[#2E2E2E] hover:text-[#B89C7D] transition-colors">관리자</Link>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header showSearch={true} onSearchChange={setSearchTerm} searchValue={searchTerm} />
+      
       <div className="flex">
         {/* 데스크톱 사이드바 */}
         <div className="hidden md:block">
@@ -304,11 +279,33 @@ export default function SearchPage() {
                 className="w-80 h-full bg-white shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold">카테고리</h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsSidebarOpen(false)}
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
                 <BrandSidebar isMobile={true} />
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* 모바일 햄버거 메뉴 버튼 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsSidebarOpen(true)}
+          className="md:hidden fixed top-20 left-4 z-40 bg-white shadow-md"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
         {/* 메인 콘텐츠 */}
         <div className="flex-1 min-h-screen">

@@ -6,6 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import { Products, ConstructionCaseStudies } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
+import Header from '@/components/ui/header';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -177,22 +178,7 @@ export default function ProductDetailPage() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-[1360px] mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold text-black">
-              동경바닥재
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-gray-700 hover:text-black transition-colors">홈</Link>
-              <Link to="/search" className="text-gray-700 hover:text-black transition-colors">제품검색</Link>
-              <Link to="/quote" className="text-gray-700 hover:text-black transition-colors">견적요청</Link>
-              <Link to="/admin" className="text-gray-700 hover:text-black transition-colors">관리자</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Breadcrumb */}
       <div className="bg-gray-50 py-3">
