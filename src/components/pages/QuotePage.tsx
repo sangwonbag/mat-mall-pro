@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -31,8 +31,10 @@ export default function QuotePage() {
   const [products, setProducts] = useState<Products[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [showProductList, setShowProductList] = useState(false);
   const [showQuotePreview, setShowQuotePreview] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<QuoteFormData>({
     selectedProduct: location.state?.selectedProduct,
@@ -53,6 +55,20 @@ export default function QuotePage() {
   useEffect(() => {
     filterProducts();
   }, [products, productSearchTerm]);
+
+  // 외부 클릭 시 자재 리스트 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowProductList(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const loadProducts = async () => {
     try {
@@ -99,14 +115,13 @@ export default function QuotePage() {
     return total;
   };
 
-  const handleProductSelect = (productId: string) => {
-    const product = filteredProducts.find(p => p._id === productId);
-    if (product) {
-      setFormData(prev => ({
-        ...prev,
-        selectedProduct: { ...product, quantity: 1 }
-      }));
-    }
+  const handleProductSelect = (product: Products) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedProduct: { ...product, quantity: 1 }
+    }));
+    setShowProductList(false);
+    setProductSearchTerm('');
   };
 
   const handleQuantityChange = (change: number) => {
@@ -441,7 +456,11 @@ export default function QuotePage() {
                         
                         <Button
                           type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, selectedProduct: undefined }))}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, selectedProduct: undefined }));
+                            setShowProductList(false);
+                            setProductSearchTerm('');
+                          }}
                           variant="outline"
                           className="w-full mt-4 rounded-full"
                         >
@@ -450,38 +469,72 @@ export default function QuotePage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {/* 자재 검색창 */}
-                        <div className="relative">
-                          <Input
-                            type="text"
-                            placeholder="제품명, 브랜드명으로 검색하세요."
-                            value={productSearchTerm}
-                            onChange={(e) => setProductSearchTerm(e.target.value)}
-                            className="w-full pl-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#B89C7D]"
-                          />
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <Search className="h-4 w-4 text-gray-400" />
-                          </div>
+                        {/* 자재 선택 안내 문구 */}
+                        <div className="text-center">
+                          <h3 className="font-paragraph font-semibold text-lg mb-4">시공할 자재를 선택해주세요</h3>
                         </div>
 
-                        {/* 자재 선택 드롭다운 */}
-                        <Select onValueChange={handleProductSelect}>
-                          <SelectTrigger className="rounded-full">
-                            <SelectValue placeholder="시공할 자재를 선택해주세요" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-60">
-                            {filteredProducts.map((product) => (
-                              <SelectItem key={product._id} value={product._id}>
-                                {product.productName} - {product.brandName}
-                              </SelectItem>
-                            ))}
-                            {filteredProducts.length === 0 && (
-                              <div className="p-4 text-center text-gray-500">
-                                검색 결과가 없습니다.
-                              </div>
-                            )}
-                          </SelectContent>
-                        </Select>
+                        {/* 통합된 검색창과 자재 리스트 */}
+                        <div className="relative" ref={searchRef}>
+                          <div className="relative">
+                            <Input
+                              type="text"
+                              placeholder="제품명, 브랜드명으로 검색하거나 아래 목록에서 선택하세요"
+                              value={productSearchTerm}
+                              onChange={(e) => setProductSearchTerm(e.target.value)}
+                              onFocus={() => setShowProductList(true)}
+                              className="w-full pl-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#B89C7D]"
+                            />
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <Search className="h-4 w-4 text-gray-400" />
+                            </div>
+                          </div>
+
+                          {/* 자재 리스트 (검색창 아래에 항상 표시되거나 포커스 시 표시) */}
+                          {(showProductList || productSearchTerm.length > 0) && (
+                            <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {filteredProducts.length > 0 ? (
+                                filteredProducts.map((product) => (
+                                  <div
+                                    key={product._id}
+                                    onClick={() => handleProductSelect(product)}
+                                    className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-3"
+                                  >
+                                    <Image
+                                      src={product.productImage || 'https://static.wixstatic.com/media/9f8727_16e4d2bcda3c4a98a10f7f3b0bf463f3~mv2.png?originWidth=128&originHeight=128'}
+                                      alt={product.productName || ''}
+                                      className="w-12 h-12 object-cover rounded-lg"
+                                      width={48}
+                                    />
+                                    <div className="flex-1">
+                                      <h4 className="font-paragraph font-semibold text-sm">{product.productName}</h4>
+                                      <p className="text-secondary font-paragraph text-xs">{product.brandName}</p>
+                                      <p className="text-primary font-paragraph font-bold text-sm">
+                                        {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="p-4 text-center text-gray-500">
+                                  {productSearchTerm ? '검색 결과가 없습니다.' : '자재를 불러오는 중...'}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 전체 자재 보기 버튼 */}
+                        {!showProductList && productSearchTerm.length === 0 && (
+                          <Button
+                            type="button"
+                            onClick={() => setShowProductList(true)}
+                            variant="outline"
+                            className="w-full rounded-full"
+                          >
+                            전체 자재 목록 보기
+                          </Button>
+                        )}
                       </div>
                     )}
 
