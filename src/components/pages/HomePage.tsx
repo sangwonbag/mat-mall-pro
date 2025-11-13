@@ -16,10 +16,31 @@ export default function HomePage() {
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [popularSearches, setPopularSearches] = useState<PopularSearches[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<{ [key: string]: Products[] }>({});
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // 배경 이미지 배열
+  const backgroundImages = [
+    'https://static.wixstatic.com/media/9f8727_a7bcf937f60e4dfe856f4e685bd281aa~mv2.png',
+    'https://static.wixstatic.com/media/9f8727_9de575de39fb4329b67b5faaee5bbbbd~mv2.jpg',
+    'https://static.wixstatic.com/media/9f8727_bbff3323d5db4487adb1e3150c41cec9~mv2.jpg',
+    'https://static.wixstatic.com/media/9f8727_d7ceb309ffd2485d9eec5a99b52e6ff1~mv2.jpg',
+    'https://static.wixstatic.com/media/9f8727_9c7b97367d92428a8923d556a245c928~mv2.jpg'
+  ];
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // 배경 이미지 자동 전환 효과
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        (prevIndex + 1) % backgroundImages.length
+      );
+    }, 4000); // 4초마다 이미지 전환
+
+    return () => clearInterval(interval);
+  }, [backgroundImages.length]);
 
   const loadData = async () => {
     try {
@@ -90,17 +111,44 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="h-screen flex items-center justify-center bg-light-gray relative">
-        <div className="text-center max-w-4xl mx-auto px-4">
+      <section className="h-screen flex items-center justify-center relative overflow-hidden">
+        {/* 배경 이미지 슬라이더 */}
+        <div className="absolute inset-0">
+          {backgroundImages.map((image, index) => (
+            <motion.div
+              key={index}
+              className="absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ 
+                opacity: index === currentImageIndex ? 1 : 0,
+                scale: index === currentImageIndex ? 1.05 : 1
+              }}
+              transition={{ 
+                duration: 1.5,
+                ease: "easeInOut"
+              }}
+            >
+              <Image
+                src={image}
+                alt={`바닥재 시공 사례 ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+              {/* 오버레이 */}
+              <div className="absolute inset-0 bg-black/40"></div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* 콘텐츠 */}
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-5xl md:text-6xl font-heading font-bold text-primary mb-8"
+            className="text-5xl md:text-6xl font-heading font-bold text-white mb-8 drop-shadow-lg"
           >
             프리미엄 바닥재를 찾아보세요
           </motion.h1>
-          
           {/* Search Bar */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -116,7 +164,7 @@ export default function HomePage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setShowDropdown(true)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch(searchTerm)}
-                className="w-full h-16 pl-6 pr-20 text-lg rounded-full border-2 border-gray-200 focus:border-primary shadow-lg"
+                className="w-full h-16 pl-6 pr-20 text-lg rounded-full border-2 border-white/30 bg-white/90 backdrop-blur-sm focus:border-white focus:bg-white shadow-lg"
               />
               <Button
                 onClick={() => handleSearch(searchTerm)}
@@ -126,7 +174,7 @@ export default function HomePage() {
               </Button>
               <Button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="absolute right-16 top-2 h-12 w-12 rounded-full bg-transparent hover:bg-light-gray text-foreground"
+                className="absolute right-16 top-2 h-12 w-12 rounded-full bg-transparent hover:bg-white/20 text-foreground"
               >
                 <ChevronDown className="h-5 w-5" />
               </Button>
@@ -137,7 +185,7 @@ export default function HomePage() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border z-50"
+                className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border z-50"
               >
                 <div className="p-4">
                   <h3 className="text-sm font-paragraph font-medium text-secondary mb-3">인기 검색어</h3>
@@ -170,7 +218,7 @@ export default function HomePage() {
               <Button
                 key={category._id}
                 onClick={() => scrollToCategory(category.categorySlug || '')}
-                className="px-8 py-3 rounded-full bg-white text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all duration-300"
+                className="px-8 py-3 rounded-full bg-white/90 backdrop-blur-sm text-primary border-2 border-white/30 hover:bg-white hover:border-white transition-all duration-300"
               >
                 {category.categoryName}
               </Button>
