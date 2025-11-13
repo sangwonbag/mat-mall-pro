@@ -92,7 +92,19 @@ export default function AdminPage() {
       'tile': '타일'
     };
     
-    return categoryMap[categorySlug] || categorySlug;
+    // 영어로 된 카테고리는 모두 '마루'로 표시
+    const mappedName = categoryMap[categorySlug];
+    if (mappedName) {
+      return mappedName;
+    }
+    
+    // 영어 패턴 감지 (알파벳, 하이픈, 언더스코어 포함)
+    const isEnglish = /^[a-zA-Z\-_\s]+$/.test(categorySlug);
+    if (isEnglish) {
+      return '마루';
+    }
+    
+    return categorySlug;
   };
 
   // 규격 추가 함수
