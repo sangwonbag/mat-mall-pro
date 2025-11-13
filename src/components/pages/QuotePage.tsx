@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/ui/header';
 import { ChatWidget } from '@/components/ui/chat-widget';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface QuoteFormData {
   selectedProducts: (Products & { quantity: number })[];
@@ -653,7 +654,10 @@ export default function QuotePage() {
                         type="tel"
                         placeholder="010-1234-5678"
                         value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value);
+                          setFormData(prev => ({ ...prev, phone: formatted }));
+                        }}
                         className="rounded-full"
                         required
                       />

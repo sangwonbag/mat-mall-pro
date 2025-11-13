@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BaseCrudService } from '@/integrations';
 import { ChatConsultations, ChatMessages } from '@/entities';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface Message {
   id: string;
@@ -252,7 +253,18 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
                     <Input
                       placeholder="전화번호 또는 이메일"
                       value={visitorInfo.contact}
-                      onChange={(e) => setVisitorInfo(prev => ({ ...prev, contact: e.target.value }))}
+                      onChange={(e) => {
+                        // 숫자로만 이루어져 있으면 전화번호로 간주하여 포맷팅
+                        const value = e.target.value;
+                        const isPhoneNumber = /^\d/.test(value.replace(/[^\d]/g, ''));
+                        
+                        if (isPhoneNumber && value.replace(/[^\d]/g, '').length > 0) {
+                          const formatted = formatPhoneNumber(value);
+                          setVisitorInfo(prev => ({ ...prev, contact: formatted }));
+                        } else {
+                          setVisitorInfo(prev => ({ ...prev, contact: value }));
+                        }
+                      }}
                       className="mt-1"
                     />
                   </div>

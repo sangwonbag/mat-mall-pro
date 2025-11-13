@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface ChatMessage {
   id: string;
@@ -200,7 +201,10 @@ export default function ChatSupport() {
                       <Input
                         placeholder="연락처"
                         value={customerInfo.phone}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value);
+                          setCustomerInfo(prev => ({ ...prev, phone: formatted }));
+                        }}
                         className="text-sm"
                       />
                       <Textarea
