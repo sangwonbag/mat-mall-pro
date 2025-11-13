@@ -252,7 +252,7 @@ export default function ProductDetailPage() {
               <div className="space-y-3">
                 <Button
                   onClick={handleQuoteRequest}
-                  className="w-full h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   즉시 견적요청
