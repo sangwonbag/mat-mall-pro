@@ -1069,9 +1069,6 @@ export default function AdminPage() {
             <div>
               <h4 className="text-lg font-paragraph font-semibold mb-4">주요 서비스</h4>
               <ul className="space-y-2 font-paragraph text-gray-300 text-sm">
-                <li>시공 견적</li>
-                <li>시공사례</li>
-                <li>빠른 상담/방문 견적</li>
                 <li><Link to="/search" className="hover:text-white transition-colors">제품검색</Link></li>
                 <li><Link to="/quote" className="hover:text-white transition-colors">견적요청</Link></li>
               </ul>
