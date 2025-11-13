@@ -662,7 +662,7 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-2xl font-heading text-primary">
-                    등록된 제품 ({products.length}개)
+                    등록된 제품 (<span className="font-heading">{products.length}</span>개)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -953,7 +953,7 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-2xl font-heading text-primary">
-                    등록된 상세설명 & 시공사례 ({caseStudies.length}개)
+                    등록된 상세설명 & 시공사례 (<span className="font-heading">{caseStudies.length}</span>개)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
