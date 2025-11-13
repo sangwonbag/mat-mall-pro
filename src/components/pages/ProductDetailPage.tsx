@@ -6,7 +6,6 @@ import { BaseCrudService } from '@/integrations';
 import { Products, ConstructionCaseStudies } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +15,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
-  const [area, setArea] = useState(10);
+  const [area, setArea] = useState(1);
   const [showDetailDescription, setShowDetailDescription] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Products[]>([]);
@@ -297,21 +296,6 @@ export default function ProductDetailPage() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-
-              {/* Options */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-900 mb-2">옵션 선택</label>
-                <Select value={selectedOption} onValueChange={setSelectedOption}>
-                  <SelectTrigger className="w-full h-12 rounded-lg">
-                    <SelectValue placeholder="옵션을 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standard">표준형</SelectItem>
-                    <SelectItem value="premium">프리미엄</SelectItem>
-                    <SelectItem value="deluxe">디럭스</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* Estimate Calculator */}
