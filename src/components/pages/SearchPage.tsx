@@ -507,7 +507,6 @@ export default function SearchPage() {
           </section>
         </div>
       </div>
-
       {/* Footer */}
       <footer className="bg-[#2E2E2E] text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">
@@ -549,12 +548,12 @@ export default function SearchPage() {
             <div>
               <h4 className="text-lg font-semibold mb-4">회사 정보</h4>
               <div className="text-gray-300 text-sm space-y-1">
-                <p>주소: 경기 하남시 서하남로 37</p>
                 <div className="mt-4">
                   <Link to="/search" className="hover:text-white transition-colors block mb-2">제품검색</Link>
                   <Link to="/quote" className="hover:text-white transition-colors block">견적요청</Link>
                 </div>
-              </div>
+              <p>주소: 경기 하남시 서하남로 37</p>
+                </div>
             </div>
           </div>
           <div className="border-t border-gray-600 mt-12 pt-8 text-center">
