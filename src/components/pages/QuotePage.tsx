@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check } from 'lucide-react';
+import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products } from '@/entities';
@@ -29,6 +29,8 @@ export default function QuotePage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Products[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
   const [showQuotePreview, setShowQuotePreview] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   
@@ -48,13 +50,34 @@ export default function QuotePage() {
     loadProducts();
   }, []);
 
+  useEffect(() => {
+    filterProducts();
+  }, [products, productSearchTerm]);
+
   const loadProducts = async () => {
     try {
       const { items } = await BaseCrudService.getAll<Products>('products');
       setProducts(items);
+      setFilteredProducts(items); // 초기에는 모든 제품 표시
     } catch (error) {
       console.error('Error loading products:', error);
     }
+  };
+
+  const filterProducts = () => {
+    let filtered = products;
+
+    // Filter by search term (동일한 알고리즘 적용)
+    if (productSearchTerm.trim()) {
+      const term = productSearchTerm.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.productName?.toLowerCase().includes(term) ||
+        product.brandName?.toLowerCase().includes(term) ||
+        product.specifications?.toLowerCase().includes(term)
+      );
+    }
+
+    setFilteredProducts(filtered);
   };
 
   const formatPrice = (price: number) => {
@@ -77,7 +100,7 @@ export default function QuotePage() {
   };
 
   const handleProductSelect = (productId: string) => {
-    const product = products.find(p => p._id === productId);
+    const product = filteredProducts.find(p => p._id === productId);
     if (product) {
       setFormData(prev => ({
         ...prev,
@@ -419,23 +442,44 @@ export default function QuotePage() {
                         <Button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, selectedProduct: undefined }))}
-                          className="w-full mt-4 h-14 text-lg rounded-full border-2 border-gray-200 bg-white text-gray-700 hover:border-[#B89C7D] hover:bg-[#B89C7D] hover:text-white transition-all duration-200"
+                          variant="outline"
+                          className="w-full mt-4 rounded-full"
                         >
                           다른 제품 선택
                         </Button>
                       </div>
                     ) : (
-                      <div>
+                      <div className="space-y-4">
+                        {/* 자재 검색창 */}
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            placeholder="제품명, 브랜드명으로 검색하세요."
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            className="w-full pl-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#B89C7D]"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <Search className="h-4 w-4 text-gray-400" />
+                          </div>
+                        </div>
+
+                        {/* 자재 선택 드롭다운 */}
                         <Select onValueChange={handleProductSelect}>
-                          <SelectTrigger className="w-full h-14 pl-6 pr-16 text-lg rounded-full border-2 border-gray-200 focus:border-[#B89C7D] bg-white">
+                          <SelectTrigger className="rounded-full">
                             <SelectValue placeholder="시공할 자재를 선택해주세요" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
+                          <SelectContent className="max-h-60">
+                            {filteredProducts.map((product) => (
                               <SelectItem key={product._id} value={product._id}>
                                 {product.productName} - {product.brandName}
                               </SelectItem>
                             ))}
+                            {filteredProducts.length === 0 && (
+                              <div className="p-4 text-center text-gray-500">
+                                검색 결과가 없습니다.
+                              </div>
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
