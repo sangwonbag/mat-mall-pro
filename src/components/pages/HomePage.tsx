@@ -289,12 +289,12 @@ export default function HomePage() {
       })}
 
       {/* Fixed Quote Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-40">
         <Button
           onClick={() => navigate('/quote')}
           className="px-6 py-4 rounded-full bg-gold-accent hover:bg-primary text-white shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-paragraph font-semibold"
         >
-          전문시공 자동견적 바로가기
+          전문시공 견적 바로가기
         </Button>
       </div>
 
