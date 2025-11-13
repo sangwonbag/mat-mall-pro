@@ -262,27 +262,28 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">
-          <div className="flex justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-20 max-w-4xl">
-              {/* 왼쪽 컬럼 - 동경바닥재 */}
-              <div>
-                <h3 className="text-2xl font-heading font-bold mb-4 text-white">동경바닥재</h3>
-                <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
-                  <p>
-                    데코타일/장판/마루/벽지<br />
-                    시공·자재 전문<br />
-                    B2C/B2B/현장 납품
-                  </p>
-                  <p className="mt-4">
-                    경기 하남시 서하남로 37
-                  </p>
-                  <p>
-                    사업자등록번호: 890-88-02243
-                  </p>
-                </div>
+          <div className="flex justify-between items-start">
+            {/* 왼쪽 끝 - 동경바닥재 */}
+            <div>
+              <h3 className="text-2xl font-heading font-bold mb-4 text-white">동경바닥재</h3>
+              <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
+                <p>
+                  데코타일/장판/마루/벽지<br />
+                  시공·자재 전문<br />
+                  B2C/B2B/현장 납품
+                </p>
+                <p className="mt-4">
+                  경기 하남시 서하남로 37
+                </p>
+                <p>
+                  사업자등록번호: 890-88-02243
+                </p>
               </div>
-              
-              {/* 가운데 컬럼 - 주요 서비스 */}
+            </div>
+            
+            {/* 오른쪽 끝 - 주요 서비스 & 고객센터 */}
+            <div className="flex gap-20">
+              {/* 주요 서비스 */}
               <div>
                 <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">주요 서비스</h4>
                 <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
@@ -301,7 +302,7 @@ export default function HomePage() {
                 </div>
               </div>
               
-              {/* 오른쪽 컬럼 - 고객센터 */}
+              {/* 고객센터 */}
               <div>
                 <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">고객센터</h4>
                 <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
