@@ -199,10 +199,10 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 제품 그리드 - 4개 제품 중앙 정렬 (PC 4열, 태블릿 2열, 모바일 2열) */}
+              {/* 제품 그리드 - PC 5열, 태블릿 2열, 모바일 2열 */}
               <div className="flex justify-center">
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl">
-                  {categoryProducts.slice(0, 4).map((product) => (
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl">
+                  {categoryProducts.slice(0, 5).map((product) => (
                     <motion.div
                       key={product._id}
                       initial={{ opacity: 0, y: 20 }}
@@ -224,16 +224,13 @@ export default function HomePage() {
                         <p className="text-sm font-paragraph text-secondary mb-3">
                           {product.brandName}
                         </p>
-                        <p className="text-xl font-paragraph font-bold text-primary">
-                          {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
-                        </p>
                       </div>
                     </motion.div>
                   ))}
                 </div>
               </div>
 
-              {categoryProducts.length > 4 && (
+              {categoryProducts.length > 5 && (
                 <div className="text-center mt-12">
                   <Button
                     onClick={() => navigate(`/search?category=${category.categorySlug}`)}
