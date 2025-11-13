@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useMember } from '@/integrations';
 
 interface ChatMessage {
   id: string;
@@ -13,6 +14,7 @@ interface ChatMessage {
 }
 
 export default function ChatSupport() {
+  const { member, isAuthenticated } = useMember();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -30,6 +32,14 @@ export default function ChatSupport() {
     inquiry: ''
   });
   const [showContactForm, setShowContactForm] = useState(false);
+
+  // dongk3089@naver.com 계정으로 로그인한 경우에만 채팅 기능 활성화
+  const isAuthorizedUser = isAuthenticated && member?.loginEmail === 'dongk3089@naver.com';
+
+  // 권한이 없는 경우 채팅 기능을 렌더링하지 않음
+  if (!isAuthorizedUser) {
+    return null;
+  }
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
