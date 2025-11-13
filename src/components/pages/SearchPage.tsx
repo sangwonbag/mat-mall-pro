@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, GitCompare, FileText } from 'lucide-react';
+import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ProductCategories } from '@/entities';
@@ -454,15 +454,14 @@ export default function SearchPage() {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('비교하기:', product.productName);
+                                navigate(`/product/${product._id}`);
                               }}
                               size="sm"
-                              variant="outline"
-                              className="flex-1 h-7 text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+                              className="flex-1 h-8 text-xs bg-[#2E2E2E] hover:bg-[#B89C7D] text-white transition-colors duration-200"
                               style={{ borderRadius: 0 }}
                             >
-                              <GitCompare className="h-3 w-3 mr-1" />
-                              비교하기
+                              <Eye className="h-3 w-3 mr-1" />
+                              상세보기
                             </Button>
                             <Button
                               onClick={(e) => {
@@ -471,7 +470,7 @@ export default function SearchPage() {
                               }}
                               size="sm"
                               variant="outline"
-                              className="flex-1 h-7 text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+                              className="flex-1 h-8 text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
                               style={{ borderRadius: 0 }}
                             >
                               <FileText className="h-3 w-3 mr-1" />
