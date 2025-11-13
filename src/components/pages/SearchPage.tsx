@@ -401,14 +401,15 @@ export default function SearchPage() {
                     </h2>
                   </div>
 
-                  {/* 제품 그리드 - 첨부 이미지 스타일 적용 (PC 6열, 태블릿 3열, 모바일 2열) */}
+                  {/* 제품 그리드 - 완전히 각진 스타일 (PC 6열, 태블릿 3열, 모바일 2열) */}
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                     {filteredProducts.map((product) => (
                       <motion.div
                         key={product._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 hover:border-gray-300 cursor-pointer"
+                        className="bg-white border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 hover:border-gray-300 cursor-pointer"
+                        style={{ borderRadius: 0 }}
                         onClick={() => navigate(`/product/${product._id}`)}
                       >
                         {/* 제품 이미지 - 정사각형 */}
@@ -417,6 +418,7 @@ export default function SearchPage() {
                             src={product.productImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=192&originHeight=192'}
                             alt={product.productName || '제품 이미지'}
                             className="w-full h-full object-cover"
+                            style={{ borderRadius: 0 }}
                             width={240}
                           />
                         </div>
@@ -456,7 +458,8 @@ export default function SearchPage() {
                               }}
                               size="sm"
                               variant="outline"
-                              className="flex-1 h-7 text-xs rounded border-gray-300 text-gray-600 hover:bg-gray-50"
+                              className="flex-1 h-7 text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+                              style={{ borderRadius: 0 }}
                             >
                               <GitCompare className="h-3 w-3 mr-1" />
                               비교하기
@@ -468,7 +471,8 @@ export default function SearchPage() {
                               }}
                               size="sm"
                               variant="outline"
-                              className="flex-1 h-7 text-xs rounded border-gray-300 text-gray-600 hover:bg-gray-50"
+                              className="flex-1 h-7 text-xs border-gray-300 text-gray-600 hover:bg-gray-50"
+                              style={{ borderRadius: 0 }}
                             >
                               <FileText className="h-3 w-3 mr-1" />
                               견적요청

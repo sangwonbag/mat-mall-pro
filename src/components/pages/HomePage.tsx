@@ -208,13 +208,15 @@ export default function HomePage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6 }}
-                      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 hover:border-gray-300"
+                      className="bg-white border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 hover:border-gray-300"
+                      style={{ borderRadius: 0 }}
                     >
                       <div className="aspect-square relative bg-gray-50">
                         <Image
                           src={product.productImage || '/placeholder-product.jpg'}
                           alt={product.productName || ''}
                           className="w-full h-full object-cover"
+                          style={{ borderRadius: 0 }}
                         />
                       </div>
                       <div className="p-3">
