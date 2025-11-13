@@ -231,51 +231,7 @@ export default function ProductDetailPage() {
                 />
               </div>
               
-              {/* Thumbnail Images - Desktop */}
-              <div className="hidden lg:flex space-x-2">
-                {thumbnailImages.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden shadow-md transition-all duration-200 ${
-                      selectedImageIndex === index 
-                        ? 'ring-2 ring-[#1f6fff] shadow-lg' 
-                        : 'hover:shadow-lg'
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`썸네일 ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      width={64}
-                    />
-                  </button>
-                ))}
-              </div>
 
-              {/* Mobile Thumbnail Slider */}
-              <div className="lg:hidden">
-                <div className="flex space-x-2 overflow-x-auto pb-2">
-                  {thumbnailImages.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden shadow-md transition-all duration-200 ${
-                        selectedImageIndex === index 
-                          ? 'ring-2 ring-[#1f6fff] shadow-lg' 
-                          : 'hover:shadow-lg'
-                      }`}
-                    >
-                      <Image
-                        src={image}
-                        alt={`썸네일 ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        width={64}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Right Info Section - 55% (720px) */}
