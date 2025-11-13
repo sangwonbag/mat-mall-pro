@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Heart, Share2, Star, Truck, Shield, Award } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Share2, Star, Truck, Shield, Award, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ConstructionCaseStudies } from '@/entities';
@@ -95,6 +95,21 @@ export default function ProductDetailPage() {
           selectedProduct: product
         } 
       });
+    }
+  };
+
+  const handlePhoneOrder = () => {
+    const phoneNumber = '02-487-9775';
+    
+    // 모바일 기기 감지
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 모바일에서는 직접 전화 연결
+      window.location.href = `tel:${phoneNumber}`;
+    } else {
+      // PC에서는 안내 팝업
+      alert(`전화주문 문의\n\n전화번호: ${phoneNumber}\n\n위 번호로 전화하시면 친절하게 상담해드립니다.`);
     }
   };
 
@@ -250,13 +265,22 @@ export default function ProductDetailPage() {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                <Button
-                  onClick={handleQuoteRequest}
-                  className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  즉시 견적요청
-                </Button>
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={handleQuoteRequest}
+                    className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    즉시 견적요청
+                  </Button>
+                  <Button
+                    onClick={handlePhoneOrder}
+                    className="w-fit px-6 h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    전화주문
+                  </Button>
+                </div>
               </div>
 
               {/* Additional Actions */}
