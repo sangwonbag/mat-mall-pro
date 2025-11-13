@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Heart, Share2, Star, ChevronDown, ChevronUp, Info, Truck, Shield, Award } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Share2, Star, Truck, Shield, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ConstructionCaseStudies } from '@/entities';
@@ -14,7 +14,6 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
-  const [showDetailDescription, setShowDetailDescription] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Products[]>([]);
   const [caseStudy, setCaseStudy] = useState<ConstructionCaseStudies | null>(null);
@@ -253,23 +252,10 @@ export default function ProductDetailPage() {
               <div className="space-y-3">
                 <Button
                   onClick={handleQuoteRequest}
-                  className="w-full h-14 text-lg font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-full h-7 text-base font-semibold rounded-xl bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  <ShoppingCart className="h-4 w-4 mr-2" />
                   즉시 견적요청
-                </Button>
-                
-                <Button
-                  onClick={() => setShowDetailDescription(!showDetailDescription)}
-                  variant="outline"
-                  className="w-full h-12 rounded-xl border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  상세설명보기
-                  {showDetailDescription ? (
-                    <ChevronUp className="h-4 w-4 ml-2" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  )}
                 </Button>
               </div>
 
@@ -288,47 +274,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </section>
-
-      {/* Detail Description */}
-      <AnimatePresence>
-        {showDetailDescription && (
-          <motion.section
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden bg-gray-50"
-          >
-            <div className="max-w-[1360px] mx-auto px-4 py-8">
-              <div className="bg-white rounded-2xl p-8 shadow-lg">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">제품 상세 설명</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Shield className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">품질 보증</h3>
-                    <p className="text-gray-600 text-sm">엄선된 프리미엄 자재로 최고의 품질을 보장합니다.</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Award className="h-8 w-8 text-green-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">전문 시공</h3>
-                    <p className="text-gray-600 text-sm">숙련된 전문가가 직접 시공하여 완벽한 마감을 제공합니다.</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Truck className="h-8 w-8 text-purple-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">빠른 배송</h3>
-                    <p className="text-gray-600 text-sm">주문 후 신속한 배송과 설치 서비스를 제공합니다.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
 
       {/* Bottom Sections */}
       <section className="py-12 bg-white">
