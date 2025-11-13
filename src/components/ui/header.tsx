@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, LogIn, Menu, X } from 'lucide-react';
+import { User, LogIn, Menu, X, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMember } from '@/integrations';
 import { Button } from '@/components/ui/button';
@@ -66,6 +66,14 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
     setIsMobileMenuOpen(false);
   };
 
+  const handleAdminClick = () => {
+    navigate('/admin');
+    setIsMobileMenuOpen(false);
+  };
+
+  // 관리자 권한 확인 (dongk3089@naver.com만 관리자)
+  const isAdmin = isAuthenticated && member?.loginEmail === 'dongk3089@naver.com';
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,6 +108,13 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
             <Link to="/quote" className="text-gray-700 hover:text-black transition-colors">
               견적요청
             </Link>
+            
+            {/* 관리자 버튼 - dongk3089@naver.com만 표시 */}
+            {isAdmin && (
+              <Link to="/admin" className="text-gray-700 hover:text-black transition-colors">
+                관리자
+              </Link>
+            )}
             
             {isLoading ? (
               <div className="w-8 h-8 animate-spin rounded-full border-2 border-gray-300 border-t-black"></div>
@@ -240,6 +255,17 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
               >
                 견적요청
               </Link>
+              
+              {/* 모바일 관리자 버튼 - dongk3089@naver.com만 표시 */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="block py-2 text-gray-700 hover:text-black transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  관리자
+                </Link>
+              )}
               
               {isAuthenticated ? (
                 <div className="space-y-3 pt-3 border-t border-gray-200">
