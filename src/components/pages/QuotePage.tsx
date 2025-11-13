@@ -201,7 +201,6 @@ export default function QuotePage() {
           </div>
         </div>
       </header>
-
       {/* Breadcrumb */}
       <div className="bg-light-gray py-4">
         <div className="max-w-[120rem] mx-auto px-4">
@@ -215,10 +214,9 @@ export default function QuotePage() {
           </Button>
         </div>
       </div>
-
       {showQuotePreview ? (
         /* Quote Preview */
-        <section className="py-12">
+        (<section className="py-12">
           <div className="max-w-4xl mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -362,15 +360,13 @@ export default function QuotePage() {
               </div>
             </motion.div>
           </div>
-        </section>
+        </section>)
       ) : (
         /* Quote Form */
-        <section className="py-12">
+        (<section className="py-12">
           <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h1 className="text-4xl font-heading font-bold text-primary mb-4">
-                전문시공 자동견적
-              </h1>
+              <h1 className="text-4xl font-heading font-bold text-primary mb-4">{"전문시공 견적"}</h1>
               <p className="text-lg font-paragraph text-secondary">
                 정확한 견적을 위해 아래 정보를 입력해주세요.
               </p>
@@ -618,9 +614,8 @@ export default function QuotePage() {
               </div>
             </form>
           </div>
-        </section>
+        </section>)
       )}
-
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">
