@@ -74,9 +74,9 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">센</span>
+                <span className="text-white font-bold text-sm">동</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">센스타일</span>
+              <span className="text-xl font-bold text-gray-900">동경바닥재</span>
             </Link>
           </div>
 
