@@ -18,9 +18,8 @@ export default function HomePage() {
   const [filteredProducts, setFilteredProducts] = useState<{ [key: string]: Products[] }>({});
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // 배경 이미지 배열
+  // 배경 이미지 배열 (센스타일 배경 제외)
   const backgroundImages = [
-    'https://static.wixstatic.com/media/9f8727_a7bcf937f60e4dfe856f4e685bd281aa~mv2.png',
     'https://static.wixstatic.com/media/9f8727_9de575de39fb4329b67b5faaee5bbbbd~mv2.jpg',
     'https://static.wixstatic.com/media/9f8727_bbff3323d5db4487adb1e3150c41cec9~mv2.jpg',
     'https://static.wixstatic.com/media/9f8727_d7ceb309ffd2485d9eec5a99b52e6ff1~mv2.jpg',
