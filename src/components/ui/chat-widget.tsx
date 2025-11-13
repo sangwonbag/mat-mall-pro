@@ -188,13 +188,24 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
     <div className={`fixed bottom-24 right-6 z-50 ${className}`}>
       {/* Chat Button */}
       {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg"
-          size="icon"
-        >
-          <Headphones className="h-6 w-6" />
-        </Button>
+        <div className="relative group">
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg"
+            size="icon"
+          >
+            <Headphones className="h-6 w-6" />
+          </Button>
+          
+          {/* Tooltip */}
+          <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+            <div className="bg-gray-800 text-white text-sm px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg">
+              채팅상담
+              {/* Arrow pointing to button */}
+              <div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-800"></div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Chat Window */}
