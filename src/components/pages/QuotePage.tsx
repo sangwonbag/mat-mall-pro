@@ -419,8 +419,7 @@ export default function QuotePage() {
                         <Button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, selectedProduct: undefined }))}
-                          variant="outline"
-                          className="w-full mt-4 rounded-full"
+                          className="w-full mt-4 h-14 text-lg rounded-full border-2 border-gray-200 bg-white text-gray-700 hover:border-[#B89C7D] hover:bg-[#B89C7D] hover:text-white transition-all duration-200"
                         >
                           다른 제품 선택
                         </Button>
@@ -428,7 +427,7 @@ export default function QuotePage() {
                     ) : (
                       <div>
                         <Select onValueChange={handleProductSelect}>
-                          <SelectTrigger className="rounded-full">
+                          <SelectTrigger className="w-full h-14 pl-6 pr-16 text-lg rounded-full border-2 border-gray-200 focus:border-[#B89C7D] bg-white">
                             <SelectValue placeholder="시공할 자재를 선택해주세요" />
                           </SelectTrigger>
                           <SelectContent>
