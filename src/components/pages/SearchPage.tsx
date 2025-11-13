@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/ui/header';
-import ChatSupport from '@/components/ui/chat-support';
+import { ChatWidget } from '@/components/ui/chat-widget';
 
 // 브랜드 사이드바 구조 정의
 const brandStructure = {
@@ -562,8 +562,8 @@ export default function SearchPage() {
         </div>
       </footer>
 
-      {/* 채팅상담 컴포넌트 */}
-      <ChatSupport />
+      {/* 채팅상담 위젯 */}
+      <ChatWidget />
     </div>
   );
 }

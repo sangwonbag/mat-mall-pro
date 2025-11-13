@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/ui/header';
-import ChatSupport from '@/components/ui/chat-support';
+import { ChatWidget } from '@/components/ui/chat-widget';
 
 interface QuoteFormData {
   selectedProducts: (Products & { quantity: number })[];
@@ -783,8 +783,8 @@ export default function QuotePage() {
         </div>
       </footer>
 
-      {/* 채팅상담 컴포넌트 */}
-      <ChatSupport />
+      {/* 채팅상담 위젯 */}
+      <ChatWidget />
     </div>
   );
 }
