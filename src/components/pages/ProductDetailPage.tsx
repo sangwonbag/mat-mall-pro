@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, ShoppingCart, Heart, Share2, Star, ChevronDown, ChevronUp, Info, Truck, Shield, Award } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Heart, Share2, Star, ChevronDown, ChevronUp, Info, Truck, Shield, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ConstructionCaseStudies } from '@/entities';
@@ -11,11 +11,9 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Products | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState('');
-  const [area, setArea] = useState(1);
   const [showDetailDescription, setShowDetailDescription] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Products[]>([]);
@@ -91,29 +89,11 @@ export default function ProductDetailPage() {
     return new Intl.NumberFormat('ko-KR').format(price);
   };
 
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
-    }
-  };
-
-  const calculateEstimate = () => {
-    if (!product?.price) return 0;
-    const materialCost = product.price * quantity;
-    const laborCost = area * 12000; // 평당 시공비 12,000원
-    return materialCost + laborCost;
-  };
-
   const handleQuoteRequest = () => {
     if (product) {
       navigate('/quote', { 
         state: { 
-          selectedProduct: {
-            ...product,
-            quantity,
-            area
-          }
+          selectedProduct: product
         } 
       });
     }
@@ -229,8 +209,6 @@ export default function ProductDetailPage() {
                   width={640}
                 />
               </div>
-              
-
             </div>
 
             {/* Right Info Section - 55% (720px) */}
@@ -269,76 +247,6 @@ export default function ProductDetailPage() {
                     * 부가세 별도, 시공비 별도
                   </p>
                 )}
-              </div>
-
-              {/* Quantity Selector */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-900 mb-2">수량</label>
-                <div className="flex items-center space-x-3">
-                  <Button
-                    onClick={() => handleQuantityChange(-1)}
-                    variant="outline"
-                    size="sm"
-                    className="w-10 h-10 rounded-lg border-gray-300"
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="text-xl font-bold text-gray-900 w-12 text-center">
-                    {quantity}
-                  </span>
-                  <Button
-                    onClick={() => handleQuantityChange(1)}
-                    variant="outline"
-                    size="sm"
-                    className="w-10 h-10 rounded-lg border-gray-300"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Estimate Calculator */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-xl">
-                <h3 className="font-semibold text-gray-900 mb-3">예상 견적 계산기</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">시공 면적</span>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        onClick={() => setArea(Math.max(1, area - 1))}
-                        variant="outline"
-                        size="sm"
-                        className="w-8 h-8 rounded"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-12 text-center font-semibold">{area}평</span>
-                      <Button
-                        onClick={() => setArea(area + 1)}
-                        variant="outline"
-                        size="sm"
-                        className="w-8 h-8 rounded"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between text-sm">
-                      <span>자재비 ({quantity}개)</span>
-                      <span>{product?.price ? formatPrice(product.price * quantity) : 0}원</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>시공비 ({area}평)</span>
-                      <span>{formatPrice(area * 12000)}원</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                      <span>예상 총액</span>
-                      <span className="text-black">{formatPrice(calculateEstimate())}원</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Action Buttons */}
