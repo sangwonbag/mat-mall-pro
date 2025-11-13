@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products, ProductCategories, PopularSearches } from '@/entities';
@@ -278,6 +278,22 @@ export default function HomePage() {
                             {product.materialCode}
                           </p>
                         )}
+                        
+                        {/* 상세보기 버튼 */}
+                        <div className="mt-3">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/product/${product._id}`);
+                            }}
+                            size="sm"
+                            className="w-full h-8 text-xs bg-[#2E2E2E] hover:bg-[#B89C7D] text-white transition-colors duration-200"
+                            style={{ borderRadius: 0 }}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            상세보기
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
