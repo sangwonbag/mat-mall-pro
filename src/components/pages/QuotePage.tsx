@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search } from 'lucide-react';
+import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
 import { Products } from '@/entities';
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/ui/header';
 
 interface QuoteFormData {
-  selectedProduct?: Products & { quantity?: number };
+  selectedProducts: (Products & { quantity: number })[];
   area: string;
   address: string;
   name: string;
@@ -37,7 +37,7 @@ export default function QuotePage() {
   const searchRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<QuoteFormData>({
-    selectedProduct: location.state?.selectedProduct,
+    selectedProducts: location.state?.selectedProduct ? [{ ...location.state.selectedProduct, quantity: 1 }] : [],
     area: '',
     address: '',
     name: '',
@@ -101,11 +101,17 @@ export default function QuotePage() {
   };
 
   const calculateTotalPrice = () => {
-    if (!formData.selectedProduct?.price || !formData.area) return 0;
+    if (!formData.selectedProducts.length || !formData.area) return 0;
     
     const area = parseFloat(formData.area);
-    const quantity = formData.selectedProduct.quantity || 1;
-    let total = formData.selectedProduct.price * quantity * area;
+    let total = 0;
+    
+    // 선택된 모든 제품의 가격 합계
+    formData.selectedProducts.forEach(product => {
+      if (product.price) {
+        total += product.price * product.quantity * area;
+      }
+    });
     
     // Add additional costs
     if (formData.includeSubMaterials) total += area * 5000; // 부자재비
@@ -116,27 +122,36 @@ export default function QuotePage() {
   };
 
   const handleProductSelect = (product: Products) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedProduct: { ...product, quantity: 1 }
-    }));
+    // 이미 선택된 제품인지 확인
+    const isAlreadySelected = formData.selectedProducts.some(p => p._id === product._id);
+    
+    if (!isAlreadySelected) {
+      setFormData(prev => ({
+        ...prev,
+        selectedProducts: [...prev.selectedProducts, { ...product, quantity: 1 }]
+      }));
+    }
+    
     setShowProductList(false);
     setProductSearchTerm('');
   };
 
-  const handleQuantityChange = (change: number) => {
-    if (!formData.selectedProduct) return;
-    
-    const newQuantity = (formData.selectedProduct.quantity || 1) + change;
-    if (newQuantity >= 1) {
-      setFormData(prev => ({
-        ...prev,
-        selectedProduct: {
-          ...prev.selectedProduct!,
-          quantity: newQuantity
-        }
-      }));
-    }
+  const handleRemoveProduct = (productId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedProducts: prev.selectedProducts.filter(p => p._id !== productId)
+    }));
+  };
+
+  const handleQuantityChange = (productId: string, change: number) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedProducts: prev.selectedProducts.map(p => 
+        p._id === productId 
+          ? { ...p, quantity: Math.max(1, p.quantity + change) }
+          : p
+      )
+    }));
   };
 
   // 평수 변경 시 자재 갯수 자동 계산
@@ -145,15 +160,15 @@ export default function QuotePage() {
       const newFormData = { ...prev, area };
       
       // 평수가 있고 제품이 선택되어 있을 때 자재 갯수 자동 계산
-      if (area && prev.selectedProduct && parseFloat(area) > 0) {
+      if (area && prev.selectedProducts.length > 0 && parseFloat(area) > 0) {
         const areaValue = parseFloat(area);
         // 1평당 1개 기준으로 계산 (필요에 따라 조정 가능)
         const calculatedQuantity = Math.ceil(areaValue);
         
-        newFormData.selectedProduct = {
-          ...prev.selectedProduct,
+        newFormData.selectedProducts = prev.selectedProducts.map(product => ({
+          ...product,
           quantity: calculatedQuantity
-        };
+        }));
       }
       
       return newFormData;
@@ -164,7 +179,7 @@ export default function QuotePage() {
     e.preventDefault();
     
     // Validate required fields
-    if (!formData.selectedProduct || !formData.area || !formData.address || !formData.name || !formData.phone) {
+    if (!formData.selectedProducts.length || !formData.area || !formData.address || !formData.name || !formData.phone) {
       alert('필수 항목을 모두 입력해주세요.');
       return;
     }
@@ -286,26 +301,28 @@ export default function QuotePage() {
                   <CardHeader>
                     <CardTitle className="font-heading">선택 자재</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center space-x-4">
-                      <Image
-                        src={formData.selectedProduct?.productImage || 'https://static.wixstatic.com/media/9f8727_70051f61b73140f8bdfb586f2536153f~mv2.png?originWidth=128&originHeight=128'}
-                        alt={formData.selectedProduct?.productName || ''}
-                        className="w-20 h-20 object-cover rounded-lg"
-                        width={80}
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-paragraph font-semibold text-lg price-font">{formData.selectedProduct?.productName}</h3>
-                        <p className="text-secondary font-paragraph">자재코드: {formData.selectedProduct?.materialCode}</p>
-                        <p className="text-secondary font-paragraph">수량: {formData.selectedProduct?.quantity}개</p>
-                        <p className="text-secondary font-paragraph">시공 면적: {formData.area}평</p>
+                  <CardContent className="space-y-4">
+                    {formData.selectedProducts.map((product, index) => (
+                      <div key={product._id} className={`flex items-center space-x-4 ${index > 0 ? 'pt-4 border-t border-gray-200' : ''}`}>
+                        <Image
+                          src={product.productImage || 'https://static.wixstatic.com/media/9f8727_70051f61b73140f8bdfb586f2536153f~mv2.png?originWidth=128&originHeight=128'}
+                          alt={product.productName || ''}
+                          className="w-20 h-20 object-cover rounded-lg"
+                          width={80}
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-paragraph font-semibold text-lg price-font">{product.productName}</h3>
+                          <p className="text-secondary font-paragraph">자재코드: {product.materialCode}</p>
+                          <p className="text-secondary font-paragraph">수량: {product.quantity}개</p>
+                          <p className="text-secondary font-paragraph">시공 면적: {formData.area}평</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-paragraph font-bold text-primary price-font">
+                            {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xl font-paragraph font-bold text-primary price-font">
-                          {formData.selectedProduct?.price ? `${formatPrice(formData.selectedProduct.price)}원` : '가격 문의'}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </CardContent>
                 </Card>
 
@@ -316,9 +333,11 @@ export default function QuotePage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
-                      <span className="font-paragraph">자재비</span>
+                      <span className="font-paragraph">자재비 (총합)</span>
                       <span className="font-paragraph font-semibold price-font">
-                        {formatPrice((formData.selectedProduct?.price || 0) * (formData.selectedProduct?.quantity || 1) * parseFloat(formData.area || '0'))}원
+                        {formatPrice(formData.selectedProducts.reduce((total, product) => {
+                          return total + (product.price || 0) * product.quantity * parseFloat(formData.area || '0');
+                        }, 0))}원
                       </span>
                     </div>
                     {formData.includeSubMaterials && (
@@ -408,97 +427,109 @@ export default function QuotePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {formData.selectedProduct ? (
-                      <div className="bg-light-gray rounded-xl p-4">
-                        <div className="flex items-center space-x-4 mb-4">
-                          <Image
-                            src={formData.selectedProduct.productImage || 'https://static.wixstatic.com/media/9f8727_16e4d2bcda3c4a98a10f7f3b0bf463f3~mv2.png?originWidth=128&originHeight=128'}
-                            alt={formData.selectedProduct.productName || ''}
-                            className="w-16 h-16 object-cover rounded-lg"
-                            width={64}
-                          />
-                          <div className="flex-1">
-                            <h3 className="font-paragraph font-semibold">{formData.selectedProduct.productName}</h3>
-                            <p className="text-secondary font-paragraph text-sm">{formData.selectedProduct.materialCode}</p>
-                            <p className="text-primary font-paragraph font-bold">
-                              {formData.selectedProduct.price ? `${formatPrice(formData.selectedProduct.price)}원` : '가격 문의'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <span className="font-paragraph font-semibold">수량:</span>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              type="button"
-                              onClick={() => handleQuantityChange(-1)}
-                              variant="outline"
-                              size="sm"
-                              className="w-8 h-8 rounded-full"
-                              disabled={(formData.selectedProduct.quantity || 1) <= 1}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="font-paragraph font-bold w-8 text-center">
-                              {formData.selectedProduct.quantity || 1}
-                            </span>
-                            <Button
-                              type="button"
-                              onClick={() => handleQuantityChange(1)}
-                              variant="outline"
-                              size="sm"
-                              className="w-8 h-8 rounded-full"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, selectedProduct: undefined }));
-                            setShowProductList(false);
-                            setProductSearchTerm('');
-                          }}
-                          variant="outline"
-                          className="w-full mt-4 rounded-full"
-                        >
-                          다른 제품 선택
-                        </Button>
-                      </div>
-                    ) : (
+                    {/* 선택된 자재 리스트 */}
+                    {formData.selectedProducts.length > 0 && (
                       <div className="space-y-4">
-                        {/* 자재 선택 안내 문구 */}
-                        <div className="text-center">
-                          <h3 className="font-paragraph font-semibold text-lg mb-4">시공할 자재를 선택해주세요</h3>
-                        </div>
-
-                        {/* 통합된 검색창과 자재 리스트 */}
-                        <div className="relative" ref={searchRef}>
-                          <div className="relative">
-                            <Input
-                              type="text"
-                              placeholder="제품명, 브랜드명으로 검색하거나 아래 목록에서 선택하세요"
-                              value={productSearchTerm}
-                              onChange={(e) => setProductSearchTerm(e.target.value)}
-                              onFocus={() => setShowProductList(true)}
-                              className="w-full pl-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#B89C7D]"
-                            />
-                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                              <Search className="h-4 w-4 text-gray-400" />
+                        <h4 className="font-paragraph font-semibold text-lg">선택된 자재</h4>
+                        {formData.selectedProducts.map((product) => (
+                          <div key={product._id} className="bg-light-gray rounded-xl p-4">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <Image
+                                src={product.productImage || 'https://static.wixstatic.com/media/9f8727_16e4d2bcda3c4a98a10f7f3b0bf463f3~mv2.png?originWidth=128&originHeight=128'}
+                                alt={product.productName || ''}
+                                className="w-16 h-16 object-cover rounded-lg"
+                                width={64}
+                              />
+                              <div className="flex-1">
+                                <h3 className="font-paragraph font-semibold">{product.productName}</h3>
+                                <p className="text-secondary font-paragraph text-sm">{product.materialCode}</p>
+                                <p className="text-primary font-paragraph font-bold">
+                                  {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                onClick={() => handleRemoveProduct(product._id)}
+                                variant="outline"
+                                size="sm"
+                                className="w-8 h-8 rounded-full p-0 hover:bg-red-50 hover:border-red-200"
+                              >
+                                <X className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span className="font-paragraph font-semibold">수량:</span>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  type="button"
+                                  onClick={() => handleQuantityChange(product._id, -1)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-8 h-8 rounded-full"
+                                  disabled={product.quantity <= 1}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="font-paragraph font-bold w-8 text-center">
+                                  {product.quantity}
+                                </span>
+                                <Button
+                                  type="button"
+                                  onClick={() => handleQuantityChange(product._id, 1)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-8 h-8 rounded-full"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    )}
 
-                          {/* 자재 리스트 (검색창 아래에 항상 표시되거나 포커스 시 표시) */}
-                          {(showProductList || productSearchTerm.length > 0) && (
-                            <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                              {filteredProducts.length > 0 ? (
-                                filteredProducts.map((product) => (
+                    {/* 자재 추가 섹션 */}
+                    <div className="space-y-4">
+                      {/* 자재 선택 안내 문구 */}
+                      <div className="text-center">
+                        <h3 className="font-paragraph font-semibold text-lg mb-4">
+                          {formData.selectedProducts.length > 0 ? '추가 자재 선택' : '시공할 자재를 선택해주세요'}
+                        </h3>
+                      </div>
+
+                      {/* 통합된 검색창과 자재 리스트 */}
+                      <div className="relative" ref={searchRef}>
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            placeholder="제품명, 브랜드명으로 검색하거나 아래 목록에서 선택하세요"
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            onFocus={() => setShowProductList(true)}
+                            className="w-full pl-6 pr-12 rounded-full border-2 border-gray-200 focus:border-[#B89C7D]"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <Search className="h-4 w-4 text-gray-400" />
+                          </div>
+                        </div>
+
+                        {/* 자재 리스트 (검색창 아래에 항상 표시되거나 포커스 시 표시) */}
+                        {(showProductList || productSearchTerm.length > 0) && (
+                          <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {filteredProducts.length > 0 ? (
+                              filteredProducts.map((product) => {
+                                const isSelected = formData.selectedProducts.some(p => p._id === product._id);
+                                return (
                                   <div
                                     key={product._id}
                                     onClick={() => handleProductSelect(product)}
-                                    className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-3"
+                                    className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-3 ${
+                                      isSelected 
+                                        ? 'bg-green-50 hover:bg-green-100' 
+                                        : 'hover:bg-gray-50'
+                                    }`}
                                   >
                                     <Image
                                       src={product.productImage || 'https://static.wixstatic.com/media/9f8727_16e4d2bcda3c4a98a10f7f3b0bf463f3~mv2.png?originWidth=128&originHeight=128'}
@@ -513,30 +544,35 @@ export default function QuotePage() {
                                         {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                                       </p>
                                     </div>
+                                    {isSelected && (
+                                      <div className="text-green-600">
+                                        <Check className="h-4 w-4" />
+                                      </div>
+                                    )}
                                   </div>
-                                ))
-                              ) : (
-                                <div className="p-4 text-center text-gray-500">
-                                  {productSearchTerm ? '검색 결과가 없습니다.' : '자재를 불러오는 중...'}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 전체 자재 보기 버튼 */}
-                        {!showProductList && productSearchTerm.length === 0 && (
-                          <Button
-                            type="button"
-                            onClick={() => setShowProductList(true)}
-                            variant="outline"
-                            className="w-full rounded-full"
-                          >
-                            전체 자재 목록 보기
-                          </Button>
+                                );
+                              })
+                            ) : (
+                              <div className="p-4 text-center text-gray-500">
+                                {productSearchTerm ? '검색 결과가 없습니다.' : '자재를 불러오는 중...'}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
+
+                      {/* 전체 자재 보기 버튼 */}
+                      {!showProductList && productSearchTerm.length === 0 && (
+                        <Button
+                          type="button"
+                          onClick={() => setShowProductList(true)}
+                          variant="outline"
+                          className="w-full rounded-full"
+                        >
+                          {formData.selectedProducts.length > 0 ? '추가 자재 선택하기' : '전체 자재 목록 보기'}
+                        </Button>
+                      )}
+                    </div>
 
                     <div>
                       <label className="block font-paragraph font-semibold mb-2">
@@ -668,7 +704,7 @@ export default function QuotePage() {
                 </Card>
 
                 {/* Price Preview */}
-                {formData.selectedProduct && formData.area && (
+                {formData.selectedProducts.length > 0 && formData.area && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="font-heading">예상 견적</CardTitle>
@@ -689,7 +725,7 @@ export default function QuotePage() {
                 <Button
                   type="submit"
                   className="w-full h-14 text-lg font-paragraph font-semibold rounded-full bg-gold-accent hover:bg-primary"
-                  disabled={!formData.selectedProduct || !formData.area || !formData.address || !formData.name || !formData.phone}
+                  disabled={!formData.selectedProducts.length || !formData.area || !formData.address || !formData.name || !formData.phone}
                 >
                   <Calculator className="h-5 w-5 mr-2" />
                   견적서 생성하기
