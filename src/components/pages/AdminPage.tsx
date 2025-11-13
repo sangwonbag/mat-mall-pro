@@ -415,7 +415,6 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       <div className="max-w-[120rem] mx-auto px-4 py-8">
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -662,7 +661,7 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-2xl font-heading text-primary">
-                    등록된 제품 (<span className="font-heading">{products.length}</span>개)
+                    등록된 제품 (<span className="font-roboto">{products.length}</span>개)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1038,7 +1037,6 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
-
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">

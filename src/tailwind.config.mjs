@@ -19,8 +19,9 @@ export default {
                 '9xl': ['8rem', { lineHeight: '1', letterSpacing: '-0.025em', fontWeight: '700' }],
             },
             fontFamily: {
-                heading: "cormorantgaramond",
-                paragraph: "sora"
+                heading: ["cormorantgaramond"],
+                paragraph: ["sora"],
+                roboto: ["roboto", "sans-serif"]
             },
             colors: {
                 'light-gray': '#F2F2F2',
