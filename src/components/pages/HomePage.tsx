@@ -262,65 +262,59 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* 왼쪽 컬럼 - 동경바닥재 */}
-            <div>
-              <h3 className="text-2xl font-heading font-bold mb-4 text-white">동경바닥재</h3>
-              <div className="font-paragraph text-[#EDEDED] text-sm leading-relaxed space-y-2">
-                <p>
-                  데코타일/장판/마루/벽지<br />
-                  시공·자재 전문<br />
-                  B2C/B2B/현장 납품
-                </p>
-                <p className="mt-4">
-                  경기 하남시 서하남로 37
-                </p>
-                <p className="mt-2">
-                  사업자등록번호: 890-88-02243
-                </p>
-              </div>
-            </div>
-            
-            {/* 가운데 컬럼 - 주요 서비스 */}
-            <div>
-              <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">주요 서비스</h4>
-              <div className="font-paragraph text-[#EDEDED] text-sm leading-relaxed space-y-2">
-                <Link 
-                  to="/search" 
-                  className="block hover:text-[#BFA365] transition-colors duration-200"
-                >
-                  제품검색
-                </Link>
-                <Link 
-                  to="/quote" 
-                  className="block hover:text-[#BFA365] transition-colors duration-200"
-                >
-                  견적요청
-                </Link>
-                <p>시공 견적</p>
-                <p>시공사례</p>
-                <p>빠른 상담/방문 견적</p>
-              </div>
-            </div>
-            
-            {/* 고객센터 */}
-            <div>
-              <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">고객센터</h4>
-              <div className="font-paragraph text-[#EDEDED] text-sm leading-relaxed space-y-2">
-                <p>전화: 02-487-9775</p>
-                <p>팩스: 02-487-9787</p>
-                <p>이메일: dongk3089@naver.com</p>
-                <div className="mt-4">
-                  <p>운영시간:</p>
-                  <p>평일 07:00~18:00</p>
-                  <p>주말 07:00~12:00</p>
+          <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-20 max-w-4xl">
+              {/* 왼쪽 컬럼 - 동경바닥재 */}
+              <div>
+                <h3 className="text-2xl font-heading font-bold mb-4 text-white">동경바닥재</h3>
+                <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
+                  <p>
+                    데코타일/장판/마루/벽지<br />
+                    시공·자재 전문<br />
+                    B2C/B2B/현장 납품
+                  </p>
+                  <p className="mt-4">
+                    경기 하남시 서하남로 37
+                  </p>
+                  <p>
+                    사업자등록번호: 890-88-02243
+                  </p>
                 </div>
               </div>
-            </div>
-            
-            {/* 오른쪽 컬럼 - 회사 정보 (비움) */}
-            <div>
-              <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">회사 정보</h4>
+              
+              {/* 가운데 컬럼 - 주요 서비스 */}
+              <div>
+                <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">주요 서비스</h4>
+                <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
+                  <Link 
+                    to="/search" 
+                    className="block hover:text-[#BFA365] transition-colors duration-200"
+                  >
+                    제품검색
+                  </Link>
+                  <Link 
+                    to="/quote" 
+                    className="block hover:text-[#BFA365] transition-colors duration-200"
+                  >
+                    견적요청
+                  </Link>
+                </div>
+              </div>
+              
+              {/* 오른쪽 컬럼 - 고객센터 */}
+              <div>
+                <h4 className="text-lg font-paragraph font-semibold mb-4 text-white">고객센터</h4>
+                <div className="font-paragraph text-[#EDEDED] text-sm space-y-1.5">
+                  <p>전화: 02-487-9775</p>
+                  <p>팩스: 02-487-9787</p>
+                  <p>이메일: dongk3089@naver.com</p>
+                  <div className="mt-4">
+                    <p>운영시간:</p>
+                    <p>평일 07:00~18:00</p>
+                    <p>주말 07:00~12:00</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="border-t border-gray-600 mt-12 pt-8 text-center">
