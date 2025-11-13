@@ -593,7 +593,7 @@ export default function QuotePage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="font-heading">주의사항</CardTitle>
+                    <CardTitle className="font-heading">※ 주의사항</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="space-y-2 text-sm font-paragraph text-gray-600">
