@@ -603,8 +603,7 @@ export default function ProductDetailPage() {
               <h3 className="text-2xl font-heading font-bold mb-4">동경바닥재</h3>
               <p className="font-paragraph text-gray-300 mb-4 text-sm">
                 데코타일/장판/마루/벽지<br />
-                시공·자재 전문<br />
-                B2C/B2B/현장 납품
+                시공·자재 전문
               </p>
             </div>
             <div>
