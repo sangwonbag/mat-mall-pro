@@ -41,6 +41,7 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedBrand, setSelectedBrand] = useState('');
+  const [showFilterTags, setShowFilterTags] = useState(false); // 필터 태그 표시 여부
   const [products, setProducts] = useState<Products[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
@@ -159,6 +160,7 @@ export default function SearchPage() {
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
     setSelectedBrand('');
+    setShowFilterTags(true); // 상단 카테고리 버튼 클릭 시 필터 태그 표시
     if (category !== '전체') {
       setExpandedCategories(prev => 
         prev.includes(category) ? prev : [...prev, category]
@@ -169,6 +171,8 @@ export default function SearchPage() {
   const handleBrandSelect = (brand: string, category: string) => {
     setSelectedBrand(brand);
     setSelectedCategory(category);
+    // 브랜드 선택 시에는 필터 태그를 표시하지 않음
+    setShowFilterTags(false);
   };
 
   const handleSearch = () => {
@@ -184,6 +188,7 @@ export default function SearchPage() {
     setSearchTerm('');
     setSelectedCategory('');
     setSelectedBrand('');
+    setShowFilterTags(false); // 필터 초기화 시 태그도 숨김
     navigate('/search');
   };
 
@@ -269,7 +274,11 @@ export default function SearchPage() {
                       {brands.map((brand) => (
                         <div
                           key={brand}
-                          className={`brand-sub-menu-item cursor-pointer`}
+                          className={`brand-sub-menu-item cursor-pointer transition-colors duration-200 ${
+                            selectedBrand === brand 
+                              ? 'text-[#B89C7D] font-medium' 
+                              : 'hover:text-[#B89C7D]'
+                          }`}
                           onClick={() => handleBrandSelect(brand, category)}
                         >
                           <span>{brand}</span>
@@ -416,28 +425,50 @@ export default function SearchPage() {
                 </Button>
               </div>
 
-              {/* 선택된 필터 표시 */}
-              {(selectedCategory || selectedBrand) && (
-                <div className="flex items-center justify-center gap-4 mb-6">
+              {/* 선택된 필터 표시 - 상단 카테고리 버튼 클릭 시에만 표시 */}
+              {showFilterTags && (selectedCategory || selectedBrand) && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center justify-center gap-4 mb-6"
+                >
                   {selectedCategory && (
-                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
+                    <motion.div 
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2, delay: 0.1 }}
+                      className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm"
+                    >
                       카테고리: {getCategoryDisplayName(selectedCategory)}
-                    </div>
+                    </motion.div>
                   )}
                   {selectedBrand && (
-                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
+                    <motion.div 
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2, delay: 0.2 }}
+                      className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm"
+                    >
                       브랜드: {selectedBrand}
-                    </div>
+                    </motion.div>
                   )}
-                  <Button
-                    onClick={clearFilters}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full border-2 border-[#2E2E2E] text-[#2E2E2E] hover:bg-[#2E2E2E] hover:text-white"
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2, delay: 0.3 }}
                   >
-                    필터 초기화
-                  </Button>
-                </div>
+                    <Button
+                      onClick={clearFilters}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-2 border-[#2E2E2E] text-[#2E2E2E] hover:bg-[#2E2E2E] hover:text-white"
+                    >
+                      필터 초기화
+                    </Button>
+                  </motion.div>
+                </motion.div>
               )}
             </div>
           </section>
