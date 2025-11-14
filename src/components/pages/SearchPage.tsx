@@ -374,7 +374,7 @@ export default function SearchPage() {
           </div>
 
           {/* Search Section */}
-          <section className="bg-gray-50 py-12">
+          <section className="bg-white py-12">
             <div className="max-w-[120rem] mx-auto px-4">
               <h1 className="text-3xl font-bold text-[#2E2E2E] text-center mb-8">
                 제품 검색
