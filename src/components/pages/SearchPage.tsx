@@ -177,7 +177,7 @@ export default function SearchPage() {
   const handleBrandSelect = (brand: string, category: string) => {
     setSelectedBrand(brand);
     setSelectedCategory(category);
-    // 레이아웃 변경 없이 상품 리스트만 필터링
+    // 브랜드 선택 시에는 UI 모션 없이 상품 리스트만 필터링
     filterProducts();
   };
 
@@ -265,13 +265,7 @@ export default function SearchPage() {
               
               <AnimatePresence>
                 {expandedCategories.includes(category) && brands.length > 0 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
+                  <div className="overflow-hidden">
                     <div className="ml-6 space-y-1 mt-2">
                       {brands.map((brand) => (
                         <div
@@ -287,7 +281,7 @@ export default function SearchPage() {
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
@@ -297,11 +291,9 @@ export default function SearchPage() {
       
       {/* 센스타일 트랜디 카탈로그 고정 버튼 */}
       <div className="p-6 border-t border-gray-200">
-        <motion.button
+        <button
           onClick={openSenstyleCatalog}
           className="w-full h-12 bg-[#111111] text-white rounded-xl flex flex-col items-center justify-center transition-all duration-180 hover:bg-[#333333] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#333333] focus:ring-offset-2"
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
         >
           <div className="text-sm font-medium leading-tight">
             센스타일 트랜디 카탈로그 보기
@@ -309,7 +301,7 @@ export default function SearchPage() {
           <div className="text-xs text-gray-300 leading-tight">
             KCC 글라스 공식 PDF
           </div>
-        </motion.button>
+        </button>
       </div>
     </div>
   );
@@ -427,19 +419,12 @@ export default function SearchPage() {
                 </Button>
               </div>
 
-              {/* 선택된 필터 표시 */}
-              {(selectedCategory && selectedCategory !== '전체') || selectedBrand ? (
+              {/* 선택된 필터 표시 - 카테고리만 */}
+              {selectedCategory && selectedCategory !== '전체' ? (
                 <div className="flex items-center justify-center gap-4 mb-6">
-                  {selectedCategory && selectedCategory !== '전체' && (
-                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
-                      카테고리: {selectedCategory}
-                    </div>
-                  )}
-                  {selectedBrand && (
-                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
-                      브랜드: {selectedBrand}
-                    </div>
-                  )}
+                  <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
+                    카테고리: {selectedCategory}
+                  </div>
                   <Button
                     onClick={clearFilters}
                     variant="outline"
