@@ -2,12 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, User, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { BaseCrudService } from '@/integrations';
 import { ChatConsultations, ChatMessages } from '@/entities';
-import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface Message {
   id: string;
@@ -23,14 +20,8 @@ interface ChatWidgetProps {
 
 export function ChatWidget({ className = '' }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isStarted, setIsStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [visitorInfo, setVisitorInfo] = useState({
-    name: '',
-    contact: '',
-    inquiry: ''
-  });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -51,29 +42,18 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
 
   // Poll for new messages every 3 seconds when chat is active
   useEffect(() => {
-    if (!sessionId || !isStarted) return;
+    if (!sessionId) return;
 
     const interval = setInterval(() => {
       loadMessages();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [sessionId, isStarted]);
+  }, [sessionId]);
 
   const loadExistingSession = async (sessionId: string) => {
     try {
-      const { items: consultations } = await BaseCrudService.getAll<ChatConsultations>('chatconsultations');
-      const existingSession = consultations.find(c => c.sessionId === sessionId);
-      
-      if (existingSession) {
-        setVisitorInfo({
-          name: existingSession.visitorName || '',
-          contact: existingSession.visitorContact || '',
-          inquiry: existingSession.initialInquiry || ''
-        });
-        setIsStarted(true);
-        await loadMessages();
-      }
+      await loadMessages();
     } catch (error) {
       console.error('Error loading existing session:', error);
     }
@@ -102,19 +82,14 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
   };
 
   const startChat = async () => {
-    if (!visitorInfo.name || !visitorInfo.contact || !visitorInfo.inquiry) {
-      alert('모든 필드를 입력해주세요.');
-      return;
-    }
-
     setIsLoading(true);
     try {
       const newSessionId = crypto.randomUUID();
       const consultation: ChatConsultations = {
         _id: crypto.randomUUID(),
-        visitorName: visitorInfo.name,
-        visitorContact: visitorInfo.contact,
-        initialInquiry: visitorInfo.inquiry,
+        visitorName: '익명 사용자',
+        visitorContact: '',
+        initialInquiry: '채팅 상담을 시작합니다.',
         status: 'New',
         sessionId: newSessionId,
         startTime: new Date().toISOString()
@@ -122,21 +97,20 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
 
       await BaseCrudService.create('chatconsultations', consultation);
 
-      // Save initial message
-      const initialMessage: ChatMessages = {
+      // Save welcome message from admin
+      const welcomeMessage: ChatMessages = {
         _id: crypto.randomUUID(),
         consultationSessionId: newSessionId,
-        senderType: 'visitor',
-        messageContent: visitorInfo.inquiry,
+        senderType: 'admin',
+        messageContent: '안녕하세요! 동경바닥재 상담센터입니다. 무엇을 도와드릴까요?',
         sentAt: new Date().toISOString(),
         isRead: false
       };
 
-      await BaseCrudService.create('chatmessages', initialMessage);
+      await BaseCrudService.create('chatmessages', welcomeMessage);
 
       setSessionId(newSessionId);
       localStorage.setItem('chatSessionId', newSessionId);
-      setIsStarted(true);
       await loadMessages();
     } catch (error) {
       console.error('Error starting chat:', error);
@@ -147,7 +121,17 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !sessionId) return;
+    if (!newMessage.trim()) return;
+
+    // If no session exists, start one first
+    if (!sessionId) {
+      await startChat();
+      // Wait a moment for session to be created
+      setTimeout(() => {
+        sendMessage();
+      }, 500);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -230,123 +214,62 @@ export function ChatWidget({ className = '' }: ChatWidgetProps) {
           </CardHeader>
 
           <CardContent className="p-0 h-full flex flex-col">
-            {!isStarted ? (
-              /* Initial Form */
-              <div className="p-4 space-y-4 flex-1">
-                <div className="text-sm text-gray-600 mb-4">
-                  바닥재 상담을 위해 정보를 입력해주세요.
-                </div>
-                
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">이름</label>
-                    <Input
-                      placeholder="이름을 입력하세요"
-                      value={visitorInfo.name}
-                      onChange={(e) => setVisitorInfo(prev => ({ ...prev, name: e.target.value }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">연락처</label>
-                    <Input
-                      placeholder="전화번호 또는 이메일"
-                      value={visitorInfo.contact}
-                      onChange={(e) => {
-                        // 숫자로만 이루어져 있으면 전화번호로 간주하여 포맷팅
-                        const value = e.target.value;
-                        const isPhoneNumber = /^\d/.test(value.replace(/[^\d]/g, ''));
-                        
-                        if (isPhoneNumber && value.replace(/[^\d]/g, '').length > 0) {
-                          const formatted = formatPhoneNumber(value);
-                          setVisitorInfo(prev => ({ ...prev, contact: formatted }));
-                        } else {
-                          setVisitorInfo(prev => ({ ...prev, contact: value }));
-                        }
-                      }}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">문의내용</label>
-                    <Textarea
-                      placeholder="문의하실 내용을 간단히 적어주세요"
-                      value={visitorInfo.inquiry}
-                      onChange={(e) => setVisitorInfo(prev => ({ ...prev, inquiry: e.target.value }))}
-                      className="mt-1 resize-none"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={startChat} 
-                  className="w-full mt-4"
-                  disabled={isLoading}
-                >
-                  {isLoading ? '시작 중...' : '상담 시작'}
-                </Button>
-              </div>
-            ) : (
-              /* Chat Interface */
-              <>
-                {/* Messages Area */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-3 max-h-64">
-                  {messages.map((message) => (
+            {/* Chat Interface */}
+            <>
+              {/* Messages Area */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 max-h-64">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.senderType === 'visitor' ? 'justify-end' : 'justify-start'}`}
+                  >
                     <div
-                      key={message.id}
-                      className={`flex ${message.senderType === 'visitor' ? 'justify-end' : 'justify-start'}`}
+                      className={`max-w-[80%] p-3 rounded-lg ${
+                        message.senderType === 'visitor'
+                          ? 'bg-primary text-white rounded-br-sm'
+                          : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                      }`}
                     >
-                      <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          message.senderType === 'visitor'
-                            ? 'bg-primary text-white rounded-br-sm'
-                            : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                        }`}
-                      >
-                        <div className="text-sm">{message.content}</div>
-                        <div className={`text-xs mt-1 ${
-                          message.senderType === 'visitor' ? 'text-white/70' : 'text-gray-500'
-                        }`}>
-                          {formatTime(message.timestamp)}
-                        </div>
+                      <div className="text-sm">{message.content}</div>
+                      <div className={`text-xs mt-1 ${
+                        message.senderType === 'visitor' ? 'text-white/70' : 'text-gray-500'
+                      }`}>
+                        {formatTime(message.timestamp)}
                       </div>
                     </div>
-                  ))}
-                  
-                  {messages.length === 0 && (
-                    <div className="text-center text-gray-500 text-sm py-8">
-                      상담사가 곧 응답드릴 예정입니다.
-                    </div>
-                  )}
-                  
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Message Input */}
-                <div className="p-4 border-t bg-gray-50">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="메시지를 입력하세요..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      disabled={isLoading}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={sendMessage} 
-                      size="icon"
-                      disabled={isLoading || !newMessage.trim()}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
                   </div>
+                ))}
+                
+                {messages.length === 0 && (
+                  <div className="text-center text-gray-500 text-sm py-8">
+                    안녕하세요! 바로 메시지를 입력하시면 상담을 시작할 수 있습니다.
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input */}
+              <div className="p-4 border-t bg-gray-50">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="메시지를 입력하세요..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={sendMessage} 
+                    size="icon"
+                    disabled={isLoading || !newMessage.trim()}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
-              </>
-            )}
+              </div>
+            </>
           </CardContent>
         </Card>
       )}
