@@ -160,3 +160,45 @@ export interface Products {
   /** @wixFieldType text */
   category?: string;
 }
+
+
+/**
+ * Collection ID: wallpaperpdfsamples
+ * Interface for WallpaperPdfSamples
+ */
+export interface WallpaperPdfSamples {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  sampleName?: string;
+  /** @wixFieldType url */
+  pdfUrl?: string;
+  /** @wixFieldType text */
+  category?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType image */
+  thumbnailImage?: string;
+}
+
+
+/**
+ * Collection ID: wallpaperpdfsamples
+ * Interface for WallpaperPDFSamples
+ */
+export interface WallpaperPDFSamples {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  sampleName?: string;
+  /** @wixFieldType url */
+  pdfUrl?: string;
+  /** @wixFieldType text */
+  category?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType image */
+  thumbnailImage?: string;
+}

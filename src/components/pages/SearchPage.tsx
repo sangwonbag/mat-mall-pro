@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText } from 'lucide-react';
+import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories } from '@/entities';
+import { Products, ProductCategories, WallpaperPdfSamples } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +45,7 @@ export default function SearchPage() {
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
+  const [pdfSamples, setPdfSamples] = useState<WallpaperPdfSamples[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
@@ -78,13 +79,15 @@ export default function SearchPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult] = await Promise.all([
+      const [productsResult, categoriesResult, pdfSamplesResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
-        BaseCrudService.getAll<ProductCategories>('productcategories')
+        BaseCrudService.getAll<ProductCategories>('productcategories'),
+        BaseCrudService.getAll<WallpaperPdfSamples>('wallpaperpdfsamples')
       ]);
 
       setProducts(productsResult.items);
       setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
+      setPdfSamples(pdfSamplesResult.items);
 
       // Extract unique brands
       const uniqueBrands = [...new Set(productsResult.items
@@ -479,6 +482,72 @@ export default function SearchPage() {
                       </motion.div>
                     ))}
                   </div>
+
+                  {/* PDF 샘플 섹션 - 벽지 카테고리일 때만 표시 */}
+                  {(selectedCategory === '벽지' || selectedCategory === 'wallpaper') && pdfSamples.length > 0 && (
+                    <div className="mt-16">
+                      <div className="border-t border-gray-200 pt-12">
+                        <h3 className="text-2xl font-bold text-[#2E2E2E] mb-8 text-center">
+                          벽지 샘플 카탈로그
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {pdfSamples
+                            .filter(sample => sample.category === '벽지' || sample.category === 'wallpaper')
+                            .map((sample) => (
+                              <motion.div
+                                key={sample._id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-[#B89C7D]"
+                                style={{ borderRadius: 0 }}
+                              >
+                                {/* 썸네일 이미지 */}
+                                <div className="w-full aspect-[4/3] bg-gray-50 relative">
+                                  <Image
+                                    src={sample.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_53a3a54e09f14b3ea2e7ac62cd4c2a03~mv2.png?originWidth=256&originHeight=192'}
+                                    alt={sample.sampleName || 'PDF 샘플'}
+                                    className="w-full h-full object-cover"
+                                    style={{ borderRadius: 0 }}
+                                    width={300}
+                                  />
+                                  {/* PDF 아이콘 오버레이 */}
+                                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                    <FileText className="h-12 w-12 text-white" />
+                                  </div>
+                                </div>
+                                
+                                {/* 샘플 정보 */}
+                                <div className="p-4">
+                                  <h4 className="text-lg font-paragraph font-semibold text-gray-900 mb-2">
+                                    {sample.sampleName}
+                                  </h4>
+                                  
+                                  {sample.description && (
+                                    <p className="text-sm font-paragraph text-gray-600 mb-4 line-clamp-2">
+                                      {sample.description}
+                                    </p>
+                                  )}
+                                  
+                                  {/* PDF 다운로드 버튼 */}
+                                  <Button
+                                    onClick={() => {
+                                      if (sample.pdfUrl) {
+                                        window.open(sample.pdfUrl, '_blank');
+                                      }
+                                    }}
+                                    className="w-full bg-[#2E2E2E] hover:bg-[#B89C7D] text-white transition-colors duration-200"
+                                    style={{ borderRadius: 0 }}
+                                  >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    PDF 다운로드
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-20">
