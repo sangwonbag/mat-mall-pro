@@ -39,9 +39,8 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '전체');
   const [selectedBrand, setSelectedBrand] = useState('');
-  const [showFilterTags, setShowFilterTags] = useState(false); // 필터 태그 표시 여부
   const [products, setProducts] = useState<Products[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
@@ -118,8 +117,13 @@ export default function SearchPage() {
 
     // Filter by category
     if (selectedCategory && selectedCategory !== '전체') {
-      // 데코타일 선택 시 deco-tile 카테고리와 매칭
-      const categoryToMatch = selectedCategory === '데코타일' ? 'deco-tile' : selectedCategory;
+      // 카테고리 매핑 처리
+      let categoryToMatch = selectedCategory;
+      if (selectedCategory === '데코타일') categoryToMatch = 'deco-tile';
+      else if (selectedCategory === '장판') categoryToMatch = 'flooring';
+      else if (selectedCategory === '마루') categoryToMatch = 'wood-flooring';
+      else if (selectedCategory === '벽지') categoryToMatch = 'wallpaper';
+      
       filtered = filtered.filter(product => product.category === categoryToMatch);
     }
 
@@ -160,27 +164,25 @@ export default function SearchPage() {
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
     setSelectedBrand('');
-    setShowFilterTags(true); // 상단 카테고리 버튼 클릭 시 필터 태그 표시
+    // 페이지 이동 없이 현재 데이터셋 필터만 업데이트
     if (category !== '전체') {
       setExpandedCategories(prev => 
         prev.includes(category) ? prev : [...prev, category]
       );
     }
+    // URL 업데이트 없이 필터링만 수행
+    filterProducts();
   };
 
   const handleBrandSelect = (brand: string, category: string) => {
     setSelectedBrand(brand);
     setSelectedCategory(category);
-    // 브랜드 선택 시에는 필터 태그를 표시하지 않음
-    setShowFilterTags(false);
+    // 레이아웃 변경 없이 상품 리스트만 필터링
+    filterProducts();
   };
 
   const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchTerm.trim()) params.set('q', searchTerm.trim());
-    if (selectedCategory) params.set('category', selectedCategory);
-    
-    navigate(`/search?${params.toString()}`);
+    // URL 업데이트 없이 필터링만 수행
     filterProducts();
   };
 
@@ -188,8 +190,8 @@ export default function SearchPage() {
     setSearchTerm('');
     setSelectedCategory('');
     setSelectedBrand('');
-    setShowFilterTags(false); // 필터 초기화 시 태그도 숨김
-    navigate('/search');
+    // URL 업데이트 없이 필터 초기화
+    filterProducts();
   };
 
   // 센스타일 트랜디 카탈로그 PDF 열기 함수
@@ -425,51 +427,29 @@ export default function SearchPage() {
                 </Button>
               </div>
 
-              {/* 선택된 필터 표시 - 상단 카테고리 버튼 클릭 시에만 표시 */}
-              {showFilterTags && (selectedCategory || selectedBrand) && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex items-center justify-center gap-4 mb-6"
-                >
-                  {selectedCategory && (
-                    <motion.div 
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.2, delay: 0.1 }}
-                      className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm"
-                    >
-                      카테고리: {getCategoryDisplayName(selectedCategory)}
-                    </motion.div>
+              {/* 선택된 필터 표시 */}
+              {(selectedCategory && selectedCategory !== '전체') || selectedBrand ? (
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  {selectedCategory && selectedCategory !== '전체' && (
+                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
+                      카테고리: {selectedCategory}
+                    </div>
                   )}
                   {selectedBrand && (
-                    <motion.div 
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.2, delay: 0.2 }}
-                      className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm"
-                    >
+                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
                       브랜드: {selectedBrand}
-                    </motion.div>
+                    </div>
                   )}
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2, delay: 0.3 }}
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full border-2 border-[#2E2E2E] text-[#2E2E2E] hover:bg-[#2E2E2E] hover:text-white"
                   >
-                    <Button
-                      onClick={clearFilters}
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full border-2 border-[#2E2E2E] text-[#2E2E2E] hover:bg-[#2E2E2E] hover:text-white"
-                    >
-                      필터 초기화
-                    </Button>
-                  </motion.div>
-                </motion.div>
-              )}
+                    필터 초기화
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </section>
 
