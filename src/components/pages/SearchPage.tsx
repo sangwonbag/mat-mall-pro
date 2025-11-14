@@ -49,6 +49,7 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
+  const [expandedTopCategory, setExpandedTopCategory] = useState<string>('');
 
   // 브랜드 메뉴 스타일 CSS
   const brandMenuStyles = `
@@ -153,6 +154,29 @@ export default function SearchPage() {
     setFilteredProducts(filtered);
   };
 
+  const toggleTopCategory = (category: string) => {
+    setExpandedTopCategory(prev => prev === category ? '' : category);
+  };
+
+  const handleTopCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedBrand('');
+    // 카테고리 선택 시 해당 카테고리 확장
+    if (category !== '전체') {
+      setExpandedTopCategory(category);
+    } else {
+      setExpandedTopCategory('');
+    }
+    filterProducts();
+  };
+
+  const handleTopBrandSelect = (brand: string, category: string) => {
+    setSelectedBrand(brand);
+    setSelectedCategory(category);
+    // 브랜드 선택 시에는 카테고리 확장 상태 유지하고 필터링만 수행
+    filterProducts();
+  };
+
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => 
       prev.includes(category) 
@@ -190,6 +214,7 @@ export default function SearchPage() {
     setSearchTerm('');
     setSelectedCategory('');
     setSelectedBrand('');
+    setExpandedTopCategory('');
     // URL 업데이트 없이 필터 초기화
     filterProducts();
   };
@@ -376,19 +401,66 @@ export default function SearchPage() {
           <div className="sticky top-[73px] z-30 bg-white border-b border-gray-200 py-4">
             <div className="max-w-[120rem] mx-auto px-4">
               <div className="flex items-center gap-4 overflow-x-auto">
-
-                {Object.keys(brandStructure).map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => handleCategorySelect(category)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                      selectedCategory === category
-                        ? 'bg-[#B89C7D] text-white'
-                        : 'bg-gray-100 text-[#2E2E2E] hover:bg-[#EAE3D8]'
-                    }`}
-                  >
-                    {category}
-                  </button>
+                {Object.entries(brandStructure).map(([category, brands]) => (
+                  <div key={category} className="relative">
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => handleTopCategorySelect(category)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                          selectedCategory === category
+                            ? 'bg-[#B89C7D] text-white'
+                            : 'bg-gray-100 text-[#2E2E2E] hover:bg-[#EAE3D8]'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                      {brands.length > 0 && (
+                        <button
+                          onClick={() => toggleTopCategory(category)}
+                          className={`ml-1 p-1 rounded-full transition-colors ${
+                            selectedCategory === category
+                              ? 'text-white hover:bg-white hover:bg-opacity-20'
+                              : 'text-[#2E2E2E] hover:bg-[#EAE3D8]'
+                          }`}
+                        >
+                          <ChevronDown 
+                            className={`h-4 w-4 transition-transform duration-200 ${
+                              expandedTopCategory === category ? 'rotate-180' : ''
+                            }`} 
+                          />
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* 브랜드 드롭다운 */}
+                    <AnimatePresence>
+                      {expandedTopCategory === category && brands.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-40 min-w-[200px]"
+                        >
+                          <div className="py-2">
+                            {brands.map((brand) => (
+                              <button
+                                key={brand}
+                                onClick={() => handleTopBrandSelect(brand, category)}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                                  selectedBrand === brand
+                                    ? 'bg-[#B89C7D] text-white'
+                                    : 'text-[#2E2E2E] hover:bg-[#EAE3D8]'
+                                }`}
+                              >
+                                {brand}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 ))}
               </div>
             </div>
@@ -419,12 +491,19 @@ export default function SearchPage() {
                 </Button>
               </div>
 
-              {/* 선택된 필터 표시 - 카테고리만 */}
-              {selectedCategory && selectedCategory !== '전체' ? (
+              {/* 선택된 필터 표시 - 카테고리와 브랜드 */}
+              {(selectedCategory && selectedCategory !== '전체') || selectedBrand ? (
                 <div className="flex items-center justify-center gap-4 mb-6">
-                  <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
-                    카테고리: {selectedCategory}
-                  </div>
+                  {selectedCategory && selectedCategory !== '전체' && (
+                    <div className="bg-[#B89C7D] text-white px-4 py-2 rounded-full text-sm">
+                      카테고리: {selectedCategory}
+                    </div>
+                  )}
+                  {selectedBrand && (
+                    <div className="bg-[#8B7355] text-white px-4 py-2 rounded-full text-sm">
+                      브랜드: {selectedBrand}
+                    </div>
+                  )}
                   <Button
                     onClick={clearFilters}
                     variant="outline"
