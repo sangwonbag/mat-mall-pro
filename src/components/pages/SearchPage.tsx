@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, WallpaperPdfSamples } from '@/entities';
+import { Products, ProductCategories, WallpaperPDFSamples } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,7 +45,7 @@ export default function SearchPage() {
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
-  const [pdfSamples, setPdfSamples] = useState<WallpaperPdfSamples[]>([]);
+  const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
@@ -82,7 +82,7 @@ export default function SearchPage() {
       const [productsResult, categoriesResult, pdfSamplesResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
         BaseCrudService.getAll<ProductCategories>('productcategories'),
-        BaseCrudService.getAll<WallpaperPdfSamples>('wallpaperpdfsamples')
+        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples')
       ]);
 
       setProducts(productsResult.items);
@@ -169,11 +169,32 @@ export default function SearchPage() {
     navigate('/search');
   };
 
+  // 센스타일 트랜디 카탈로그 PDF 열기 함수
+  const openSenstyleCatalog = async () => {
+    try {
+      // wallpaperpdfsamples에서 센스타일 트랜디 카탈로그 찾기
+      const { items } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
+      const senstyleCatalog = items.find(item => 
+        item.sampleName?.includes('센스타일 트랜디') || 
+        item.category?.includes('KCC 글라스')
+      );
+      
+      if (senstyleCatalog && senstyleCatalog.pdfUrl) {
+        window.open(senstyleCatalog.pdfUrl, '_blank');
+      } else {
+        // 백업 URL 또는 알림
+        console.warn('센스타일 트랜디 카탈로그를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      console.error('카탈로그 로딩 중 오류:', error);
+    }
+  };
+
   // 브랜드 사이드바 컴포넌트
   const BrandSidebar = ({ isMobile = false }) => (
-    <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto`}>
+    <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto flex flex-col`}>
       <style dangerouslySetInnerHTML={{ __html: brandMenuStyles }} />
-      <div className="p-6">
+      <div className="p-6 flex-1">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-[#2E2E2E]">{"브랜드"}</h3>
           {isMobile && (
@@ -243,6 +264,23 @@ export default function SearchPage() {
             </div>
           ))}
         </div>
+      </div>
+      
+      {/* 센스타일 트랜디 카탈로그 고정 버튼 */}
+      <div className="p-6 border-t border-gray-200">
+        <motion.button
+          onClick={openSenstyleCatalog}
+          className="w-full h-12 bg-[#111111] text-white rounded-xl flex flex-col items-center justify-center transition-all duration-180 hover:bg-[#333333] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#333333] focus:ring-offset-2"
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <div className="text-sm font-medium leading-tight">
+            센스타일 트랜디 카탈로그 보기
+          </div>
+          <div className="text-xs text-gray-300 leading-tight">
+            KCC 글라스 공식 PDF
+          </div>
+        </motion.button>
       </div>
     </div>
   );
