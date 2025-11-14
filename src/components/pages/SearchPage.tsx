@@ -127,6 +127,24 @@ export default function SearchPage() {
       filtered = filtered.filter(product => product.brandName === selectedBrand);
     }
 
+    // Sort by materialCode (numeric ascending order)
+    filtered = filtered.sort((a, b) => {
+      const codeA = a.materialCode || '';
+      const codeB = b.materialCode || '';
+      
+      // Extract numeric parts from material codes for proper numeric sorting
+      const numA = parseInt(codeA.replace(/\D/g, '')) || 0;
+      const numB = parseInt(codeB.replace(/\D/g, '')) || 0;
+      
+      // If numeric parts are different, sort by them
+      if (numA !== numB) {
+        return numA - numB;
+      }
+      
+      // If numeric parts are same, sort alphabetically
+      return codeA.localeCompare(codeB);
+    });
+
     setFilteredProducts(filtered);
   };
 
