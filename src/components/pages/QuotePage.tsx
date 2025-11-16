@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search, X, ChevronRight, Home, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BaseCrudService } from '@/integrations';
-import { Products } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +14,8 @@ import { ChatWidget } from '@/components/ui/chat-widget';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface QuoteFormData {
-  selectedProducts: (Products & { quantity: number })[];
+  materialName: string;
+  quantity: number;
   area: string;
   address: string;
   name: string;
@@ -27,7 +26,8 @@ interface QuoteFormData {
 }
 
 interface ValidationErrors {
-  selectedProducts?: string;
+  materialName?: string;
+  quantity?: string;
   area?: string;
   address?: string;
   name?: string;
@@ -37,17 +37,13 @@ interface ValidationErrors {
 export default function QuotePage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Products[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
-  const [productSearchTerm, setProductSearchTerm] = useState('');
-  const [showProductList, setShowProductList] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
-  const searchRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<QuoteFormData>({
-    selectedProducts: location.state?.selectedProduct ? [{ ...location.state.selectedProduct, quantity: 1 }] : [],
+    materialName: location.state?.selectedProduct?.productName || '',
+    quantity: 1,
     area: '',
     address: '',
     name: '',
@@ -57,72 +53,15 @@ export default function QuotePage() {
     additionalRequests: ''
   });
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  useEffect(() => {
-    filterProducts();
-  }, [products, productSearchTerm]);
-
-  // 외부 클릭 시 자재 리스트 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowProductList(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      const { items } = await BaseCrudService.getAll<Products>('products');
-      setProducts(items);
-      setFilteredProducts(items); // 초기에는 모든 제품 표시
-    } catch (error) {
-      console.error('Error loading products:', error);
-    }
-  };
-
-  const filterProducts = () => {
-    let filtered = products;
-
-    // Filter by search term (동일한 알고리즘 적용)
-    if (productSearchTerm.trim()) {
-      const term = productSearchTerm.toLowerCase();
-      filtered = filtered.filter(product =>
-        product.productName?.toLowerCase().includes(term) ||
-        product.brandName?.toLowerCase().includes(term) ||
-        product.specifications?.toLowerCase().includes(term)
-      );
-    }
-
-    setFilteredProducts(filtered);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
-  };
+  // 더 이상 필요하지 않은 useEffect들과 함수들 제거
 
   const calculateTotalPrice = () => {
-    if (!formData.selectedProducts.length || !formData.area) return 0;
+    if (!formData.materialName || !formData.area || !formData.quantity) return 0;
     
     const area = parseFloat(formData.area);
-    let total = 0;
-    
-    // 선택된 모든 제품의 가격 합계
-    formData.selectedProducts.forEach(product => {
-      if (product.price) {
-        total += product.price * product.quantity * area;
-      }
-    });
-    
-    return total;
+    // 기본 가격을 설정하거나 가격 문의로 표시
+    // 실제 구현에서는 자재명에 따른 가격 로직을 추가할 수 있습니다
+    return 0; // 가격 문의로 처리
   };
 
   const validateStep = (step: number): boolean => {
@@ -130,8 +69,11 @@ export default function QuotePage() {
     
     switch (step) {
       case 1:
-        if (!formData.selectedProducts.length) {
-          newErrors.selectedProducts = '시공 자재를 선택해주세요.';
+        if (!formData.materialName.trim()) {
+          newErrors.materialName = '자재명을 입력해주세요.';
+        }
+        if (!formData.quantity || formData.quantity <= 0) {
+          newErrors.quantity = '수량을 입력해주세요.';
         }
         break;
       case 2:
@@ -171,51 +113,21 @@ export default function QuotePage() {
     setErrors({});
   };
 
-  const handleProductSelect = (product: Products) => {
-    // 이미 선택된 제품인지 확인
-    const isAlreadySelected = formData.selectedProducts.some(p => p._id === product._id);
-    
-    if (!isAlreadySelected) {
-      setFormData(prev => ({
-        ...prev,
-        selectedProducts: [...prev.selectedProducts, { ...product, quantity: 1 }]
-      }));
-    }
-    
-    setShowProductList(false);
-    setProductSearchTerm('');
+  const handleQuantityChange = (change: number) => {
+    setFormData(prev => ({
+      ...prev,
+      quantity: Math.max(1, prev.quantity + change)
+    }));
   };
 
-  const handleQuantityInputChange = (productId: string, value: string) => {
+  const handleQuantityInputChange = (value: string) => {
     // 숫자가 아닌 값이나 0 이하의 값 자동 보정
     let quantity = parseInt(value) || 1;
     if (quantity < 1) quantity = 1;
     
     setFormData(prev => ({
       ...prev,
-      selectedProducts: prev.selectedProducts.map(p => 
-        p._id === productId 
-          ? { ...p, quantity }
-          : p
-      )
-    }));
-  };
-
-  const handleRemoveProduct = (productId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedProducts: prev.selectedProducts.filter(p => p._id !== productId)
-    }));
-  };
-
-  const handleQuantityChange = (productId: string, change: number) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedProducts: prev.selectedProducts.map(p => 
-        p._id === productId 
-          ? { ...p, quantity: Math.max(1, p.quantity + change) }
-          : p
-      )
+      quantity
     }));
   };
 
@@ -224,16 +136,13 @@ export default function QuotePage() {
     setFormData(prev => {
       const newFormData = { ...prev, area };
       
-      // 평수가 있고 제품이 선택되어 있을 때 자재 갯수 자동 계산
-      if (area && prev.selectedProducts.length > 0 && parseFloat(area) > 0) {
+      // 평수가 있을 때 자재 갯수 자동 계산
+      if (area && parseFloat(area) > 0) {
         const areaValue = parseFloat(area);
         // 1평당 1개 기준으로 계산 (필요에 따라 조정 가능)
         const calculatedQuantity = Math.ceil(areaValue);
         
-        newFormData.selectedProducts = prev.selectedProducts.map(product => ({
-          ...product,
-          quantity: calculatedQuantity
-        }));
+        newFormData.quantity = calculatedQuantity;
       }
       
       return newFormData;
@@ -360,8 +269,8 @@ export default function QuotePage() {
     </div>
   );
 
-  // STEP 1: 시공 자재 선택
-  const Step1MaterialSelection = () => (
+  // STEP 1: 자재명 직접 입력
+  const Step1MaterialInput = () => (
     <motion.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
@@ -370,195 +279,83 @@ export default function QuotePage() {
     >
       <div className="text-center mb-8">
         <h2 className="text-2xl font-heading font-bold text-gray-900 mb-2">
-          시공 자재 선택
+          시공 자재 입력
         </h2>
         <p className="text-gray-600 font-paragraph">
-          시공할 자재를 검색하거나 목록에서 선택해주세요
+          시공할 자재명과 수량을 입력해주세요
         </p>
       </div>
 
-      {/* 선택된 자재 표시 */}
-      {formData.selectedProducts.length > 0 && (
-        <Card className="rounded-3xl border-0 shadow-sm bg-gradient-to-r from-teal-50 to-emerald-50">
-          <CardContent className="p-6">
-            <h3 className="font-paragraph font-semibold text-lg mb-4 text-gray-900">
-              선택된 자재 ({formData.selectedProducts.length}개)
-            </h3>
-            <div className="space-y-4">
-              {formData.selectedProducts.map((product) => (
-                <div key={product._id} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center space-x-4">
-                    <Image
-                      src={product.productImage || 'https://static.wixstatic.com/media/9f8727_07ad5a2f02bd4059b9efd6f7826fb511~mv2.png?originWidth=128&originHeight=128'}
-                      alt={product.productName || ''}
-                      className="w-16 h-16 object-cover rounded-xl"
-                      width={64}
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-paragraph font-semibold text-gray-900">{product.productName}</h4>
-                      <p className="text-gray-500 font-paragraph text-sm">{product.materialCode}</p>
-                      <p className="text-teal-600 font-paragraph font-bold">
-                        {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
-                      </p>
-                    </div>
-                    <motion.div
-                      whileTap={{ 
-                        scale: 0.97,
-                        x: [-1, 1, -1, 0]
-                      }}
-                      transition={{ 
-                        scale: { duration: 0.1 },
-                        x: { duration: 0.12, times: [0, 0.33, 0.66, 1] }
-                      }}
-                    >
-                      <Button
-                        onClick={() => handleRemoveProduct(product._id)}
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 rounded-full p-0 hover:bg-red-50"
-                      >
-                        <X className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </motion.div>
-                  </div>
-                  
-                  {/* 수량 입력 박스 */}
-                  <div className="mt-4 flex justify-center">
-                    <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden" style={{ width: '165px' }}>
-                      <motion.button
-                        type="button"
-                        onClick={() => handleQuantityChange(product._id, -1)}
-                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-xl"
-                        disabled={product.quantity <= 1}
-                        whileTap={{ scale: 0.96 }}
-                        transition={{ duration: 0.1 }}
-                      >
-                        <Minus className="h-4 w-4 text-gray-600" />
-                      </motion.button>
-                      
-                      <input
-                        type="text"
-                        value={product.quantity}
-                        onChange={(e) => handleQuantityInputChange(product._id, e.target.value)}
-                        className="flex-1 h-11 text-center font-semibold text-gray-900 bg-gray-100 border-0 outline-none"
-                        style={{ fontSize: '17px', fontWeight: '600' }}
-                      />
-                      
-                      <motion.button
-                        type="button"
-                        onClick={() => handleQuantityChange(product._id, 1)}
-                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 rounded-r-xl"
-                        whileTap={{ scale: 0.96 }}
-                        transition={{ duration: 0.1 }}
-                      >
-                        <Plus className="h-4 w-4 text-gray-600" />
-                      </motion.button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 자재 검색 및 선택 */}
+      {/* 자재명 입력 */}
       <Card className="rounded-3xl border-0 shadow-sm">
         <CardContent className="p-6">
-          <div className="relative" ref={searchRef}>
-            <div className="relative">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-paragraph font-semibold text-gray-700 mb-2">
+                자재명
+              </label>
               <Input
                 type="text"
-                placeholder="제품명, 브랜드명으로 검색하세요"
-                value={productSearchTerm}
-                onChange={(e) => setProductSearchTerm(e.target.value)}
-                onFocus={() => setShowProductList(true)}
-                className="w-full pl-6 pr-12 h-14 rounded-full border-2 border-gray-200 focus:border-teal-500 text-lg"
+                placeholder="예: 강화마루, 타일, 벽지 등"
+                value={formData.materialName}
+                onChange={(e) => setFormData(prev => ({ ...prev, materialName: e.target.value }))}
+                className="w-full h-14 rounded-2xl border-2 border-gray-200 focus:border-teal-500 text-lg"
               />
-              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              {errors.materialName && (
+                <div className="flex items-center space-x-2 text-red-500 mt-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm font-paragraph">{errors.materialName}</span>
+                </div>
+              )}
             </div>
 
-            {/* 자재 목록 */}
-            {(showProductList || productSearchTerm.length > 0) && (
-              <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-80 overflow-y-auto">
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => {
-                    const isSelected = formData.selectedProducts.some(p => p._id === product._id);
-                    return (
-                    <motion.div
-                      key={product._id}
-                      onClick={() => handleProductSelect(product)}
-                      className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-3 transition-colors ${
-                        isSelected 
-                          ? 'bg-teal-50 hover:bg-teal-100' 
-                          : 'hover:bg-gray-50'
-                      }`}
-                      whileTap={{ 
-                        scale: 0.97,
-                        x: [-1, 1, -1, 0]
-                      }}
-                      transition={{ 
-                        scale: { duration: 0.1 },
-                        x: { duration: 0.12, times: [0, 0.33, 0.66, 1] }
-                      }}
-                    >
-                        <Image
-                          src={product.productImage || 'https://static.wixstatic.com/media/9f8727_89376df88f0947cbadf7a20712511b29~mv2.png?originWidth=128&originHeight=128'}
-                          alt={product.productName || ''}
-                          className="w-12 h-12 object-cover rounded-xl"
-                          width={48}
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-paragraph font-semibold text-sm">{product.productName}</h4>
-                          <p className="text-gray-500 font-paragraph text-xs">{product.brandName}</p>
-                          <p className="text-teal-600 font-paragraph font-bold text-sm">
-                            {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
-                          </p>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-5 w-5 text-teal-600" />
-                        )}
-                      </motion.div>
-                    );
-                  })
-                ) : (
-                  <div className="p-6 text-center text-gray-500">
-                    {productSearchTerm ? '검색 결과가 없습니다.' : '자재를 불러오는 중...'}
-                  </div>
-                )}
+            {/* 수량 입력 */}
+            <div>
+              <label className="block text-sm font-paragraph font-semibold text-gray-700 mb-2">
+                수량
+              </label>
+              <div className="flex justify-center">
+                <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden" style={{ width: '165px' }}>
+                  <motion.button
+                    type="button"
+                    onClick={() => handleQuantityChange(-1)}
+                    className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-xl"
+                    disabled={formData.quantity <= 1}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <Minus className="h-4 w-4 text-gray-600" />
+                  </motion.button>
+                  
+                  <input
+                    type="text"
+                    value={formData.quantity}
+                    onChange={(e) => handleQuantityInputChange(e.target.value)}
+                    className="flex-1 h-11 text-center font-semibold text-gray-900 bg-gray-100 border-0 outline-none"
+                    style={{ fontSize: '17px', fontWeight: '600' }}
+                  />
+                  
+                  <motion.button
+                    type="button"
+                    onClick={() => handleQuantityChange(1)}
+                    className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 rounded-r-xl"
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <Plus className="h-4 w-4 text-gray-600" />
+                  </motion.button>
+                </div>
               </div>
-            )}
+              {errors.quantity && (
+                <div className="flex items-center space-x-2 text-red-500 mt-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm font-paragraph">{errors.quantity}</span>
+                </div>
+              )}
+            </div>
           </div>
-
-          {!showProductList && productSearchTerm.length === 0 && (
-            <motion.div
-              whileTap={{ 
-                scale: 0.97,
-                x: [-1, 1, -1, 0]
-              }}
-              transition={{ 
-                scale: { duration: 0.1 },
-                x: { duration: 0.12, times: [0, 0.33, 0.66, 1] }
-              }}
-            >
-              <Button
-                onClick={() => setShowProductList(true)}
-                variant="outline"
-                className="w-full mt-4 h-12 rounded-full border-2 border-teal-200 text-teal-600 hover:bg-teal-50"
-              >
-                전체 자재 목록 보기
-              </Button>
-            </motion.div>
-          )}
         </CardContent>
       </Card>
-
-      {errors.selectedProducts && (
-        <div className="flex items-center space-x-2 text-red-500 bg-red-50 p-3 rounded-2xl">
-          <AlertCircle className="h-4 w-4" />
-          <span className="text-sm font-paragraph">{errors.selectedProducts}</span>
-        </div>
-      )}
     </motion.div>
   );
   // STEP 2: 시공 면적 입력
@@ -781,7 +578,7 @@ export default function QuotePage() {
         <StepIndicator />
         
         <AnimatePresence mode="wait">
-          {currentStep === 1 && <Step1MaterialSelection key="step1" />}
+          {currentStep === 1 && <Step1MaterialInput key="step1" />}
           {currentStep === 2 && <Step2AreaInput key="step2" />}
           {currentStep === 3 && <Step3CustomerInfo key="step3" />}
         </AnimatePresence>
@@ -795,7 +592,7 @@ export default function QuotePage() {
               onClick={handleNextStep}
               className="w-full h-14 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-paragraph font-semibold text-lg shadow-lg"
               disabled={
-                (currentStep === 1 && !formData.selectedProducts.length) ||
+                (currentStep === 1 && (!formData.materialName.trim() || !formData.quantity)) ||
                 (currentStep === 2 && !formData.area)
               }
             >
@@ -805,14 +602,17 @@ export default function QuotePage() {
           ) : (
             <div className="space-y-3">
               {/* 예상 견적 표시 */}
-              {formData.selectedProducts.length > 0 && formData.area && (
+              {formData.materialName && formData.area && (
                 <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl p-4 text-center">
-                  <p className="text-sm text-gray-600 font-paragraph mb-1">예상 견적</p>
-                  <p className="text-xl font-paragraph font-bold text-teal-600">
-                    {formatPrice(calculateTotalPrice())}원
+                  <p className="text-sm text-gray-600 font-paragraph mb-1">견적 요청 내용</p>
+                  <p className="text-lg font-paragraph font-bold text-teal-600">
+                    {formData.materialName} × {formData.quantity}개
+                  </p>
+                  <p className="text-sm text-gray-600 font-paragraph">
+                    시공 면적: {formData.area}평
                   </p>
                   <p className="text-xs text-gray-500 font-paragraph mt-1">
-                    * 부가세 별도, 정확한 견적은 현장 확인 후 제공
+                    * 정확한 견적은 현장 확인 후 제공
                   </p>
                 </div>
               )}
