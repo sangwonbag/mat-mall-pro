@@ -186,6 +186,21 @@ export default function QuotePage() {
     setProductSearchTerm('');
   };
 
+  const handleQuantityInputChange = (productId: string, value: string) => {
+    // 숫자가 아닌 값이나 0 이하의 값 자동 보정
+    let quantity = parseInt(value) || 1;
+    if (quantity < 1) quantity = 1;
+    
+    setFormData(prev => ({
+      ...prev,
+      selectedProducts: prev.selectedProducts.map(p => 
+        p._id === productId 
+          ? { ...p, quantity }
+          : p
+      )
+    }));
+  };
+
   const handleRemoveProduct = (productId: string) => {
     setFormData(prev => ({
       ...prev,
@@ -374,7 +389,7 @@ export default function QuotePage() {
                 <div key={product._id} className="bg-white rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center space-x-4">
                     <Image
-                      src={product.productImage || 'https://static.wixstatic.com/media/9f8727_17fbf5853d474e138c0d5cca81f8b67d~mv2.png?originWidth=128&originHeight=128'}
+                      src={product.productImage || 'https://static.wixstatic.com/media/9f8727_07ad5a2f02bd4059b9efd6f7826fb511~mv2.png?originWidth=128&originHeight=128'}
                       alt={product.productName || ''}
                       className="w-16 h-16 object-cover rounded-xl"
                       width={64}
@@ -394,6 +409,36 @@ export default function QuotePage() {
                     >
                       <X className="h-4 w-4 text-red-500" />
                     </Button>
+                  </div>
+                  
+                  {/* 수량 입력 박스 */}
+                  <div className="mt-4 flex justify-center">
+                    <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden" style={{ width: '150px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(product._id, -1)}
+                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={product.quantity <= 1}
+                      >
+                        <Minus className="h-4 w-4 text-gray-600" />
+                      </button>
+                      
+                      <input
+                        type="text"
+                        value={product.quantity}
+                        onChange={(e) => handleQuantityInputChange(product._id, e.target.value)}
+                        className="flex-1 h-11 text-center text-lg font-semibold text-gray-900 bg-gray-100 border-0 outline-none"
+                        style={{ fontSize: '18px', fontWeight: '600' }}
+                      />
+                      
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(product._id, 1)}
+                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-150"
+                      >
+                        <Plus className="h-4 w-4 text-gray-600" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
