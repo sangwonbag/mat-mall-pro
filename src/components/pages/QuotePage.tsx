@@ -242,7 +242,6 @@ export default function QuotePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
       {/* Breadcrumb */}
       <div className="bg-light-gray py-4">
         <div className="max-w-[120rem] mx-auto px-4">
@@ -599,7 +598,7 @@ export default function QuotePage() {
                   <CardContent className="space-y-3">
                     <div className="space-y-2 text-sm font-paragraph text-gray-600">
                       <p>• 부자재비는 별도로 산정됩니다.</p>
-                      <p>• 엘리베이터 사용료가 추가될 수 있습니다.</p>
+                      <p>{"• 엘리베이터"}</p>
                       <p>• 주차 공간이 필요한 경우 별도 비용이 발생할 수 있습니다.</p>
                       <p>• 현장 상황에 따라 최종 견적이 변동될 수 있습니다.</p>
                       <p>• 정확한 견적은 현장 확인 후 제공됩니다.</p>
@@ -755,7 +754,6 @@ export default function QuotePage() {
           </div>
         </div>
       </footer>
-
       {/* 채팅상담 위젯 */}
       <ChatWidget />
     </div>
