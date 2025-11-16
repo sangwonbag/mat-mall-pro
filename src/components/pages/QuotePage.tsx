@@ -401,43 +401,58 @@ export default function QuotePage() {
                         {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
                       </p>
                     </div>
-                    <Button
-                      onClick={() => handleRemoveProduct(product._id)}
-                      variant="ghost"
-                      size="sm"
-                      className="w-8 h-8 rounded-full p-0 hover:bg-red-50"
+                    <motion.div
+                      whileTap={{ 
+                        scale: 0.97,
+                        x: [-1, 1, -1, 0]
+                      }}
+                      transition={{ 
+                        scale: { duration: 0.1 },
+                        x: { duration: 0.12, times: [0, 0.33, 0.66, 1] }
+                      }}
                     >
-                      <X className="h-4 w-4 text-red-500" />
-                    </Button>
+                      <Button
+                        onClick={() => handleRemoveProduct(product._id)}
+                        variant="ghost"
+                        size="sm"
+                        className="w-8 h-8 rounded-full p-0 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </motion.div>
                   </div>
                   
                   {/* 수량 입력 박스 */}
                   <div className="mt-4 flex justify-center">
-                    <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden" style={{ width: '150px' }}>
-                      <button
+                    <div className="flex items-center bg-gray-100 rounded-xl overflow-hidden" style={{ width: '165px' }}>
+                      <motion.button
                         type="button"
                         onClick={() => handleQuantityChange(product._id, -1)}
-                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-xl"
                         disabled={product.quantity <= 1}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ duration: 0.1 }}
                       >
                         <Minus className="h-4 w-4 text-gray-600" />
-                      </button>
+                      </motion.button>
                       
                       <input
                         type="text"
                         value={product.quantity}
                         onChange={(e) => handleQuantityInputChange(product._id, e.target.value)}
-                        className="flex-1 h-11 text-center text-lg font-semibold text-gray-900 bg-gray-100 border-0 outline-none"
-                        style={{ fontSize: '18px', fontWeight: '600' }}
+                        className="flex-1 h-11 text-center font-semibold text-gray-900 bg-gray-100 border-0 outline-none"
+                        style={{ fontSize: '17px', fontWeight: '600' }}
                       />
                       
-                      <button
+                      <motion.button
                         type="button"
                         onClick={() => handleQuantityChange(product._id, 1)}
-                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors duration-150"
+                        className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 rounded-r-xl"
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ duration: 0.1 }}
                       >
                         <Plus className="h-4 w-4 text-gray-600" />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                 </div>
@@ -470,15 +485,23 @@ export default function QuotePage() {
                   filteredProducts.map((product) => {
                     const isSelected = formData.selectedProducts.some(p => p._id === product._id);
                     return (
-                      <div
-                        key={product._id}
-                        onClick={() => handleProductSelect(product)}
-                        className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-3 transition-colors ${
-                          isSelected 
-                            ? 'bg-teal-50 hover:bg-teal-100' 
-                            : 'hover:bg-gray-50'
-                        }`}
-                      >
+                    <motion.div
+                      key={product._id}
+                      onClick={() => handleProductSelect(product)}
+                      className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center space-x-3 transition-colors ${
+                        isSelected 
+                          ? 'bg-teal-50 hover:bg-teal-100' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                      whileTap={{ 
+                        scale: 0.97,
+                        x: [-1, 1, -1, 0]
+                      }}
+                      transition={{ 
+                        scale: { duration: 0.1 },
+                        x: { duration: 0.12, times: [0, 0.33, 0.66, 1] }
+                      }}
+                    >
                         <Image
                           src={product.productImage || 'https://static.wixstatic.com/media/9f8727_89376df88f0947cbadf7a20712511b29~mv2.png?originWidth=128&originHeight=128'}
                           alt={product.productName || ''}
@@ -495,7 +518,7 @@ export default function QuotePage() {
                         {isSelected && (
                           <Check className="h-5 w-5 text-teal-600" />
                         )}
-                      </div>
+                      </motion.div>
                     );
                   })
                 ) : (
@@ -508,13 +531,24 @@ export default function QuotePage() {
           </div>
 
           {!showProductList && productSearchTerm.length === 0 && (
-            <Button
-              onClick={() => setShowProductList(true)}
-              variant="outline"
-              className="w-full mt-4 h-12 rounded-full border-2 border-teal-200 text-teal-600 hover:bg-teal-50"
+            <motion.div
+              whileTap={{ 
+                scale: 0.97,
+                x: [-1, 1, -1, 0]
+              }}
+              transition={{ 
+                scale: { duration: 0.1 },
+                x: { duration: 0.12, times: [0, 0.33, 0.66, 1] }
+              }}
             >
-              전체 자재 목록 보기
-            </Button>
+              <Button
+                onClick={() => setShowProductList(true)}
+                variant="outline"
+                className="w-full mt-4 h-12 rounded-full border-2 border-teal-200 text-teal-600 hover:bg-teal-50"
+              >
+                전체 자재 목록 보기
+              </Button>
+            </motion.div>
           )}
         </CardContent>
       </Card>
