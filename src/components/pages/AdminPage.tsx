@@ -158,54 +158,145 @@ export default function AdminPage() {
     loadData();
   }, []);
 
-  // ADMIN ONLY - 데이터 로딩 (수동 관리)
+  // ADMIN ONLY - 데이터 로딩 (수동 관리) - 오류 방지 개선
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult, catalogSlidesResult, pdfSamplesResult] = await Promise.all([
-        BaseCrudService.getAll<Products>('products'),
-        BaseCrudService.getAll<ProductCategories>('productcategories'),
-        BaseCrudService.getAll<TrendyCatalogSlides>('trendycatalogslides'),
-        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples')
-      ]);
+      console.log('ADMIN: 데이터 로딩 시작...');
+      
+      // ADMIN ONLY - 각 컬렉션을 개별적으로 로드하여 오류 격리
+      const productsResult = await BaseCrudService.getAll<Products>('products').catch(err => {
+        console.warn('ADMIN WARNING: Products 로딩 실패:', err);
+        return { items: [] };
+      });
+      
+      const categoriesResult = await BaseCrudService.getAll<ProductCategories>('productcategories').catch(err => {
+        console.warn('ADMIN WARNING: Categories 로딩 실패:', err);
+        return { items: [] };
+      });
+      
+      const catalogSlidesResult = await BaseCrudService.getAll<TrendyCatalogSlides>('trendycatalogslides').catch(err => {
+        console.warn('ADMIN WARNING: Catalog Slides 로딩 실패:', err);
+        return { items: [] };
+      });
+      
+      const pdfSamplesResult = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples').catch(err => {
+        console.warn('ADMIN WARNING: PDF Samples 로딩 실패:', err);
+        return { items: [] };
+      });
 
-      setProducts(productsResult.items);
-      setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
-      setCatalogSlides(catalogSlidesResult.items.sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0)));
-      setPdfSamples(pdfSamplesResult.items);
+      // ADMIN ONLY - 안전한 데이터 설정 (null/undefined 방지)
+      setProducts(Array.isArray(productsResult.items) ? productsResult.items : []);
+      setCategories(Array.isArray(categoriesResult.items) ? 
+        categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)) : []);
+      setCatalogSlides(Array.isArray(catalogSlidesResult.items) ? 
+        catalogSlidesResult.items.sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0)) : []);
+      setPdfSamples(Array.isArray(pdfSamplesResult.items) ? pdfSamplesResult.items : []);
+      
+      console.log('ADMIN: 데이터 로딩 완료', {
+        products: productsResult.items?.length || 0,
+        categories: categoriesResult.items?.length || 0,
+        slides: catalogSlidesResult.items?.length || 0,
+        pdfs: pdfSamplesResult.items?.length || 0
+      });
+      
     } catch (error) {
       console.error('ADMIN ERROR - 데이터 로딩 실패:', error);
       toast({
         title: "오류",
-        description: "데이터를 불러오는 중 오류가 발생했습니다.",
+        description: "데이터를 불러오는 중 오류가 발생했습니다. 페이지를 새로고침해 주세요.",
         variant: "destructive",
       });
+      
+      // ADMIN ONLY - 오류 시 빈 배열로 초기화하여 크래시 방지
+      setProducts([]);
+      setCategories([]);
+      setCatalogSlides([]);
+      setPdfSamples([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // ADMIN ONLY - 이미지 업로드 핸들러 (원본 그대로)
+  // ADMIN ONLY - 이미지 업로드 핸들러 (원본 그대로) - 오류 방지 개선
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'slide' | 'pdf-thumbnail') => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file) {
+      console.warn('ADMIN WARNING: 파일이 선택되지 않음');
+      return;
+    }
+    
+    // ADMIN ONLY - 파일 크기 및 타입 검증 (보안)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({
+        title: "파일 크기 오류",
+        description: "파일 크기는 10MB 이하여야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "파일 형식 오류",
+        description: "이미지 파일만 업로드 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
       // ADMIN ONLY - 이미지 미리보기 생성 (원본 그대로)
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string;
-        
-        if (type === 'product') {
-          setImagePreview(result);
-          setFormData(prev => ({ ...prev, productImage: result }));
-        } else if (type === 'slide') {
-          setSlideImagePreview(result);
-          setCatalogSlideFormData(prev => ({ ...prev, slideImage: result }));
-        } else if (type === 'pdf-thumbnail') {
-          setPdfThumbnailPreview(result);
-          setPdfFormData(prev => ({ ...prev, thumbnailImage: result }));
+        try {
+          const result = e.target?.result as string;
+          
+          if (!result) {
+            throw new Error('파일 읽기 실패');
+          }
+          
+          if (type === 'product') {
+            setImagePreview(result);
+            setFormData(prev => ({ ...prev, productImage: result }));
+            console.log('ADMIN: 제품 이미지 업로드 완료');
+          } else if (type === 'slide') {
+            setSlideImagePreview(result);
+            setCatalogSlideFormData(prev => ({ ...prev, slideImage: result }));
+            console.log('ADMIN: 슬라이드 이미지 업로드 완료');
+          } else if (type === 'pdf-thumbnail') {
+            setPdfThumbnailPreview(result);
+            setPdfFormData(prev => ({ ...prev, thumbnailImage: result }));
+            console.log('ADMIN: PDF 썸네일 업로드 완료');
+          }
+        } catch (error) {
+          console.error('ADMIN ERROR - 이미지 처리 실패:', error);
+          toast({
+            title: "이미지 처리 오류",
+            description: "이미지 파일을 처리하는 중 오류가 발생했습니다.",
+            variant: "destructive",
+          });
         }
       };
+      
+      reader.onerror = () => {
+        console.error('ADMIN ERROR - 파일 읽기 실패');
+        toast({
+          title: "파일 읽기 오류",
+          description: "파일을 읽는 중 오류가 발생했습니다.",
+          variant: "destructive",
+        });
+      };
+      
       reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('ADMIN ERROR - 이미지 업로드 실패:', error);
+      toast({
+        title: "업로드 오류",
+        description: "이미지 업로드 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -260,14 +351,33 @@ export default function AdminPage() {
     setEditingPDF(null);
   };
 
-  // ADMIN ONLY - 제품 저장 (수동)
+  // ADMIN ONLY - 제품 저장 (수동) - 오류 방지 개선
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.productName || !formData.brandName || !formData.category) {
+    // ADMIN ONLY - 입력 검증 강화
+    if (!formData.productName?.trim()) {
       toast({
         title: "입력 오류",
-        description: "제품명, 브랜드명, 카테고리는 필수 입력 항목입니다.",
+        description: "제품명을 입력해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.brandName?.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "브랜드명을 입력해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.category?.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "카테고리를 선택해 주세요.",
         variant: "destructive",
       });
       return;
@@ -275,26 +385,30 @@ export default function AdminPage() {
 
     try {
       setSaving(true);
+      console.log('ADMIN: 제품 저장 시작...', { editing: !!editingProduct });
 
+      // ADMIN ONLY - 안전한 데이터 구성
       const productData = {
         _id: editingProduct?._id || crypto.randomUUID(),
-        productName: formData.productName,
-        brandName: formData.brandName,
-        specifications: formData.specifications,
+        productName: formData.productName.trim(),
+        brandName: formData.brandName.trim(),
+        specifications: formData.specifications?.trim() || '',
         price: formData.price ? parseFloat(formData.price) : undefined,
-        category: formData.category,
-        productImage: formData.productImage,
-        materialCode: formData.materialCode
+        category: formData.category.trim(),
+        productImage: formData.productImage || '',
+        materialCode: formData.materialCode?.trim() || ''
       };
 
       if (editingProduct) {
         await BaseCrudService.update('products', productData);
+        console.log('ADMIN: 제품 수정 완료');
         toast({
           title: "성공",
           description: "제품이 성공적으로 수정되었습니다.",
         });
       } else {
         await BaseCrudService.create('products', productData);
+        console.log('ADMIN: 제품 등록 완료');
         toast({
           title: "성공",
           description: "제품이 성공적으로 등록되었습니다.",
@@ -302,12 +416,12 @@ export default function AdminPage() {
       }
 
       resetForm();
-      loadData();
+      await loadData(); // 데이터 다시 로드
     } catch (error) {
       console.error('ADMIN ERROR - 제품 저장 실패:', error);
       toast({
         title: "오류",
-        description: "제품 저장 중 오류가 발생했습니다.",
+        description: `제품 저장 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     } finally {
@@ -315,14 +429,34 @@ export default function AdminPage() {
     }
   };
 
-  // ADMIN ONLY - 카탈로그 슬라이드 저장 (원본 그대로)
+  // ADMIN ONLY - 카탈로그 슬라이드 저장 (원본 그대로) - 오류 방지 개선
   const handleSlideSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!catalogSlideFormData.pageNumber || !catalogSlideFormData.slideImage) {
+    // ADMIN ONLY - 입력 검증 강화
+    if (!catalogSlideFormData.pageNumber?.trim()) {
       toast({
         title: "입력 오류",
-        description: "페이지 번호와 이미지는 필수 입력 항목입니다.",
+        description: "페이지 번호를 입력해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!catalogSlideFormData.slideImage?.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "슬라이드 이미지를 업로드해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const pageNum = parseInt(catalogSlideFormData.pageNumber);
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > 14) {
+      toast({
+        title: "입력 오류",
+        description: "페이지 번호는 1~14 사이의 숫자여야 합니다.",
         variant: "destructive",
       });
       return;
@@ -330,23 +464,27 @@ export default function AdminPage() {
 
     try {
       setSaving(true);
+      console.log('ADMIN: 슬라이드 저장 시작...', { editing: !!editingSlide, pageNumber: pageNum });
 
+      // ADMIN ONLY - 안전한 데이터 구성
       const slideData = {
         _id: editingSlide?._id || crypto.randomUUID(),
-        pageNumber: parseInt(catalogSlideFormData.pageNumber),
-        pageTitle: catalogSlideFormData.pageTitle,
-        pageContentSummary: catalogSlideFormData.pageContentSummary,
-        slideImage: catalogSlideFormData.slideImage
+        pageNumber: pageNum,
+        pageTitle: catalogSlideFormData.pageTitle?.trim() || '',
+        pageContentSummary: catalogSlideFormData.pageContentSummary?.trim() || '',
+        slideImage: catalogSlideFormData.slideImage.trim()
       };
 
       if (editingSlide) {
         await BaseCrudService.update('trendycatalogslides', slideData);
+        console.log('ADMIN: 슬라이드 수정 완료');
         toast({
           title: "성공",
           description: "카탈로그 슬라이드가 성공적으로 수정되었습니다.",
         });
       } else {
         await BaseCrudService.create('trendycatalogslides', slideData);
+        console.log('ADMIN: 슬라이드 등록 완료');
         toast({
           title: "성공",
           description: "카탈로그 슬라이드가 성공적으로 등록되었습니다.",
@@ -354,12 +492,12 @@ export default function AdminPage() {
       }
 
       resetSlideForm();
-      loadData();
+      await loadData(); // 데이터 다시 로드
     } catch (error) {
       console.error('ADMIN ERROR - 슬라이드 저장 실패:', error);
       toast({
         title: "오류",
-        description: "슬라이드 저장 중 오류가 발생했습니다.",
+        description: `슬라이드 저장 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     } finally {
@@ -367,14 +505,36 @@ export default function AdminPage() {
     }
   };
 
-  // ADMIN ONLY - PDF 저장 (원본 그대로)
+  // ADMIN ONLY - PDF 저장 (원본 그대로) - 오류 방지 개선
   const handlePDFSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!pdfFormData.sampleName || !pdfFormData.pdfUrl) {
+    // ADMIN ONLY - 입력 검증 강화
+    if (!pdfFormData.sampleName?.trim()) {
       toast({
         title: "입력 오류",
-        description: "샘플명과 PDF URL은 필수 입력 항목입니다.",
+        description: "샘플명을 입력해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!pdfFormData.pdfUrl?.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "PDF URL을 입력해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // ADMIN ONLY - URL 형식 검증
+    try {
+      new URL(pdfFormData.pdfUrl.trim());
+    } catch {
+      toast({
+        title: "입력 오류",
+        description: "올바른 URL 형식을 입력해 주세요.",
         variant: "destructive",
       });
       return;
@@ -382,24 +542,28 @@ export default function AdminPage() {
 
     try {
       setSaving(true);
+      console.log('ADMIN: PDF 저장 시작...', { editing: !!editingPDF });
 
+      // ADMIN ONLY - 안전한 데이터 구성
       const pdfData = {
         _id: editingPDF?._id || crypto.randomUUID(),
-        sampleName: pdfFormData.sampleName,
-        category: pdfFormData.category,
-        description: pdfFormData.description,
-        pdfUrl: pdfFormData.pdfUrl,
-        thumbnailImage: pdfFormData.thumbnailImage
+        sampleName: pdfFormData.sampleName.trim(),
+        category: pdfFormData.category?.trim() || '',
+        description: pdfFormData.description?.trim() || '',
+        pdfUrl: pdfFormData.pdfUrl.trim(),
+        thumbnailImage: pdfFormData.thumbnailImage || ''
       };
 
       if (editingPDF) {
         await BaseCrudService.update('wallpaperpdfsamples', pdfData);
+        console.log('ADMIN: PDF 수정 완료');
         toast({
           title: "성공",
           description: "PDF 샘플이 성공적으로 수정되었습니다.",
         });
       } else {
         await BaseCrudService.create('wallpaperpdfsamples', pdfData);
+        console.log('ADMIN: PDF 등록 완료');
         toast({
           title: "성공",
           description: "PDF 샘플이 성공적으로 등록되었습니다.",
@@ -407,12 +571,12 @@ export default function AdminPage() {
       }
 
       resetPDFForm();
-      loadData();
+      await loadData(); // 데이터 다시 로드
     } catch (error) {
       console.error('ADMIN ERROR - PDF 저장 실패:', error);
       toast({
         title: "오류",
-        description: "PDF 저장 중 오류가 발생했습니다.",
+        description: `PDF 저장 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     } finally {
@@ -420,14 +584,24 @@ export default function AdminPage() {
     }
   };
 
-  // ADMIN ONLY - 카탈로그 슬라이더 업데이트 (STRICT LOCK)
+  // ADMIN ONLY - 카탈로그 슬라이더 업데이트 (STRICT LOCK) - 오류 방지 개선
   const updateCatalogSlider = async () => {
-    if (!confirm('선택된 이미지들을 /catalog-trendy 페이지에 덮어쓰시겠습니까? (기존 데이터는 삭제됩니다)')) {
+    if (catalogSlides.length === 0) {
+      toast({
+        title: "업데이트 불가",
+        description: "등록된 슬라이드가 없습니다. 먼저 카탈로그 이미지를 등록해 주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!confirm(`현재 등록된 ${catalogSlides.length}개의 슬라이드를 /catalog-trendy 페이지에 반영하시겠습니까?`)) {
       return;
     }
 
     try {
       setSaving(true);
+      console.log('ADMIN: 슬라이더 업데이트 시작...', { slideCount: catalogSlides.length });
       
       // ADMIN ONLY - STRICT LOCK: 원본 이미지 그대로 카탈로그 페이지에 반영
       toast({
@@ -438,19 +612,22 @@ export default function AdminPage() {
       // ADMIN ONLY - 실제 업데이트는 이미 저장된 데이터를 사용
       await loadData();
       
+      console.log('ADMIN: 슬라이더 업데이트 완료');
       toast({
         title: "성공",
         description: "카탈로그 슬라이더가 성공적으로 업데이트되었습니다.",
       });
       
       // ADMIN ONLY - 카탈로그 페이지로 이동하여 확인
-      window.open('/catalog-trendy', '_blank');
+      setTimeout(() => {
+        window.open('/catalog-trendy', '_blank');
+      }, 1000);
       
     } catch (error) {
       console.error('ADMIN ERROR - 슬라이더 업데이트 실패:', error);
       toast({
         title: "오류",
-        description: "슬라이더 업데이트 중 오류가 발생했습니다.",
+        description: `슬라이더 업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     } finally {
@@ -458,114 +635,212 @@ export default function AdminPage() {
     }
   };
 
-  // ADMIN ONLY - 편집 핸들러 (수동)
+  // ADMIN ONLY - 편집 핸들러 (수동) - 오류 방지 개선
   const handleEdit = (product: Products) => {
-    setEditingProduct(product);
-    setFormData({
-      productName: product.productName || '',
-      brandName: product.brandName || '',
-      specifications: product.specifications || '',
-      price: product.price?.toString() || '',
-      category: product.category || '',
-      productImage: product.productImage || '',
-      materialCode: product.materialCode || ''
-    });
-    setImagePreview(product.productImage || '');
+    if (!product?._id) {
+      toast({
+        title: "편집 오류",
+        description: "올바르지 않은 제품 데이터입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      console.log('ADMIN: 제품 편집 시작...', { productId: product._id });
+      setEditingProduct(product);
+      setFormData({
+        productName: product.productName || '',
+        brandName: product.brandName || '',
+        specifications: product.specifications || '',
+        price: product.price?.toString() || '',
+        category: product.category || '',
+        productImage: product.productImage || '',
+        materialCode: product.materialCode || ''
+      });
+      setImagePreview(product.productImage || '');
+    } catch (error) {
+      console.error('ADMIN ERROR - 제품 편집 실패:', error);
+      toast({
+        title: "편집 오류",
+        description: "제품 편집 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditSlide = (slide: TrendyCatalogSlides) => {
-    setEditingSlide(slide);
-    setCatalogSlideFormData({
-      pageNumber: slide.pageNumber?.toString() || '',
-      pageTitle: slide.pageTitle || '',
-      pageContentSummary: slide.pageContentSummary || '',
-      slideImage: slide.slideImage || ''
-    });
-    setSlideImagePreview(slide.slideImage || '');
+    if (!slide?._id) {
+      toast({
+        title: "편집 오류",
+        description: "올바르지 않은 슬라이드 데이터입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      console.log('ADMIN: 슬라이드 편집 시작...', { slideId: slide._id });
+      setEditingSlide(slide);
+      setCatalogSlideFormData({
+        pageNumber: slide.pageNumber?.toString() || '',
+        pageTitle: slide.pageTitle || '',
+        pageContentSummary: slide.pageContentSummary || '',
+        slideImage: slide.slideImage || ''
+      });
+      setSlideImagePreview(slide.slideImage || '');
+    } catch (error) {
+      console.error('ADMIN ERROR - 슬라이드 편집 실패:', error);
+      toast({
+        title: "편집 오류",
+        description: "슬라이드 편집 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditPDF = (pdf: WallpaperPDFSamples) => {
-    setEditingPDF(pdf);
-    setPdfFormData({
-      sampleName: pdf.sampleName || '',
-      category: pdf.category || '',
-      description: pdf.description || '',
-      pdfUrl: pdf.pdfUrl || '',
-      thumbnailImage: pdf.thumbnailImage || ''
-    });
-    setPdfThumbnailPreview(pdf.thumbnailImage || '');
+    if (!pdf?._id) {
+      toast({
+        title: "편집 오류",
+        description: "올바르지 않은 PDF 데이터입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      console.log('ADMIN: PDF 편집 시작...', { pdfId: pdf._id });
+      setEditingPDF(pdf);
+      setPdfFormData({
+        sampleName: pdf.sampleName || '',
+        category: pdf.category || '',
+        description: pdf.description || '',
+        pdfUrl: pdf.pdfUrl || '',
+        thumbnailImage: pdf.thumbnailImage || ''
+      });
+      setPdfThumbnailPreview(pdf.thumbnailImage || '');
+    } catch (error) {
+      console.error('ADMIN ERROR - PDF 편집 실패:', error);
+      toast({
+        title: "편집 오류",
+        description: "PDF 편집 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
-  // ADMIN ONLY - 삭제 핸들러 (수동)
+  // ADMIN ONLY - 삭제 핸들러 (수동) - 오류 방지 개선
   const handleDelete = async (productId: string) => {
+    if (!productId?.trim()) {
+      toast({
+        title: "삭제 오류",
+        description: "올바르지 않은 제품 ID입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!confirm('정말로 이 제품을 삭제하시겠습니까?')) {
       return;
     }
 
     try {
+      console.log('ADMIN: 제품 삭제 시작...', { productId });
       await BaseCrudService.delete('products', productId);
+      console.log('ADMIN: 제품 삭제 완료');
       toast({
         title: "성공",
         description: "제품이 성공적으로 삭제되었습니다.",
       });
-      loadData();
+      await loadData(); // 데이터 다시 로드
     } catch (error) {
       console.error('ADMIN ERROR - 제품 삭제 실패:', error);
       toast({
         title: "오류",
-        description: "제품 삭제 중 오류가 발생했습니다.",
+        description: `제품 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteSlide = async (slideId: string) => {
+    if (!slideId?.trim()) {
+      toast({
+        title: "삭제 오류",
+        description: "올바르지 않은 슬라이드 ID입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!confirm('정말로 이 슬라이드를 삭제하시겠습니까?')) {
       return;
     }
 
     try {
+      console.log('ADMIN: 슬라이드 삭제 시작...', { slideId });
       await BaseCrudService.delete('trendycatalogslides', slideId);
+      console.log('ADMIN: 슬라이드 삭제 완료');
       toast({
         title: "성공",
         description: "슬라이드가 성공적으로 삭제되었습니다.",
       });
-      loadData();
+      await loadData(); // 데이터 다시 로드
     } catch (error) {
       console.error('ADMIN ERROR - 슬라이드 삭제 실패:', error);
       toast({
         title: "오류",
-        description: "슬라이드 삭제 중 오류가 발생했습니다.",
+        description: `슬라이드 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     }
   };
 
   const handleDeletePDF = async (pdfId: string) => {
+    if (!pdfId?.trim()) {
+      toast({
+        title: "삭제 오류",
+        description: "올바르지 않은 PDF ID입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!confirm('정말로 이 PDF를 삭제하시겠습니까?')) {
       return;
     }
 
     try {
+      console.log('ADMIN: PDF 삭제 시작...', { pdfId });
       await BaseCrudService.delete('wallpaperpdfsamples', pdfId);
+      console.log('ADMIN: PDF 삭제 완료');
       toast({
         title: "성공",
         description: "PDF가 성공적으로 삭제되었습니다.",
       });
-      loadData();
+      await loadData(); // 데이터 다시 로드
     } catch (error) {
       console.error('ADMIN ERROR - PDF 삭제 실패:', error);
       toast({
         title: "오류",
-        description: "PDF 삭제 중 오류가 발생했습니다.",
+        description: `PDF 삭제 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
         variant: "destructive",
       });
     }
   };
 
-  // ADMIN ONLY - 가격 포맷팅 (수동)
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('ko-KR').format(price);
+  // ADMIN ONLY - 가격 포맷팅 (수동) - 오류 방지 개선
+  const formatPrice = (price: number | undefined | null) => {
+    if (typeof price !== 'number' || isNaN(price)) {
+      return '가격 미정';
+    }
+    try {
+      return new Intl.NumberFormat('ko-KR').format(price);
+    } catch (error) {
+      console.warn('ADMIN WARNING - 가격 포맷팅 실패:', error);
+      return price.toString();
+    }
   };
 
   return (
