@@ -400,6 +400,17 @@ export default function SearchPage() {
                 </Button>
               </div>
 
+              {/* 센스타일 트랜디 카탈로그 버튼 */}
+              <div className="max-w-2xl mx-auto mb-6">
+                <Button
+                  onClick={openSenstyleCatalog}
+                  className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors duration-200"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  센스타일 트랜디 카탈로그 보기
+                </Button>
+              </div>
+
               {/* 선택된 필터 표시 - 브랜드만 */}
               {selectedBrand ? (
                 <div className="flex items-center justify-center gap-4 mb-6">
