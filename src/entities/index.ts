@@ -188,6 +188,35 @@ export interface Products {
 
 
 /**
+ * Collection ID: samplebooksandcatalogs
+ * Interface for SampleBooksandCatalogs
+ */
+export interface SampleBooksandCatalogs {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType text */
+  type?: string;
+  /** @wixFieldType text */
+  brand?: string;
+  /** @wixFieldType text */
+  materialCategory?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType number */
+  sortOrder?: number;
+  /** @wixFieldType text */
+  pageImageUrls?: string;
+  /** @wixFieldType url */
+  pdfFileUrl?: string;
+}
+
+
+/**
  * Collection ID: trendycatalogslides
  * Interface for TrendyCatalogSlides
  */

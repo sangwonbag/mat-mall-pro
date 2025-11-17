@@ -3,13 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, WallpaperPDFSamples, BrandSamplePDFs } from '@/entities';
+import { Products, ProductCategories, SampleBooksandCatalogs, WallpaperPDFSamples } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/ui/header';
 import { ChatWidget } from '@/components/ui/chat-widget';
+import { SampleBookSlider } from '@/components/ui/sample-book-slider';
 import { PdfSamplesSlider } from '@/components/ui/pdf-samples-slider';
 
 // 브랜드 사이드바 구조 정의
@@ -46,12 +47,33 @@ export default function SearchPage() {
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
+  const [sampleBooks, setSampleBooks] = useState<SampleBooksandCatalogs[]>([]);
   const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
-  const [brandSamples, setBrandSamples] = useState<BrandSamplePDFs[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
+
+  // 슬라이더 관련 상태 추가
+  const [brandSamples, setBrandSamples] = useState<any[]>([]);
+  const slidesPerView = 4;
+
+  // 슬라이더 함수들 추가
+  const nextSlide = () => {
+    setCurrentSlide(prev => 
+      prev >= brandSamples.length - slidesPerView ? 0 : prev + 1
+    );
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(prev => 
+      prev <= 0 ? Math.max(0, brandSamples.length - slidesPerView) : prev - 1
+    );
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index * slidesPerView);
+  };
 
 
   // 브랜드 메뉴 스타일 CSS
@@ -83,17 +105,24 @@ export default function SearchPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult, pdfSamplesResult, brandSamplesResult] = await Promise.all([
+      const [productsResult, categoriesResult, sampleBooksResult, pdfSamplesResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
         BaseCrudService.getAll<ProductCategories>('productcategories'),
-        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples'),
-        BaseCrudService.getAll<BrandSamplePDFs>('brandsamplepdfs')
+        BaseCrudService.getAll<SampleBooksandCatalogs>('samplebooksandcatalogs'),
+        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples')
       ]);
 
       setProducts(productsResult.items);
       setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
+      
+      // 활성화된 샘플북만 필터링하고 정렬순서대로 정렬
+      const activeSampleBooks = sampleBooksResult.items
+        .filter(book => book.isActive)
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      setSampleBooks(activeSampleBooks);
+
+      // PDF 샘플 설정
       setPdfSamples(pdfSamplesResult.items);
-      setBrandSamples(brandSamplesResult.items);
 
       // Extract unique brands
       const uniqueBrands = [...new Set(productsResult.items
@@ -292,39 +321,21 @@ export default function SearchPage() {
     navigate('/quote', { state: { selectedProduct: product } });
   };
 
-  // 브랜드 샘플 슬라이더 네비게이션
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % brandSamples.length);
+  // 브랜드별 샘플북 그룹화
+  const groupSampleBooksByBrand = () => {
+    const grouped: { [brand: string]: SampleBooksandCatalogs[] } = {};
+    sampleBooks.forEach(book => {
+      if (book.brand) {
+        if (!grouped[book.brand]) {
+          grouped[book.brand] = [];
+        }
+        grouped[book.brand].push(book);
+      }
+    });
+    return grouped;
   };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + brandSamples.length) % brandSamples.length);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
-
-  // 슬라이더에 표시할 브랜드 샘플 개수 (반응형)
-  const getSlidesPerView = () => {
-    if (typeof window !== 'undefined') {
-      if (window.innerWidth >= 1280) return 4; // xl
-      if (window.innerWidth >= 768) return 3;  // md
-      return 2; // mobile
-    }
-    return 4;
-  };
-
-  const [slidesPerView, setSlidesPerView] = useState(getSlidesPerView());
-
-  useEffect(() => {
-    const handleResize = () => {
-      setSlidesPerView(getSlidesPerView());
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const sampleBooksByBrand = groupSampleBooksByBrand();
 
   return (
     <div className="min-h-screen bg-white font-['Pretendard']">
@@ -452,105 +463,42 @@ export default function SearchPage() {
                 </p>
               </div>
 
-              {/* 슬라이더 컨테이너 */}
-              {brandSamples.length > 0 ? (
-                <div className="relative">
-                  {/* 슬라이더 */}
-                  <div className="overflow-hidden">
-                    <div 
-                      className="flex transition-transform duration-500 ease-in-out"
-                      style={{
-                        transform: `translateX(-${currentSlide * (100 / slidesPerView)}%)`
-                      }}
-                    >
-                      {brandSamples.map((sample, index) => (
-                        <div
-                          key={sample._id}
-                          className="flex-shrink-0 px-3"
-                          style={{ width: `${100 / slidesPerView}%` }}
-                        >
-                          <div className="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors duration-300">
-                            {/* 썸네일 이미지 */}
-                            <div className="aspect-[4/3] relative">
-                              <Image
-                                src={sample.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_6c15f0a2e52e4ca3a2ac05b3c747dadb~mv2.png?originWidth=384&originHeight=256'}
-                                alt={sample.brandName || '브랜드 샘플'}
-                                className="w-full h-full object-cover"
-                                width={400}
-                              />
-                              {/* PDF 오버레이 */}
-                              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                                <FileText className="h-12 w-12 text-white" />
-                              </div>
-                            </div>
-                            
-                            {/* 브랜드 정보 */}
-                            <div className="p-6">
-                              <h3 className="text-xl font-bold text-white mb-2 font-roboto">
-                                {sample.brandName}
-                              </h3>
-                              <p className="text-sm text-gray-400 mb-1 font-roboto">
-                                {sample.category}
-                              </p>
-                              {sample.sampleBookDescription && (
-                                <p className="text-sm text-gray-300 mb-4 line-clamp-2 font-roboto">
-                                  {sample.sampleBookDescription}
-                                </p>
-                              )}
-                              
-                              {/* PDF 보기 버튼 */}
-                              <Button
-                                onClick={() => {
-                                  if (sample.pdfUrl) {
-                                    window.open(sample.pdfUrl, '_blank');
-                                  }
-                                }}
-                                className="w-full bg-white text-black hover:bg-gray-200 transition-colors duration-200 font-roboto font-medium"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                PDF 샘플 보기
-                              </Button>
-                            </div>
+              {/* 샘플북 그리드 */}
+              {Object.keys(sampleBooksByBrand).length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {Object.entries(sampleBooksByBrand).map(([brand, books]) => (
+                    <div key={brand} className="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors duration-300">
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-white mb-4 font-roboto">
+                          {brand}
+                        </h3>
+                        
+                        {/* 브랜드의 첫 번째 샘플북 표시 */}
+                        {books.length > 0 && (
+                          <SampleBookSlider
+                            title={books[0].title || ''}
+                            pageImages={books[0].pageImageUrls ? 
+                              (typeof books[0].pageImageUrls === 'string' ? 
+                                JSON.parse(books[0].pageImageUrls) : 
+                                books[0].pageImageUrls
+                              ) : []
+                            }
+                            pdfUrl={books[0].pdfFileUrl}
+                            className="bg-gray-800"
+                          />
+                        )}
+                        
+                        {/* 추가 샘플북이 있는 경우 개수 표시 */}
+                        {books.length > 1 && (
+                          <div className="mt-4 text-center">
+                            <p className="text-sm text-gray-400 font-roboto">
+                              +{books.length - 1}개의 추가 샘플북
+                            </p>
                           </div>
-                        </div>
-                      ))}
+                        )}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* 네비게이션 화살표 */}
-                  {brandSamples.length > slidesPerView && (
-                    <>
-                      <Button
-                        onClick={prevSlide}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 z-10 backdrop-blur-sm"
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                      </Button>
-                      <Button
-                        onClick={nextSlide}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 z-10 backdrop-blur-sm"
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                      </Button>
-                    </>
-                  )}
-
-                  {/* 도트 네비게이션 */}
-                  {brandSamples.length > slidesPerView && (
-                    <div className="flex justify-center space-x-2 mt-8">
-                      {Array.from({ length: Math.ceil(brandSamples.length / slidesPerView) }).map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => goToSlide(index)}
-                          className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                            Math.floor(currentSlide / slidesPerView) === index
-                              ? 'bg-white scale-125'
-                              : 'bg-white/40 hover:bg-white/60'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
               ) : (
                 <div className="text-center py-12">
