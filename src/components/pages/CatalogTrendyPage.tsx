@@ -25,19 +25,44 @@ export default function CatalogTrendyPage() {
     try {
       setLoading(true);
       
-      // Load PDF catalog data
+      // Load PDF catalog data - STRICT: Use latest/most recent PDF
       const { items: pdfItems } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
-      const catalog = pdfItems.find(item => 
+      // Sort by creation date to get the most recent PDF first
+      const sortedPdfItems = pdfItems.sort((a, b) => {
+        const dateA = new Date(a._createdDate || 0).getTime();
+        const dateB = new Date(b._createdDate || 0).getTime();
+        return dateB - dateA; // Most recent first
+      });
+      
+      // Find the latest catalog or use the most recent one
+      const catalog = sortedPdfItems.find(item => 
         item.sampleName?.includes('KCC 센스타일 트랜디') || 
         item.category?.includes('KCC 글라스') ||
-        item.sampleName?.includes('센스타일 트랜디')
-      );
+        item.sampleName?.includes('센스타일 트랜디') ||
+        item.sampleName?.includes('센스타일') ||
+        item.category?.includes('트랜디')
+      ) || sortedPdfItems[0]; // Use most recent if no specific match
+      
       setCatalogData(catalog || null);
 
-      // Load catalog slides data
+      // Load catalog slides data - STRICT: Ensure exactly 14 slides in correct order
       const { items: slideItems } = await BaseCrudService.getAll<TrendyCatalogSlides>('trendycatalogslides');
-      const sortedSlides = slideItems.sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0));
-      setCatalogSlides(sortedSlides);
+      // Sort by page number first, then by creation date for consistency
+      const sortedSlides = slideItems.sort((a, b) => {
+        const pageA = a.pageNumber || 0;
+        const pageB = b.pageNumber || 0;
+        if (pageA !== pageB) {
+          return pageA - pageB;
+        }
+        // If page numbers are same, sort by creation date (newest first)
+        const dateA = new Date(a._createdDate || 0).getTime();
+        const dateB = new Date(b._createdDate || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      // STRICT: Take exactly 14 slides (latest ones if more exist)
+      const finalSlides = sortedSlides.slice(0, 14);
+      setCatalogSlides(finalSlides);
       
     } catch (error) {
       console.error('Error loading catalog data:', error);
@@ -128,8 +153,12 @@ export default function CatalogTrendyPage() {
 
   const handleDownload = () => {
     if (catalogData?.pdfUrl) {
-      // Direct link to original PDF - no modifications
+      // STRICT LOCK: Direct link to original PDF - absolutely no modifications
+      // Open in new tab to preserve original PDF viewing experience
       window.open(catalogData.pdfUrl, '_blank');
+    } else {
+      // Fallback: Alert user if no PDF is available
+      alert('원본 PDF 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
     }
   };
 
@@ -155,7 +184,7 @@ export default function CatalogTrendyPage() {
             KCC 센스타일 트랜디 카탈로그
           </h1>
           <p className="text-gray-600 mb-8">
-            카탈로그 데이터를 준비 중입니다. 잠시 후 다시 확인해 주세요.
+            STRICT LOCK MODE: 14개 PNG 이미지가 업로드되면 자동으로 표시됩니다.
           </p>
           {catalogData?.pdfUrl && (
             <Button
@@ -183,7 +212,7 @@ export default function CatalogTrendyPage() {
             KCC 센스타일 트랜디 카탈로그
           </h1>
           <p className="text-base text-gray-600">
-            원본 PDF 카탈로그 - 모든 페이지 원본 그대로 제공
+            STRICT LOCK MODE - 원본 14개 PNG 페이지 + 원본 PDF 다운로드
           </p>
         </div>
       </section>
@@ -221,18 +250,21 @@ export default function CatalogTrendyPage() {
                   {catalogSlides[currentSlide]?.slideImage && (
                     <Image
                       src={catalogSlides[currentSlide].slideImage!}
-                      alt={`카탈로그 페이지 ${(catalogSlides[currentSlide].pageNumber || currentSlide + 1)}`}
+                      alt={`센스타일 트랜디 카탈로그 페이지 ${(catalogSlides[currentSlide].pageNumber || currentSlide + 1)} - 원본 PNG`}
                       className="max-w-full max-h-full object-contain"
                       style={{
-                        // STRICT: Preserve original aspect ratio, no cropping/scaling
+                        // STRICT LOCK: Preserve original aspect ratio, no cropping/scaling/modifications
                         width: 'auto',
                         height: 'auto',
                         maxWidth: '100%',
                         maxHeight: '100%',
-                        objectFit: 'contain',
+                        objectFit: 'contain', // STRICT: Never crop or distort
                         objectPosition: 'center',
-                        // Ensure high quality rendering
-                        imageRendering: 'auto'
+                        // STRICT: Ensure high quality rendering of original PNG
+                        imageRendering: 'auto',
+                        // STRICT: No filters, effects, or modifications
+                        filter: 'none',
+                        transform: 'none'
                       }}
                       width={1200}
                       loading="eager"
@@ -266,15 +298,15 @@ export default function CatalogTrendyPage() {
                 <ChevronRight className="h-6 w-6" />
               </Button>
 
-              {/* Page Counter */}
+              {/* Page Counter - STRICT LOCK: Show exact page numbers */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium z-20">
-                페이지 {catalogSlides[currentSlide]?.pageNumber || currentSlide + 1} / {catalogSlides.length}
+                페이지 {catalogSlides[currentSlide]?.pageNumber || currentSlide + 1} / {catalogSlides.length} (최대 14개)
               </div>
             </div>
 
-            {/* Page Indicators */}
+            {/* Page Indicators - STRICT LOCK: Show all 14 pages */}
             <div className="flex justify-center space-x-2 py-6">
-              {catalogSlides.map((slide, index) => (
+              {catalogSlides.slice(0, 14).map((slide, index) => (
                 <button
                   key={slide._id}
                   onClick={() => goToSlide(index)}
@@ -283,20 +315,21 @@ export default function CatalogTrendyPage() {
                       ? 'bg-[#1A1A1A] scale-150' 
                       : 'bg-gray-400 hover:bg-gray-600'
                   }`}
-                  title={`페이지 ${slide.pageNumber || index + 1}`}
+                  title={`원본 페이지 ${slide.pageNumber || index + 1}`}
                 />
               ))}
             </div>
           </div>
 
-          {/* Direct PDF Download Button */}
+          {/* Direct PDF Download Button - STRICT LOCK: Original PDF only */}
           <div className="flex justify-center mt-6">
             <Button
               onClick={handleDownload}
               className="px-8 py-3 bg-[#1A1A1A] hover:bg-[#333] text-white font-medium transition-colors duration-200 rounded-lg"
+              disabled={!catalogData?.pdfUrl}
             >
               <Download className="h-5 w-5 mr-2" />
-              원본 PDF 다운로드
+              {catalogData?.pdfUrl ? '최신 원본 PDF 다운로드' : 'PDF 준비 중...'}
             </Button>
           </div>
         </div>
