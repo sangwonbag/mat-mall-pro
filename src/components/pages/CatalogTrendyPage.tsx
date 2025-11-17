@@ -1,29 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { WallpaperPDFSamples } from '@/entities';
+import { WallpaperPDFSamples, TrendyCatalogSlides } from '@/entities';
 import { Button } from '@/components/ui/button';
+import { Image } from '@/components/ui/image';
 import Header from '@/components/ui/header';
 
 export default function CatalogTrendyPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [catalogData, setCatalogData] = useState<WallpaperPDFSamples | null>(null);
+  const [catalogSlides, setCatalogSlides] = useState<TrendyCatalogSlides[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
-
-  // Mock catalog images - in real implementation, these would be extracted from PDF
-  const catalogImages = [
-    'https://static.wixstatic.com/media/9f8727_1048bc3ee0d5424bb3539e1db95d0b50~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_04bd2bcccfe6487787da809e171f91c7~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_bd48fbce48b04a02b5e393928da4a691~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_4bbfc2efa6304ac693143d7540cb5bdd~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_16925650d28443a39a2e9aad0c56a782~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_8a7d0bd9061c4b62ad579ea8985085e3~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_ff821bc761124373a371252b879892a3~mv2.png?originWidth=1152&originHeight=896',
-    'https://static.wixstatic.com/media/9f8727_133bd4c29f634864882bca5b8c6735b8~mv2.png?originWidth=1152&originHeight=896'
-  ];
 
   useEffect(() => {
     loadCatalogData();
@@ -32,12 +22,21 @@ export default function CatalogTrendyPage() {
   const loadCatalogData = async () => {
     try {
       setLoading(true);
-      const { items } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
-      const catalog = items.find(item => 
+      
+      // Load PDF catalog data
+      const { items: pdfItems } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
+      const catalog = pdfItems.find(item => 
         item.sampleName?.includes('KCC 센스타일 트랜디') || 
-        item.category?.includes('KCC 글라스')
+        item.category?.includes('KCC 글라스') ||
+        item.sampleName?.includes('센스타일 트랜디')
       );
       setCatalogData(catalog || null);
+
+      // Load catalog slides data
+      const { items: slideItems } = await BaseCrudService.getAll<TrendyCatalogSlides>('trendycatalogslides');
+      const sortedSlides = slideItems.sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0));
+      setCatalogSlides(sortedSlides);
+      
     } catch (error) {
       console.error('Error loading catalog data:', error);
     } finally {
@@ -46,11 +45,11 @@ export default function CatalogTrendyPage() {
   };
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % catalogImages.length);
+    setCurrentSlide((prev) => (prev + 1) % catalogSlides.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + catalogImages.length) % catalogImages.length);
+    setCurrentSlide((prev) => (prev - 1 + catalogSlides.length) % catalogSlides.length);
   };
 
   const goToSlide = (index: number) => {
@@ -97,8 +96,36 @@ export default function CatalogTrendyPage() {
     return (
       <div className="min-h-screen bg-white font-['Pretendard']">
         <Header />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A1A1A]"></div>
+        <div className="flex flex-col items-center justify-center min-h-[80vh]">
+          <Loader2 className="h-12 w-12 animate-spin text-[#1A1A1A] mb-4" />
+          <p className="text-gray-600">카탈로그를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no slides are available
+  if (catalogSlides.length === 0) {
+    return (
+      <div className="min-h-screen bg-white font-['Pretendard']">
+        <Header />
+        <div className="flex flex-col items-center justify-center min-h-[80vh]">
+          <h1 className="text-2xl font-bold text-[#2E2E2E] mb-4">
+            KCC 센스타일 트랜디 카탈로그
+          </h1>
+          <p className="text-gray-600 mb-8">
+            카탈로그 데이터를 준비 중입니다. 잠시 후 다시 확인해 주세요.
+          </p>
+          {catalogData?.pdfUrl && (
+            <Button
+              onClick={() => window.open(catalogData.pdfUrl, '_blank')}
+              className="w-[220px] h-[44px] bg-[#1A1A1A] hover:bg-[#333] text-white font-medium transition-colors duration-200"
+              style={{ borderRadius: '8px' }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              PDF 다운로드
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -114,9 +141,14 @@ export default function CatalogTrendyPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-[#2E2E2E] mb-4">
             KCC 센스타일 트랜디 카탈로그
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-4">
             KCC 글라스의 프리미엄 센스타일 트랜디 제품군을 한눈에 확인하세요
           </p>
+          {catalogSlides.length > 0 && (
+            <p className="text-sm text-gray-500">
+              총 {catalogSlides.length}페이지의 카탈로그를 확인할 수 있습니다
+            </p>
+          )}
         </div>
       </section>
 
@@ -133,20 +165,34 @@ export default function CatalogTrendyPage() {
               onMouseLeave={handleMouseUp}
             >
               <AnimatePresence mode="wait">
-                <motion.img
+                <motion.div
                   key={currentSlide}
-                  src={catalogImages[currentSlide]}
-                  alt={`카탈로그 페이지 ${currentSlide + 1}`}
-                  className="w-full h-full object-contain bg-white"
+                  className="w-full h-full flex flex-col bg-white"
                   initial={{ opacity: 0, x: 100 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -100 }}
                   transition={{ duration: 0.3 }}
-                  draggable={false}
-                />
+                >
+                  {catalogSlides[currentSlide]?.slideImage && (
+                    <Image
+                      src={catalogSlides[currentSlide].slideImage!}
+                      alt={catalogSlides[currentSlide].pageTitle || `카탈로그 페이지 ${currentSlide + 1}`}
+                      className="w-full h-full object-contain"
+                      width={1200}
+                    />
+                  )}
+                  
+                  {/* Page Title Overlay */}
+                  {catalogSlides[currentSlide]?.pageTitle && (
+                    <div className="absolute top-4 left-4 bg-black/70 text-white px-4 py-2 rounded-lg max-w-md">
+                      <h3 className="text-sm font-medium">
+                        {catalogSlides[currentSlide].pageTitle}
+                      </h3>
+                    </div>
+                  )}
+                </motion.div>
               </AnimatePresence>
 
-              {/* Navigation Arrows */}
               <Button
                 onClick={prevSlide}
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/90 text-white border-0 z-10"
@@ -158,28 +204,29 @@ export default function CatalogTrendyPage() {
               <Button
                 onClick={nextSlide}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/90 text-white border-0 z-10"
-                disabled={currentSlide === catalogImages.length - 1}
+                disabled={currentSlide === catalogSlides.length - 1}
               >
                 <ChevronRight className="h-6 w-6" />
               </Button>
 
               {/* Slide Counter */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm">
-                {currentSlide + 1} / {catalogImages.length}
+                {currentSlide + 1} / {catalogSlides.length}
               </div>
             </div>
 
             {/* Slide Indicators */}
             <div className="flex justify-center space-x-2 py-6 bg-gray-50">
-              {catalogImages.map((_, index) => (
+              {catalogSlides.map((slide, index) => (
                 <button
-                  key={index}
+                  key={slide._id}
                   onClick={() => goToSlide(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-200 ${
                     index === currentSlide 
                       ? 'bg-[#1A1A1A] scale-125' 
                       : 'bg-gray-300 hover:bg-gray-400'
                   }`}
+                  title={slide.pageTitle || `페이지 ${index + 1}`}
                 />
               ))}
             </div>
@@ -197,11 +244,34 @@ export default function CatalogTrendyPage() {
             </Button>
           </div>
 
+          {/* Current Slide Info */}
+          {catalogSlides[currentSlide] && (
+            <div className="mt-8 text-center">
+              <div className="max-w-4xl mx-auto bg-gray-50 rounded-lg p-6">
+                <div className="flex flex-col md:flex-row items-start gap-6">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-[#2E2E2E] mb-2">
+                      {catalogSlides[currentSlide].pageTitle || `페이지 ${currentSlide + 1}`}
+                    </h3>
+                    {catalogSlides[currentSlide].pageContentSummary && (
+                      <p className="text-gray-600 text-left">
+                        {catalogSlides[currentSlide].pageContentSummary}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    페이지 {catalogSlides[currentSlide].pageNumber || currentSlide + 1}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Additional Info */}
           {catalogData && (
-            <div className="mt-12 text-center">
-              <div className="max-w-2xl mx-auto bg-gray-50 rounded-lg p-8">
-                <h3 className="text-xl font-bold text-[#2E2E2E] mb-4">
+            <div className="mt-8 text-center">
+              <div className="max-w-2xl mx-auto bg-white border rounded-lg p-6">
+                <h3 className="text-lg font-bold text-[#2E2E2E] mb-4">
                   {catalogData.sampleName}
                 </h3>
                 {catalogData.description && (
