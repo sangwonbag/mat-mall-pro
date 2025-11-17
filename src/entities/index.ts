@@ -184,27 +184,6 @@ export interface TrendyCatalogSlides {
 
 
 /**
- * Collection ID: trendycatalogslides
- * Interface for TrendyCatalogSlides
- */
-export interface TrendyCatalogSlides {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType number */
-  pageNumber?: number;
-  /** @wixFieldType image */
-  slideImage?: string;
-  /** @wixFieldType text */
-  pageTitle?: string;
-  /** @wixFieldType text */
-  pageContentSummary?: string;
-  /** @wixFieldType url */
-  pdfSourceUrl?: string;
-}
-
-
-/**
  * Collection ID: wallpaperpdfsamples
  * Interface for WallpaperPDFSamples
  */
