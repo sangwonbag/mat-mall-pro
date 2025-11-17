@@ -36,6 +36,10 @@ export interface BrandSamplePDFs {
   _updatedDate?: Date;
   /** @wixFieldType text */
   brandName?: string;
+  /** @wixFieldType number */
+  displayOrder?: number;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
   /** @wixFieldType text */
   category?: string;
   /** @wixFieldType image */
@@ -44,10 +48,6 @@ export interface BrandSamplePDFs {
   pdfUrl?: string;
   /** @wixFieldType text */
   sampleBookDescription?: string;
-  /** @wixFieldType boolean */
-  isActive?: boolean;
-  /** @wixFieldType number */
-  displayOrder?: number;
 }
 
 
