@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, SampleBooksandCatalogs, WallpaperPDFSamples } from '@/entities';
+import { Products, ProductCategories, SampleBooksandCatalogs, WallpaperPDFSamples, BrandSamplePDFs } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +49,7 @@ export default function SearchPage() {
   const [brands, setBrands] = useState<string[]>([]);
   const [sampleBooks, setSampleBooks] = useState<SampleBooksandCatalogs[]>([]);
   const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
+  const [brandSamplePDFs, setBrandSamplePDFs] = useState<BrandSamplePDFs[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -105,11 +106,12 @@ export default function SearchPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult, sampleBooksResult, pdfSamplesResult] = await Promise.all([
+      const [productsResult, categoriesResult, sampleBooksResult, pdfSamplesResult, brandSamplePDFsResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
         BaseCrudService.getAll<ProductCategories>('productcategories'),
         BaseCrudService.getAll<SampleBooksandCatalogs>('samplebooksandcatalogs'),
-        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples')
+        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples'),
+        BaseCrudService.getAll<BrandSamplePDFs>('brandsamplepdfs')
       ]);
 
       setProducts(productsResult.items);
@@ -123,6 +125,12 @@ export default function SearchPage() {
 
       // PDF 샘플 설정
       setPdfSamples(pdfSamplesResult.items);
+
+      // 브랜드 샘플 PDF 설정 (활성화된 것만)
+      const activeBrandSamplePDFs = brandSamplePDFsResult.items
+        .filter(sample => sample.isActive)
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      setBrandSamplePDFs(activeBrandSamplePDFs);
 
       // Extract unique brands
       const uniqueBrands = [...new Set(productsResult.items
@@ -237,6 +245,13 @@ export default function SearchPage() {
     console.log('카탈로그 페이지가 삭제되었습니다');
   };
 
+  // 브랜드별 샘플 PDF 그룹화
+  const getBrandSamplePDFs = (brandName: string) => {
+    return brandSamplePDFs.filter(sample => 
+      sample.brandName === brandName && sample.isActive
+    );
+  };
+
   // 브랜드 사이드바 컴포넌트
   const BrandSidebar = ({ isMobile = false }) => (
     <div className={`${isMobile ? 'w-full' : 'w-64'} bg-white border-r border-gray-200 ${isMobile ? 'h-full' : 'h-screen sticky top-0'} overflow-y-auto flex flex-col`}>
@@ -288,20 +303,60 @@ export default function SearchPage() {
               <AnimatePresence>
                 {expandedCategories.includes(category) && brands.length > 0 && (
                   <div className="overflow-hidden">
-                    <div className="ml-6 space-y-1 mt-2">
-                      {brands.map((brand) => (
-                        <div
-                          key={brand}
-                          className={`brand-sub-menu-item cursor-pointer transition-colors duration-200 ${
-                            selectedBrand === brand 
-                              ? 'text-[#B89C7D] font-medium' 
-                              : 'hover:text-[#B89C7D]'
-                          }`}
-                          onClick={() => handleBrandSelect(brand, category)}
-                        >
-                          <span>{brand}</span>
-                        </div>
-                      ))}
+                    <div className="ml-6 space-y-3 mt-2">
+                      {brands.map((brand) => {
+                        const brandSamples = getBrandSamplePDFs(brand);
+                        return (
+                          <div key={brand} className="space-y-2">
+                            <div
+                              className={`brand-sub-menu-item cursor-pointer transition-colors duration-200 ${
+                                selectedBrand === brand 
+                                  ? 'text-[#B89C7D] font-medium' 
+                                  : 'hover:text-[#B89C7D]'
+                              }`}
+                              onClick={() => handleBrandSelect(brand, category)}
+                            >
+                              <span>{brand}</span>
+                            </div>
+                            
+                            {/* 브랜드별 샘플 이미지 표시 */}
+                            {brandSamples.length > 0 && (
+                              <div className="ml-4 grid grid-cols-2 gap-2">
+                                {brandSamples.slice(0, 4).map((sample, index) => (
+                                  <div
+                                    key={sample._id}
+                                    className="relative aspect-square bg-gray-100 rounded-md overflow-hidden hover:ring-2 hover:ring-[#B89C7D] transition-all duration-200 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (sample.pdfUrl) {
+                                        window.open(sample.pdfUrl, '_blank');
+                                      }
+                                    }}
+                                  >
+                                    <Image
+                                      src={sample.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_6c15f0a2e52e4ca3a2ac05b3c747dadb~mv2.png?originWidth=384&originHeight=256'}
+                                      alt={sample.brandName || '브랜드 샘플'}
+                                      className="w-full h-full object-cover"
+                                      width={80}
+                                    />
+                                    {/* PDF 아이콘 오버레이 */}
+                                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
+                                      <FileText className="h-4 w-4 text-white" />
+                                    </div>
+                                  </div>
+                                ))}
+                                {brandSamples.length > 4 && (
+                                  <div className="col-span-2 text-center">
+                                    <span className="text-xs text-gray-500">
+                                      +{brandSamples.length - 4}개 더
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -417,17 +472,6 @@ export default function SearchPage() {
                   className="absolute right-2 top-2 h-10 w-10 rounded-full bg-[#2E2E2E] hover:bg-[#B89C7D]"
                 >
                   <Search className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* 센스타일 트랜디 카탈로그 버튼 */}
-              <div className="max-w-2xl mx-auto mb-6">
-                <Button
-                  onClick={goToCatalogPage}
-                  className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors duration-200"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  카탈로그 보기
                 </Button>
               </div>
 
