@@ -10,6 +10,7 @@ import AdminPage from '@/components/pages/AdminPage';
 import ProfilePage from '@/components/pages/ProfilePage';
 import AdminLoginPage from '@/components/pages/AdminLoginPage';
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
+import AdminPdfPage from '@/components/pages/AdminPdfPage';
 import CatalogTrendyPage from '@/components/pages/CatalogTrendyPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
@@ -60,6 +61,10 @@ const router = createBrowserRouter([
       {
         path: "admin/dashboard",
         element: <AdminDashboardPage />,
+      },
+      {
+        path: "admin-pdf",
+        element: <AdminPdfPage />,
       },
       {
         path: "catalog-trendy",

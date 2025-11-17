@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Plus, Save, Trash2, Edit, Download, RefreshCw, FileText, Image as ImageIcon, Database, Settings } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, TrendyCatalogSlides, WallpaperPDFSamples } from '@/entities';
+import { Products, ProductCategories, TrendyCatalogSlides, WallpaperPDFSamples, BrandSamplePDFs } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,14 @@ interface PDFForm {
   thumbnailImage: string;
 }
 
+interface BrandSampleForm {
+  brandName: string;
+  category: string;
+  sampleBookDescription: string;
+  pdfUrl: string;
+  thumbnailImage: string;
+}
+
 // ADMIN ONLY - 기본 규격 옵션들 (수동 관리)
 const DEFAULT_SPECIFICATIONS = [
   '450*450*3',
@@ -56,6 +64,7 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [catalogSlides, setCatalogSlides] = useState<TrendyCatalogSlides[]>([]);
   const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
+  const [brandSamples, setBrandSamples] = useState<BrandSamplePDFs[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -63,11 +72,13 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<Products | null>(null);
   const [editingSlide, setEditingSlide] = useState<TrendyCatalogSlides | null>(null);
   const [editingPDF, setEditingPDF] = useState<WallpaperPDFSamples | null>(null);
+  const [editingBrandSample, setEditingBrandSample] = useState<BrandSamplePDFs | null>(null);
   
   // ADMIN ONLY - 이미지 미리보기 (원본 그대로)
   const [imagePreview, setImagePreview] = useState<string>('');
   const [slideImagePreview, setSlideImagePreview] = useState<string>('');
   const [pdfThumbnailPreview, setPdfThumbnailPreview] = useState<string>('');
+  const [brandSampleThumbnailPreview, setBrandSampleThumbnailPreview] = useState<string>('');
   
   // ADMIN ONLY - 규격 관리 (수동)
   const [customSpecifications, setCustomSpecifications] = useState<string[]>([]);
@@ -96,6 +107,14 @@ export default function AdminPage() {
     sampleName: '',
     category: '',
     description: '',
+    pdfUrl: '',
+    thumbnailImage: ''
+  });
+
+  const [brandSampleFormData, setBrandSampleFormData] = useState<BrandSampleForm>({
+    brandName: '',
+    category: '',
+    sampleBookDescription: '',
     pdfUrl: '',
     thumbnailImage: ''
   });
@@ -185,6 +204,11 @@ export default function AdminPage() {
         return { items: [] };
       });
 
+      const brandSamplesResult = await BaseCrudService.getAll<BrandSamplePDFs>('brandsamplepdfs').catch(err => {
+        console.warn('ADMIN WARNING: Brand Samples 로딩 실패:', err);
+        return { items: [] };
+      });
+
       // ADMIN ONLY - 안전한 데이터 설정 (null/undefined 방지)
       setProducts(Array.isArray(productsResult.items) ? productsResult.items : []);
       setCategories(Array.isArray(categoriesResult.items) ? 
@@ -192,12 +216,14 @@ export default function AdminPage() {
       setCatalogSlides(Array.isArray(catalogSlidesResult.items) ? 
         catalogSlidesResult.items.sort((a, b) => (a.pageNumber || 0) - (b.pageNumber || 0)) : []);
       setPdfSamples(Array.isArray(pdfSamplesResult.items) ? pdfSamplesResult.items : []);
+      setBrandSamples(Array.isArray(brandSamplesResult.items) ? brandSamplesResult.items : []);
       
       console.log('ADMIN: 데이터 로딩 완료', {
         products: productsResult.items?.length || 0,
         categories: categoriesResult.items?.length || 0,
         slides: catalogSlidesResult.items?.length || 0,
-        pdfs: pdfSamplesResult.items?.length || 0
+        pdfs: pdfSamplesResult.items?.length || 0,
+        brandSamples: brandSamplesResult.items?.length || 0
       });
       
     } catch (error) {
@@ -213,13 +239,14 @@ export default function AdminPage() {
       setCategories([]);
       setCatalogSlides([]);
       setPdfSamples([]);
+      setBrandSamples([]);
     } finally {
       setLoading(false);
     }
   };
 
   // ADMIN ONLY - 이미지 업로드 핸들러 (원본 그대로) - 오류 방지 개선
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'slide' | 'pdf-thumbnail') => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'slide' | 'pdf-thumbnail' | 'brand-sample-thumbnail') => {
     const file = event.target.files?.[0];
     if (!file) {
       console.warn('ADMIN WARNING: 파일이 선택되지 않음');
@@ -269,6 +296,10 @@ export default function AdminPage() {
             setPdfThumbnailPreview(result);
             setPdfFormData(prev => ({ ...prev, thumbnailImage: result }));
             console.log('ADMIN: PDF 썸네일 업로드 완료');
+          } else if (type === 'brand-sample-thumbnail') {
+            setBrandSampleThumbnailPreview(result);
+            setBrandSampleFormData(prev => ({ ...prev, thumbnailImage: result }));
+            console.log('ADMIN: 브랜드 샘플 썸네일 업로드 완료');
           }
         } catch (error) {
           console.error('ADMIN ERROR - 이미지 처리 실패:', error);
@@ -313,6 +344,10 @@ export default function AdminPage() {
     setPdfFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleBrandSampleInputChange = (field: keyof BrandSampleForm, value: string) => {
+    setBrandSampleFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   // ADMIN ONLY - 폼 리셋 함수 (수동)
   const resetForm = () => {
     setFormData({
@@ -349,6 +384,18 @@ export default function AdminPage() {
     });
     setPdfThumbnailPreview('');
     setEditingPDF(null);
+  };
+
+  const resetBrandSampleForm = () => {
+    setBrandSampleFormData({
+      brandName: '',
+      category: '',
+      sampleBookDescription: '',
+      pdfUrl: '',
+      thumbnailImage: ''
+    });
+    setBrandSampleThumbnailPreview('');
+    setEditingBrandSample(null);
   };
 
   // ADMIN ONLY - 제품 저장 (수동) - 오류 방지 개선

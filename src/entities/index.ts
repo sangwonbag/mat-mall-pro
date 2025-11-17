@@ -27,6 +27,31 @@ export interface AdminUsers {
 
 
 /**
+ * Collection ID: brandsamplepdfs
+ * Interface for BrandSamplePDFs
+ */
+export interface BrandSamplePDFs {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  brandName?: string;
+  /** @wixFieldType text */
+  category?: string;
+  /** @wixFieldType image */
+  thumbnailImage?: string;
+  /** @wixFieldType url */
+  pdfUrl?: string;
+  /** @wixFieldType text */
+  sampleBookDescription?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType number */
+  displayOrder?: number;
+}
+
+
+/**
  * Collection ID: chatconsultations
  * Interface for ChatConsultations
  */

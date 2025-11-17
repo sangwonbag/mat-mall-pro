@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download } from 'lucide-react';
+import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, WallpaperPDFSamples } from '@/entities';
+import { Products, ProductCategories, WallpaperPDFSamples, BrandSamplePDFs } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/ui/header';
 import { ChatWidget } from '@/components/ui/chat-widget';
+import { PdfSamplesSlider } from '@/components/ui/pdf-samples-slider';
 
 // 브랜드 사이드바 구조 정의
 const brandStructure = {
@@ -46,6 +47,8 @@ export default function SearchPage() {
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
+  const [brandSamples, setBrandSamples] = useState<BrandSamplePDFs[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
@@ -80,15 +83,17 @@ export default function SearchPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult, pdfSamplesResult] = await Promise.all([
+      const [productsResult, categoriesResult, pdfSamplesResult, brandSamplesResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
         BaseCrudService.getAll<ProductCategories>('productcategories'),
-        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples')
+        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples'),
+        BaseCrudService.getAll<BrandSamplePDFs>('brandsamplepdfs')
       ]);
 
       setProducts(productsResult.items);
       setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
       setPdfSamples(pdfSamplesResult.items);
+      setBrandSamples(brandSamplesResult.items);
 
       // Extract unique brands
       const uniqueBrands = [...new Set(productsResult.items
@@ -286,6 +291,40 @@ export default function SearchPage() {
     navigate('/quote', { state: { selectedProduct: product } });
   };
 
+  // 브랜드 샘플 슬라이더 네비게이션
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % brandSamples.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + brandSamples.length) % brandSamples.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  // 슬라이더에 표시할 브랜드 샘플 개수 (반응형)
+  const getSlidesPerView = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 1280) return 4; // xl
+      if (window.innerWidth >= 768) return 3;  // md
+      return 2; // mobile
+    }
+    return 4;
+  };
+
+  const [slidesPerView, setSlidesPerView] = useState(getSlidesPerView());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setSlidesPerView(getSlidesPerView());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-['Pretendard']">
       <Header showSearch={true} onSearchChange={setSearchTerm} searchValue={searchTerm} />
@@ -396,6 +435,128 @@ export default function SearchPage() {
                   </Button>
                 </div>
               ) : null}
+            </div>
+          </section>
+
+          {/* 브랜드 샘플북 PDF 슬라이더 섹션 */}
+          <section className="py-16 bg-black">
+            <div className="max-w-[120rem] mx-auto px-4">
+              {/* 섹션 헤더 */}
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-roboto">
+                  브랜드 샘플북(PDF)
+                </h2>
+                <p className="text-lg text-gray-300 font-roboto">
+                  각 브랜드별 제품 샘플을 PDF로 확인하세요
+                </p>
+              </div>
+
+              {/* 슬라이더 컨테이너 */}
+              {brandSamples.length > 0 ? (
+                <div className="relative">
+                  {/* 슬라이더 */}
+                  <div className="overflow-hidden">
+                    <div 
+                      className="flex transition-transform duration-500 ease-in-out"
+                      style={{
+                        transform: `translateX(-${currentSlide * (100 / slidesPerView)}%)`
+                      }}
+                    >
+                      {brandSamples.map((sample, index) => (
+                        <div
+                          key={sample._id}
+                          className="flex-shrink-0 px-3"
+                          style={{ width: `${100 / slidesPerView}%` }}
+                        >
+                          <div className="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors duration-300">
+                            {/* 썸네일 이미지 */}
+                            <div className="aspect-[4/3] relative">
+                              <Image
+                                src={sample.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_6c15f0a2e52e4ca3a2ac05b3c747dadb~mv2.png?originWidth=384&originHeight=256'}
+                                alt={sample.brandName || '브랜드 샘플'}
+                                className="w-full h-full object-cover"
+                                width={400}
+                              />
+                              {/* PDF 오버레이 */}
+                              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                <FileText className="h-12 w-12 text-white" />
+                              </div>
+                            </div>
+                            
+                            {/* 브랜드 정보 */}
+                            <div className="p-6">
+                              <h3 className="text-xl font-bold text-white mb-2 font-roboto">
+                                {sample.brandName}
+                              </h3>
+                              <p className="text-sm text-gray-400 mb-1 font-roboto">
+                                {sample.category}
+                              </p>
+                              {sample.sampleBookDescription && (
+                                <p className="text-sm text-gray-300 mb-4 line-clamp-2 font-roboto">
+                                  {sample.sampleBookDescription}
+                                </p>
+                              )}
+                              
+                              {/* PDF 보기 버튼 */}
+                              <Button
+                                onClick={() => {
+                                  if (sample.pdfUrl) {
+                                    window.open(sample.pdfUrl, '_blank');
+                                  }
+                                }}
+                                className="w-full bg-white text-black hover:bg-gray-200 transition-colors duration-200 font-roboto font-medium"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                PDF 샘플 보기
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 네비게이션 화살표 */}
+                  {brandSamples.length > slidesPerView && (
+                    <>
+                      <Button
+                        onClick={prevSlide}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 z-10 backdrop-blur-sm"
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </Button>
+                      <Button
+                        onClick={nextSlide}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 z-10 backdrop-blur-sm"
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                      </Button>
+                    </>
+                  )}
+
+                  {/* 도트 네비게이션 */}
+                  {brandSamples.length > slidesPerView && (
+                    <div className="flex justify-center space-x-2 mt-8">
+                      {Array.from({ length: Math.ceil(brandSamples.length / slidesPerView) }).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => goToSlide(index)}
+                          className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                            Math.floor(currentSlide / slidesPerView) === index
+                              ? 'bg-white scale-125'
+                              : 'bg-white/40 hover:bg-white/60'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400 font-roboto">브랜드 샘플북을 준비 중입니다.</p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -597,6 +758,10 @@ export default function SearchPage() {
           </section>
         </div>
       </div>
+
+      {/* PDF 샘플북 슬라이더 섹션 */}
+      <PdfSamplesSlider />
+
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">
