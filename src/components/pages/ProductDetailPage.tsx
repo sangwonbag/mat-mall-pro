@@ -404,7 +404,7 @@ export default function ProductDetailPage() {
                   />
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-semibold text-gray-900">페이지 1</h3>
+                  <h3 className="text-sm font-semibold text-gray-500">페이지 1 (비활성화)</h3>
                 </div>
               </div>
               <div 
@@ -420,7 +420,7 @@ export default function ProductDetailPage() {
                   />
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-semibold text-gray-900">페이지 2</h3>
+                  <h3 className="text-sm font-semibold text-gray-500">페이지 2 (비활성화)</h3>
                 </div>
               </div>
               <div 
@@ -436,7 +436,7 @@ export default function ProductDetailPage() {
                   />
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-semibold text-gray-900">페이지 3</h3>
+                  <h3 className="text-sm font-semibold text-gray-500">페이지 3 (비활성화)</h3>
                 </div>
               </div>
               <div 
@@ -452,7 +452,7 @@ export default function ProductDetailPage() {
                   />
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-semibold text-gray-900">페이지 4</h3>
+                  <h3 className="text-sm font-semibold text-gray-500">페이지 4 (비활성화)</h3>
                 </div>
               </div>
             </div>

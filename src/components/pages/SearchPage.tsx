@@ -202,9 +202,10 @@ export default function SearchPage() {
     filterProducts();
   };
 
-  // 센스타일 트랜디 카탈로그 페이지로 이동
+  // 카탈로그 기능 비활성화됨
   const goToCatalogPage = () => {
-    navigate('/catalog-trendy');
+    // 카탈로그 페이지가 삭제되어 더 이상 사용할 수 없습니다
+    console.log('카탈로그 페이지가 삭제되었습니다');
   };
 
   // 브랜드 사이드바 컴포넌트
