@@ -291,21 +291,6 @@ export default function SearchPage() {
           ))}
         </div>
       </div>
-      
-      {/* 센스타일 트랜디 카탈로그 고정 버튼 */}
-      <div className="p-6 border-t border-gray-200">
-        <button
-          onClick={openSenstyleCatalog}
-          className="w-full h-12 bg-[#111111] text-white rounded-xl flex flex-col items-center justify-center transition-all duration-180 hover:bg-[#333333] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#333333] focus:ring-offset-2"
-        >
-          <div className="text-sm font-medium leading-tight">
-            센스타일 트랜디 카탈로그 보기
-          </div>
-          <div className="text-xs text-gray-300 leading-tight">
-            KCC 글라스 공식 PDF
-          </div>
-        </button>
-      </div>
     </div>
   );
 
