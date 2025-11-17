@@ -70,22 +70,7 @@ export default function QuotePage() {
     loadProducts();
   }, []);
 
-  // debounce 함수
-  const debounce = useCallback((func: Function, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
-    return (...args: any[]) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func.apply(null, args), delay);
-    };
-  }, []);
-
-  // debounced 검색어 업데이트
-  const debouncedSetSearchTerm = useCallback(
-    debounce((value: string) => {
-      setSearchTerm(value);
-    }, 300),
-    []
-  );
+  // debounce 함수 제거 - 입력 중 자동 검색 방지
 
   useEffect(() => {
     filterProducts();
@@ -248,10 +233,10 @@ export default function QuotePage() {
     }
   };
 
-  // 검색 입력 처리 (onChange - UI state만 업데이트)
+  // 검색 입력 처리 - 입력 중에는 UI state만 업데이트, 검색 실행 안함
   const handleSearchInputChange = (value: string) => {
     setSearchInputValue(value);
-    // debounced 함수 호출하지 않음 - 입력 중에는 아무 동작 안함
+    // 입력 중에는 아무 검색 로직도 실행하지 않음
   };
 
   // 엔터키 처리
