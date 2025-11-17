@@ -52,6 +52,7 @@ export default function QuotePage() {
   const [searchInputValue, setSearchInputValue] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   
   const [formData, setFormData] = useState<QuoteFormData>({
     selectedMaterialCode: location.state?.selectedProduct?.materialCode || '',
@@ -181,8 +182,8 @@ export default function QuotePage() {
     }));
   };
 
-  // 자재 선택 처리
-  const handleMaterialSelect = (product: Products) => {
+  // 자재 선택 처리 - 안정화
+  const handleMaterialSelect = useCallback((product: Products) => {
     setFormData(prev => ({
       ...prev,
       selectedMaterialCode: product.materialCode || '',
@@ -191,65 +192,79 @@ export default function QuotePage() {
     setIsSheetOpen(false);
     setSearchInputValue('');
     setSearchTerm('');
-  };
+    setIsSearching(false); // 검색 상태 초기화
+  }, []);
 
-  // 검색 실행 함수
-  const executeSearch = (searchValue: string) => {
+  // 검색 실행 함수 - 안정화된 버전
+  const executeSearch = useCallback((searchValue: string) => {
+    if (isSearching) return; // 중복 실행 방지
+    
+    setIsSearching(true);
     setSearchTerm(searchValue);
     
-    // 4자리 숫자인지 확인하여 자동 선택 처리
-    if (/^\d{4}$/.test(searchValue)) {
-      const matchingProducts = products.filter(product => 
-        product.materialCode?.includes(searchValue)
+    // 비동기 처리로 UI 블로킹 방지
+    setTimeout(() => {
+      // 4자리 숫자인지 확인하여 자동 선택 처리
+      if (/^\d{4}$/.test(searchValue)) {
+        const matchingProducts = products.filter(product => 
+          product.materialCode?.includes(searchValue)
+        );
+        
+        if (matchingProducts.length === 1) {
+          // 한 개만 있으면 자동 선택
+          handleMaterialSelect(matchingProducts[0]);
+          toast({
+            title: "자재 자동 선택",
+            description: `${matchingProducts[0].productName}이(가) 선택되었습니다.`,
+          });
+          setIsSearching(false);
+          return;
+        } else if (matchingProducts.length > 1) {
+          // 여러 개면 후보 리스트 표시
+          setFilteredProducts(matchingProducts);
+          setIsSheetOpen(true);
+          setIsSearching(false);
+          return;
+        }
+      }
+      
+      // 일반 검색인 경우 결과가 있으면 시트 열기
+      const filtered = products.filter(product =>
+        product.productName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+        product.brandName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+        product.specifications?.toLowerCase().includes(searchValue.toLowerCase()) ||
+        product.materialCode?.toLowerCase().includes(searchValue.toLowerCase())
       );
       
-      if (matchingProducts.length === 1) {
-        // 한 개만 있으면 자동 선택
-        handleMaterialSelect(matchingProducts[0]);
-        toast({
-          title: "자재 자동 선택",
-          description: `${matchingProducts[0].productName}이(가) 선택되었습니다.`,
-        });
-        return;
-      } else if (matchingProducts.length > 1) {
-        // 여러 개면 후보 리스트 표시
-        setFilteredProducts(matchingProducts);
+      if (filtered.length > 0) {
+        setFilteredProducts(filtered);
         setIsSheetOpen(true);
-        return;
       }
-    }
-    
-    // 일반 검색인 경우 결과가 있으면 시트 열기
-    const filtered = products.filter(product =>
-      product.productName?.toLowerCase().includes(searchValue.toLowerCase()) ||
-      product.brandName?.toLowerCase().includes(searchValue.toLowerCase()) ||
-      product.specifications?.toLowerCase().includes(searchValue.toLowerCase()) ||
-      product.materialCode?.toLowerCase().includes(searchValue.toLowerCase())
-    );
-    
-    if (filtered.length > 0) {
-      setFilteredProducts(filtered);
-      setIsSheetOpen(true);
-    }
-  };
+      
+      setIsSearching(false);
+    }, 50); // 최소한의 지연으로 UI 안정화
+  }, [products, isSearching, toast]);
 
-  // 검색 입력 처리 - 입력 중에는 UI state만 업데이트, 검색 실행 안함
-  const handleSearchInputChange = (value: string) => {
+  // 검색 입력 처리 - 완전히 안정화된 버전
+  const handleSearchInputChange = useCallback((value: string) => {
+    // 입력값만 즉시 업데이트, 다른 side effect 없음
     setSearchInputValue(value);
-    // 입력 중에는 아무 검색 로직도 실행하지 않음
-  };
+  }, []);
 
-  // 엔터키 처리
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  // 엔터키 처리 - 안정화
+  const handleSearchKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isSearching) {
+      e.preventDefault(); // 기본 동작 방지
       executeSearch(searchInputValue);
     }
-  };
+  }, [searchInputValue, executeSearch, isSearching]);
 
-  // 검색 아이콘 클릭 처리
-  const handleSearchIconClick = () => {
-    executeSearch(searchInputValue);
-  };
+  // 검색 아이콘 클릭 처리 - 안정화
+  const handleSearchIconClick = useCallback(() => {
+    if (!isSearching) {
+      executeSearch(searchInputValue);
+    }
+  }, [searchInputValue, executeSearch, isSearching]);
 
   // 평수 변경 시 자재 갯수 자동 계산
   const handleAreaChange = (area: string) => {
@@ -505,15 +520,19 @@ export default function QuotePage() {
                   placeholder="제품명, 브랜드명 또는 자재번호(예: 5535)를 입력하세요"
                   value={searchInputValue}
                   onChange={(e) => handleSearchInputChange(e.target.value)}
-                  onKeyPress={handleSearchKeyPress}
+                  onKeyDown={handleSearchKeyPress}
                   className="w-full h-14 pl-6 pr-12 rounded-2xl border-2 border-gray-200 focus:border-teal-500 text-lg"
+                  disabled={isSearching}
+                  autoComplete="off"
+                  spellCheck="false"
                 />
                 <button
                   type="button"
                   onClick={handleSearchIconClick}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  disabled={isSearching}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Search className="h-5 w-5 text-gray-400 hover:text-teal-500" />
+                  <Search className={`h-5 w-5 ${isSearching ? 'text-gray-300' : 'text-gray-400 hover:text-teal-500'}`} />
                 </button>
               </div>
             </div>
