@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search, X, ChevronRight, Home, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,6 +53,7 @@ export default function QuotePage() {
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<QuoteFormData>({
     selectedMaterialCode: location.state?.selectedProduct?.materialCode || '',
@@ -182,7 +183,7 @@ export default function QuotePage() {
     }));
   };
 
-  // 자재 선택 처리 - 안정화
+  // 자재 선택 처리 - 안정화 (포커스 복원 추가)
   const handleMaterialSelect = useCallback((product: Products) => {
     setFormData(prev => ({
       ...prev,
@@ -193,17 +194,25 @@ export default function QuotePage() {
     setSearchInputValue('');
     setSearchTerm('');
     setIsSearching(false); // 검색 상태 초기화
+    
+    // 시트가 닫힌 후 검색창에 포커스 복원
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
   }, []);
 
-  // 검색 실행 함수 - 안정화된 버전
+  // 검색 실행 함수 - 안정화된 버전 (포커스 보호 강화)
   const executeSearch = useCallback((searchValue: string) => {
     if (isSearching) return; // 중복 실행 방지
     
     setIsSearching(true);
     setSearchTerm(searchValue);
     
+    // 포커스 보호를 위한 즉시 처리
+    const currentFocus = document.activeElement;
+    
     // 비동기 처리로 UI 블로킹 방지
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       // 4자리 숫자인지 확인하여 자동 선택 처리
       if (/^\d{4}$/.test(searchValue)) {
         const matchingProducts = products.filter(product => 
@@ -242,13 +251,27 @@ export default function QuotePage() {
       }
       
       setIsSearching(false);
-    }, 50); // 최소한의 지연으로 UI 안정화
-  }, [products, isSearching, toast]);
+      
+      // 포커스 복원 (검색 후에도 입력창 활성 상태 유지)
+      if (currentFocus === searchInputRef.current) {
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 10);
+      }
+    });
+  }, [products, isSearching, toast, handleMaterialSelect]);
 
-  // 검색 입력 처리 - 완전히 안정화된 버전
+  // 검색 입력 처리 - 완전히 안정화된 버전 (ref 사용)
   const handleSearchInputChange = useCallback((value: string) => {
     // 입력값만 즉시 업데이트, 다른 side effect 없음
     setSearchInputValue(value);
+    
+    // 포커스 유지를 위한 추가 보장
+    if (searchInputRef.current && document.activeElement !== searchInputRef.current) {
+      requestAnimationFrame(() => {
+        searchInputRef.current?.focus();
+      });
+    }
   }, []);
 
   // 엔터키 처리 - 안정화
@@ -516,6 +539,7 @@ export default function QuotePage() {
               </label>
               <div className="relative">
                 <Input
+                  ref={searchInputRef}
                   type="text"
                   placeholder="제품명, 브랜드명 또는 자재번호(예: 5535)를 입력하세요"
                   value={searchInputValue}
@@ -525,6 +549,7 @@ export default function QuotePage() {
                   disabled={isSearching}
                   autoComplete="off"
                   spellCheck="false"
+                  autoFocus={false}
                 />
                 <button
                   type="button"
