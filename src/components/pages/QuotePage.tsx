@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search, X, ChevronRight, Home, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BaseCrudService } from '@/integrations';
+import { Products } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +11,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/ui/header';
 import { ChatWidget } from '@/components/ui/chat-widget';
 import { formatPhoneNumber } from '@/lib/phone-formatter';
 
 interface QuoteFormData {
-  materialName: string;
+  selectedMaterialCode: string;
+  selectedMaterialName: string;
   materialQuantity: number;
   area: string;
   address: string;
@@ -26,7 +32,7 @@ interface QuoteFormData {
 }
 
 interface ValidationErrors {
-  materialName?: string;
+  selectedMaterialName?: string;
   materialQuantity?: string;
   area?: string;
   address?: string;
@@ -37,12 +43,18 @@ interface ValidationErrors {
 export default function QuotePage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [products, setProducts] = useState<Products[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const [formData, setFormData] = useState<QuoteFormData>({
-    materialName: location.state?.selectedProduct?.productName || '',
+    selectedMaterialCode: location.state?.selectedProduct?.materialCode || '',
+    selectedMaterialName: location.state?.selectedProduct?.productName || '',
     materialQuantity: 1,
     area: '',
     address: '',
@@ -53,8 +65,45 @@ export default function QuotePage() {
     additionalRequests: ''
   });
 
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  useEffect(() => {
+    filterProducts();
+  }, [products, searchTerm]);
+
+  const loadProducts = async () => {
+    try {
+      const { items } = await BaseCrudService.getAll<Products>('products');
+      setProducts(items);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
+  };
+
+  const filterProducts = () => {
+    let filtered = products;
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.productName?.toLowerCase().includes(term) ||
+        product.brandName?.toLowerCase().includes(term) ||
+        product.specifications?.toLowerCase().includes(term) ||
+        product.materialCode?.toLowerCase().includes(term)
+      );
+    }
+
+    setFilteredProducts(filtered);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('ko-KR').format(price);
+  };
+
   const calculateTotalPrice = () => {
-    if (!formData.materialName || !formData.area || !formData.materialQuantity) return 0;
+    if (!formData.selectedMaterialName || !formData.area || !formData.materialQuantity) return 0;
     
     const area = parseFloat(formData.area);
     // 기본 가격을 설정하거나 가격 문의로 표시
@@ -67,8 +116,8 @@ export default function QuotePage() {
     
     switch (step) {
       case 1:
-        if (!formData.materialName.trim()) {
-          newErrors.materialName = '자재명을 입력해주세요.';
+        if (!formData.selectedMaterialName.trim()) {
+          newErrors.selectedMaterialName = '자재를 선택해주세요.';
         }
         if (!formData.materialQuantity || formData.materialQuantity <= 0) {
           newErrors.materialQuantity = '수량을 입력해주세요.';
@@ -127,6 +176,42 @@ export default function QuotePage() {
       ...prev,
       materialQuantity: quantity
     }));
+  };
+
+  // 자재 선택 처리
+  const handleMaterialSelect = (product: Products) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedMaterialCode: product.materialCode || '',
+      selectedMaterialName: product.productName || ''
+    }));
+    setIsSheetOpen(false);
+    setSearchTerm('');
+  };
+
+  // 검색어 처리 (자재번호 자동 인식 포함)
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    
+    // 4자리 숫자인지 확인
+    if (/^\d{4}$/.test(value)) {
+      const matchingProducts = products.filter(product => 
+        product.materialCode?.includes(value)
+      );
+      
+      if (matchingProducts.length === 1) {
+        // 한 개만 있으면 자동 선택
+        handleMaterialSelect(matchingProducts[0]);
+        toast({
+          title: "자재 자동 선택",
+          description: `${matchingProducts[0].productName}이(가) 선택되었습니다.`,
+        });
+      } else if (matchingProducts.length > 1) {
+        // 여러 개면 후보 리스트 표시
+        setFilteredProducts(matchingProducts);
+        setIsSheetOpen(true);
+      }
+    }
   };
 
   // 평수 변경 시 자재 갯수 자동 계산
@@ -267,8 +352,8 @@ export default function QuotePage() {
     </div>
   );
 
-  // STEP 1: 자재명 직접 입력
-  const Step1MaterialInput = () => (
+  // STEP 1: 자재 선택 (검색 + 목록)
+  const Step1MaterialSelection = () => (
     <motion.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
@@ -277,110 +362,192 @@ export default function QuotePage() {
     >
       <div className="text-center mb-8">
         <h2 className="text-2xl font-heading font-bold text-gray-900 mb-2">
-          시공 자재 입력
+          시공 자재 선택
         </h2>
         <p className="text-gray-600 font-paragraph">
-          시공할 자재명과 수량을 입력해주세요
+          자재를 검색하거나 목록에서 선택해주세요
         </p>
       </div>
 
-      {/* 자재명 입력 */}
+      {/* 선택된 자재 카드 */}
+      {formData.selectedMaterialName && (
+        <Card className="rounded-3xl border-0 shadow-sm bg-gradient-to-r from-teal-50 to-emerald-50">
+          <CardContent className="p-6">
+            <h3 className="font-paragraph font-semibold text-lg mb-4 text-gray-900">
+              선택된 자재
+            </h3>
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h4 className="font-paragraph font-semibold text-gray-900">{formData.selectedMaterialName}</h4>
+                  <p className="text-sm text-gray-600">자재코드: {formData.selectedMaterialCode}</p>
+                  <p className="text-teal-600 font-paragraph font-bold">가격 문의</p>
+                </div>
+                <Button
+                  onClick={() => setFormData(prev => ({ 
+                    ...prev, 
+                    selectedMaterialCode: '', 
+                    selectedMaterialName: '' 
+                  }))}
+                  variant="ghost"
+                  size="sm"
+                  className="w-8 h-8 rounded-full p-0 hover:bg-red-50"
+                >
+                  <X className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
+              
+              {/* 수량 조절 UI */}
+              <div className="flex justify-center">
+                <div 
+                  className="flex items-center border border-gray-300 rounded-xl overflow-hidden bg-white"
+                  style={{ width: '160px' }}
+                >
+                  <motion.button
+                    type="button"
+                    onClick={() => handleQuantityChange(-1)}
+                    className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ 
+                      width: '44px', 
+                      height: '44px',
+                      borderRadius: '10px 0 0 10px',
+                      backgroundColor: '#F3F4F6'
+                    }}
+                    disabled={formData.materialQuantity <= 1}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <Minus className="h-4 w-4 text-gray-600" />
+                  </motion.button>
+                  
+                  <input
+                    type="text"
+                    value={formData.materialQuantity}
+                    onChange={(e) => handleQuantityInputChange(e.target.value)}
+                    className="flex-1 h-11 text-center text-gray-900 bg-white border-0 outline-none"
+                    style={{ 
+                      fontSize: '18px', 
+                      fontWeight: '600',
+                      height: '44px'
+                    }}
+                  />
+                  
+                  <motion.button
+                    type="button"
+                    onClick={() => handleQuantityChange(1)}
+                    className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160"
+                    style={{ 
+                      width: '44px', 
+                      height: '44px',
+                      borderRadius: '0 10px 10px 0',
+                      backgroundColor: '#F3F4F6'
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <Plus className="h-4 w-4 text-gray-600" />
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 자재 검색 */}
       <Card className="rounded-3xl border-0 shadow-sm">
         <CardContent className="p-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-paragraph font-semibold text-gray-700 mb-2">
-                자재명
+                자재 검색
               </label>
-              <Input
-                type="text"
-                placeholder="예: 강화마루, 타일, 벽지 등"
-                value={formData.materialName}
-                onChange={(e) => setFormData(prev => ({ ...prev, materialName: e.target.value }))}
-                className="w-full h-14 rounded-2xl border-2 border-gray-200 focus:border-teal-500 text-lg"
-              />
-              {errors.materialName && (
-                <div className="flex items-center space-x-2 text-red-500 mt-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm font-paragraph">{errors.materialName}</span>
-                </div>
-              )}
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="제품명, 브랜드명 또는 자재번호(예: 5535)를 입력하세요"
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full h-14 pl-6 pr-12 rounded-2xl border-2 border-gray-200 focus:border-teal-500 text-lg"
+                />
+                <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
             </div>
 
-            {/* 선택된 자재 카드 (자재명이 입력되었을 때만 표시) */}
-            {formData.materialName && (
-              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h4 className="font-paragraph font-semibold text-gray-900">{formData.materialName}</h4>
-                    <p className="text-sm text-gray-600">선택된 자재</p>
-                  </div>
-                </div>
+            {/* 전체 자재 목록 보기 버튼 */}
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full h-12 rounded-full border-2 border-teal-200 text-teal-600 hover:bg-teal-50"
+                  onClick={() => {
+                    setFilteredProducts(products);
+                    setIsSheetOpen(true);
+                  }}
+                >
+                  전체 자재 목록 보기
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
+                <SheetHeader className="pb-4">
+                  <SheetTitle className="text-xl font-heading font-bold text-gray-900">
+                    자재 목록
+                  </SheetTitle>
+                </SheetHeader>
                 
-                {/* 수량 조절 UI - 카드 아래에 자연스럽게 붙임 */}
-                <div className="flex justify-center">
-                  <div 
-                    className="flex items-center border border-gray-300 rounded-xl overflow-hidden bg-white"
-                    style={{ width: '160px' }}
-                  >
-                    <motion.button
-                      type="button"
-                      onClick={() => handleQuantityChange(-1)}
-                      className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ 
-                        width: '44px', 
-                        height: '44px',
-                        borderRadius: '10px 0 0 10px',
-                        backgroundColor: '#F3F4F6'
-                      }}
-                      disabled={formData.materialQuantity <= 1}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <Minus className="h-4 w-4 text-gray-600" />
-                    </motion.button>
+                {/* 자재 목록 */}
+                <div className="h-full overflow-y-auto pb-20">
+                  <div className="space-y-3">
+                    {filteredProducts.map((product) => (
+                      <motion.div
+                        key={product._id}
+                        onClick={() => handleMaterialSelect(product)}
+                        className="p-4 bg-white border border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 transition-colors"
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.1 }}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <Image
+                            src={product.productImage || 'https://static.wixstatic.com/media/9f8727_89376df88f0947cbadf7a20712511b29~mv2.png?id=placeholder'}
+                            alt={product.productName || ''}
+                            className="w-16 h-16 object-cover rounded-xl"
+                            width={64}
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-paragraph font-semibold text-gray-900">{product.productName}</h4>
+                            <p className="text-gray-500 font-paragraph text-sm">{product.brandName}</p>
+                            <p className="text-gray-400 font-paragraph text-xs">{product.specifications}</p>
+                            <p className="text-teal-600 font-paragraph font-bold text-sm">
+                              {product.price ? `${formatPrice(product.price)}원` : '가격 문의'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">자재코드</p>
+                            <p className="font-paragraph font-semibold text-gray-900">{product.materialCode}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
                     
-                    <input
-                      type="text"
-                      value={formData.materialQuantity}
-                      onChange={(e) => handleQuantityInputChange(e.target.value)}
-                      className="flex-1 h-11 text-center text-gray-900 bg-white border-0 outline-none"
-                      style={{ 
-                        fontSize: '18px', 
-                        fontWeight: '600',
-                        height: '44px'
-                      }}
-                    />
-                    
-                    <motion.button
-                      type="button"
-                      onClick={() => handleQuantityChange(1)}
-                      className="w-11 h-11 flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-all duration-160"
-                      style={{ 
-                        width: '44px', 
-                        height: '44px',
-                        borderRadius: '0 10px 10px 0',
-                        backgroundColor: '#F3F4F6'
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <Plus className="h-4 w-4 text-gray-600" />
-                    </motion.button>
+                    {filteredProducts.length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="font-paragraph">검색 결과가 없습니다.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {errors.materialQuantity && (
-              <div className="flex items-center space-x-2 text-red-500 mt-2">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-paragraph">{errors.materialQuantity}</span>
-              </div>
-            )}
+              </SheetContent>
+            </Sheet>
           </div>
         </CardContent>
       </Card>
+
+      {errors.selectedMaterialName && (
+        <div className="flex items-center space-x-2 text-red-500 bg-red-50 p-3 rounded-2xl">
+          <AlertCircle className="h-4 w-4" />
+          <span className="text-sm font-paragraph">{errors.selectedMaterialName}</span>
+        </div>
+      )}
     </motion.div>
   );
 
@@ -604,7 +771,7 @@ export default function QuotePage() {
         <StepIndicator />
         
         <AnimatePresence mode="wait">
-          {currentStep === 1 && <Step1MaterialInput key="step1" />}
+          {currentStep === 1 && <Step1MaterialSelection key="step1" />}
           {currentStep === 2 && <Step2AreaInput key="step2" />}
           {currentStep === 3 && <Step3CustomerInfo key="step3" />}
         </AnimatePresence>
@@ -618,7 +785,7 @@ export default function QuotePage() {
               onClick={handleNextStep}
               className="w-full h-14 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-paragraph font-semibold text-lg shadow-lg"
               disabled={
-                (currentStep === 1 && (!formData.materialName.trim() || !formData.materialQuantity)) ||
+                (currentStep === 1 && (!formData.selectedMaterialName.trim() || !formData.materialQuantity)) ||
                 (currentStep === 2 && !formData.area)
               }
             >
@@ -628,11 +795,11 @@ export default function QuotePage() {
           ) : (
             <div className="space-y-3">
               {/* 견적 요청 내용 표시 */}
-              {formData.materialName && formData.area && (
+              {formData.selectedMaterialName && formData.area && (
                 <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl p-4 text-center">
                   <p className="text-sm text-gray-600 font-paragraph mb-1">견적 요청 내용</p>
                   <p className="text-lg font-paragraph font-bold text-teal-600">
-                    {formData.materialName} × {formData.materialQuantity}개
+                    {formData.selectedMaterialName} × {formData.materialQuantity}개
                   </p>
                   <p className="text-sm text-gray-600 font-paragraph">
                     시공 면적: {formData.area}평
@@ -660,6 +827,9 @@ export default function QuotePage() {
 
       {/* 채팅상담 위젯 */}
       <ChatWidget />
+      
+      {/* 토스트 */}
+      <Toaster />
     </div>
   );
 }
