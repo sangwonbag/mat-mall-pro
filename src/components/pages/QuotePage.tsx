@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, FileText, Send, Plus, Minus, Check, Search, X, ChevronRight, Home, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,6 +49,7 @@ export default function QuotePage() {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [products, setProducts] = useState<Products[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInputValue, setSearchInputValue] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
@@ -68,6 +69,23 @@ export default function QuotePage() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  // debounce 함수
+  const debounce = useCallback((func: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func.apply(null, args), delay);
+    };
+  }, []);
+
+  // debounced 검색어 업데이트
+  const debouncedSetSearchTerm = useCallback(
+    debounce((value: string) => {
+      setSearchTerm(value);
+    }, 300),
+    []
+  );
 
   useEffect(() => {
     filterProducts();
@@ -186,17 +204,18 @@ export default function QuotePage() {
       selectedMaterialName: product.productName || ''
     }));
     setIsSheetOpen(false);
+    setSearchInputValue('');
     setSearchTerm('');
   };
 
-  // 검색어 처리 (자재번호 자동 인식 포함)
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+  // 검색 실행 함수
+  const executeSearch = (searchValue: string) => {
+    setSearchTerm(searchValue);
     
-    // 4자리 숫자인지 확인
-    if (/^\d{4}$/.test(value)) {
+    // 4자리 숫자인지 확인하여 자동 선택 처리
+    if (/^\d{4}$/.test(searchValue)) {
       const matchingProducts = products.filter(product => 
-        product.materialCode?.includes(value)
+        product.materialCode?.includes(searchValue)
       );
       
       if (matchingProducts.length === 1) {
@@ -206,12 +225,45 @@ export default function QuotePage() {
           title: "자재 자동 선택",
           description: `${matchingProducts[0].productName}이(가) 선택되었습니다.`,
         });
+        return;
       } else if (matchingProducts.length > 1) {
         // 여러 개면 후보 리스트 표시
         setFilteredProducts(matchingProducts);
         setIsSheetOpen(true);
+        return;
       }
     }
+    
+    // 일반 검색인 경우 결과가 있으면 시트 열기
+    const filtered = products.filter(product =>
+      product.productName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      product.brandName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      product.specifications?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      product.materialCode?.toLowerCase().includes(searchValue.toLowerCase())
+    );
+    
+    if (filtered.length > 0) {
+      setFilteredProducts(filtered);
+      setIsSheetOpen(true);
+    }
+  };
+
+  // 검색 입력 처리 (onChange - UI state만 업데이트)
+  const handleSearchInputChange = (value: string) => {
+    setSearchInputValue(value);
+    // debounced 함수 호출하지 않음 - 입력 중에는 아무 동작 안함
+  };
+
+  // 엔터키 처리
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      executeSearch(searchInputValue);
+    }
+  };
+
+  // 검색 아이콘 클릭 처리
+  const handleSearchIconClick = () => {
+    executeSearch(searchInputValue);
   };
 
   // 평수 변경 시 자재 갯수 자동 계산
@@ -466,11 +518,18 @@ export default function QuotePage() {
                 <Input
                   type="text"
                   placeholder="제품명, 브랜드명 또는 자재번호(예: 5535)를 입력하세요"
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
+                  value={searchInputValue}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
                   className="w-full h-14 pl-6 pr-12 rounded-2xl border-2 border-gray-200 focus:border-teal-500 text-lg"
                 />
-                <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <button
+                  type="button"
+                  onClick={handleSearchIconClick}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <Search className="h-5 w-5 text-gray-400 hover:text-teal-500" />
+                </button>
               </div>
             </div>
 
