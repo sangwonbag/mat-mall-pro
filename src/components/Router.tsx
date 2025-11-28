@@ -2,6 +2,7 @@ import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
+import HomePage from '@/components/pages/HomePage';
 import SearchPage from '@/components/pages/SearchPage';
 import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import QuotePage from '@/components/pages/QuotePage';
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <SearchPage />,
+      },
+      {
+        path: "home",
+        element: <HomePage />,
       },
       {
         path: "search",

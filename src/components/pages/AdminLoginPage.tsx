@@ -10,8 +10,8 @@ import { BaseCrudService } from '@/integrations';
 import { AdminUsers } from '@/entities';
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('dongk3089@naver.com');
-  const [password, setPassword] = useState('pwj110800*');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -89,7 +89,6 @@ export default function AdminLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                readOnly
               />
             </div>
 
@@ -105,7 +104,6 @@ export default function AdminLoginPage() {
                   required
                   disabled={isLoading}
                   className="pr-10"
-                  readOnly
                 />
                 <Button
                   type="button"
