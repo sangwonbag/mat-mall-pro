@@ -10,6 +10,7 @@ import AdminPage from '@/components/pages/AdminPage';
 import ProfilePage from '@/components/pages/ProfilePage';
 import AdminLoginPage from '@/components/pages/AdminLoginPage';
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
+import CatalogTrendyPage from '@/components/pages/CatalogTrendyPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
 // Layout component that includes ScrollToTop
@@ -59,6 +60,10 @@ const router = createBrowserRouter([
       {
         path: "admin/dashboard",
         element: <AdminDashboardPage />,
+      },
+      {
+        path: "catalog-trendy",
+        element: <CatalogTrendyPage />,
       },
       {
         path: "profile",
