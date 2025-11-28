@@ -1,21 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Download, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { WallpaperPDFSamples, TrendyCatalogSlides } from '@/entities';
+import { WallpaperPDFSamples } from '@/entities';
 import { Button } from '@/components/ui/button';
-import { Image } from '@/components/ui/image';
 import Header from '@/components/ui/header';
 
 export default function CatalogTrendyPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [catalogData, setCatalogData] = useState<WallpaperPDFSamples | null>(null);
-  const [catalogSlides, setCatalogSlides] = useState<TrendyCatalogSlides[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
-  const [touchStart, setTouchStart] = useState(0);
-  const sliderRef = useRef<HTMLDivElement>(null);
+
+  // Mock catalog images - in real implementation, these would be extracted from PDF
+  const catalogImages = [
+    'https://static.wixstatic.com/media/9f8727_1048bc3ee0d5424bb3539e1db95d0b50~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_04bd2bcccfe6487787da809e171f91c7~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_bd48fbce48b04a02b5e393928da4a691~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_4bbfc2efa6304ac693143d7540cb5bdd~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_16925650d28443a39a2e9aad0c56a782~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_8a7d0bd9061c4b62ad579ea8985085e3~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_ff821bc761124373a371252b879892a3~mv2.png?originWidth=1152&originHeight=896',
+    'https://static.wixstatic.com/media/9f8727_133bd4c29f634864882bca5b8c6735b8~mv2.png?originWidth=1152&originHeight=896'
+  ];
 
   useEffect(() => {
     loadCatalogData();
@@ -24,51 +32,12 @@ export default function CatalogTrendyPage() {
   const loadCatalogData = async () => {
     try {
       setLoading(true);
-      
-      // Load PDF catalog data - STRICT: Use latest/most recent PDF
-      const { items: pdfItems } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
-      // Sort by creation date to get the most recent PDF first
-      const sortedPdfItems = pdfItems.sort((a, b) => {
-        const dateA = new Date(a._createdDate || 0).getTime();
-        const dateB = new Date(b._createdDate || 0).getTime();
-        return dateB - dateA; // Most recent first
-      });
-      
-      // Find the latest catalog or use the most recent one
-      const catalog = sortedPdfItems.find(item => 
+      const { items } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
+      const catalog = items.find(item => 
         item.sampleName?.includes('KCC 센스타일 트랜디') || 
-        item.category?.includes('KCC 글라스') ||
-        item.sampleName?.includes('센스타일 트랜디') ||
-        item.sampleName?.includes('센스타일') ||
-        item.category?.includes('트랜디')
-      ) || sortedPdfItems[0]; // Use most recent if no specific match
-      
+        item.category?.includes('KCC 글라스')
+      );
       setCatalogData(catalog || null);
-
-      // Load catalog slides data - STRICT LOCK: Ensure exactly 14 slides in correct order
-      const { items: slideItems } = await BaseCrudService.getAll<TrendyCatalogSlides>('trendycatalogslides');
-      
-      // STRICT LOCK: Sort by creation date first to get the 14 most recent slides
-      const sortedByDate = slideItems.sort((a, b) => {
-        const dateA = new Date(a._createdDate || 0).getTime();
-        const dateB = new Date(b._createdDate || 0).getTime();
-        return dateB - dateA; // Most recent first
-      });
-      
-      // STRICT LOCK: Take exactly the 14 most recent slides
-      const latest14Slides = sortedByDate.slice(0, 14);
-      
-      // STRICT LOCK: Then sort these 14 slides by page number for display order
-      const finalSlides = latest14Slides.sort((a, b) => {
-        const pageA = a.pageNumber || 0;
-        const pageB = b.pageNumber || 0;
-        return pageA - pageB;
-      });
-      
-      setCatalogSlides(finalSlides);
-      
-      console.log(`STRICT LOCK: Loaded ${finalSlides.length} slides (max 14 enforced)`);
-      
     } catch (error) {
       console.error('Error loading catalog data:', error);
     } finally {
@@ -76,44 +45,34 @@ export default function CatalogTrendyPage() {
     }
   };
 
-  // STRICT LOCK: Navigation functions with 14-slide limit enforcement
   const nextSlide = () => {
-    if (currentSlide < Math.min(catalogSlides.length, 14) - 1) {
-      setCurrentSlide(prev => prev + 1);
-    }
+    setCurrentSlide((prev) => (prev + 1) % catalogImages.length);
   };
 
   const prevSlide = () => {
-    if (currentSlide > 0) {
-      setCurrentSlide(prev => prev - 1);
-    }
+    setCurrentSlide((prev) => (prev - 1 + catalogImages.length) % catalogImages.length);
   };
 
   const goToSlide = (index: number) => {
-    // STRICT LOCK: Ensure index is within 14-slide limit
-    if (index >= 0 && index < Math.min(catalogSlides.length, 14)) {
-      setCurrentSlide(index);
-    }
+    setCurrentSlide(index);
   };
 
-  // STRICT LOCK: Mouse drag handlers with 14-slide limit
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setDragStart(e.clientX);
-    e.preventDefault();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
     
     const dragDistance = e.clientX - dragStart;
-    const threshold = 50; // STRICT LOCK: Consistent threshold
+    const threshold = 100;
     
     if (Math.abs(dragDistance) > threshold) {
       if (dragDistance > 0) {
-        prevSlide(); // STRICT LOCK: Uses limited navigation
+        prevSlide();
       } else {
-        nextSlide(); // STRICT LOCK: Uses limited navigation
+        nextSlide();
       }
       setIsDragging(false);
     }
@@ -123,53 +82,14 @@ export default function CatalogTrendyPage() {
     setIsDragging(false);
   };
 
-  // STRICT LOCK: Touch handlers for mobile with 14-slide limit
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart) return;
-    
-    const touchEnd = e.changedTouches[0].clientX;
-    const touchDistance = touchStart - touchEnd;
-    const threshold = 50; // STRICT LOCK: Consistent threshold
-    
-    if (Math.abs(touchDistance) > threshold) {
-      if (touchDistance > 0) {
-        nextSlide(); // STRICT LOCK: Uses limited navigation
-      } else {
-        prevSlide(); // STRICT LOCK: Uses limited navigation
-      }
-    }
-    
-    setTouchStart(0);
-  };
-
-  // STRICT LOCK: Keyboard navigation with 14-slide limit
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        prevSlide(); // STRICT LOCK: Uses limited navigation
-      } else if (e.key === 'ArrowRight') {
-        nextSlide(); // STRICT LOCK: Uses limited navigation
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentSlide, catalogSlides.length]);
-
-  // STRICT LOCK: PDF download - absolutely no modifications to original file
   const handleDownload = () => {
     if (catalogData?.pdfUrl) {
-      // STRICT LOCK: Direct link to original PDF - absolutely no modifications
-      // Open in new tab to preserve original PDF viewing experience
-      console.log('STRICT LOCK: Opening original PDF:', catalogData.pdfUrl);
-      window.open(catalogData.pdfUrl, '_blank');
-    } else {
-      // STRICT LOCK: Alert user if no PDF is available
-      alert('원본 PDF 파일을 찾을 수 없습니다. 최신 PDF가 업로드되면 자동으로 연결됩니다.');
+      const link = document.createElement('a');
+      link.href = catalogData.pdfUrl;
+      link.download = 'KCC_센스타일_트랜디_카탈로그.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -177,36 +97,8 @@ export default function CatalogTrendyPage() {
     return (
       <div className="min-h-screen bg-white font-['Pretendard']">
         <Header />
-        <div className="flex flex-col items-center justify-center min-h-[80vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-[#1A1A1A] mb-4" />
-          <p className="text-gray-600">카탈로그를 불러오는 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // STRICT LOCK: Show message if no slides are available (max 14 enforced)
-  if (catalogSlides.length === 0) {
-    return (
-      <div className="min-h-screen bg-white font-['Pretendard']">
-        <Header />
-        <div className="flex flex-col items-center justify-center min-h-[80vh]">
-          <h1 className="text-2xl font-bold text-[#2E2E2E] mb-4">
-            KCC 센스타일 트랜디 카탈로그
-          </h1>
-          <p className="text-gray-600 mb-8">
-            STRICT LOCK MODE: 14개 PNG 이미지가 업로드되면 자동으로 표시됩니다.
-          </p>
-          {catalogData?.pdfUrl && (
-            <Button
-              onClick={() => window.open(catalogData.pdfUrl, '_blank')}
-              className="w-[220px] h-[44px] bg-[#1A1A1A] hover:bg-[#333] text-white font-medium transition-colors duration-200"
-              style={{ borderRadius: '8px' }}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              최신 원본 PDF 다운로드
-            </Button>
-          )}
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A1A1A]"></div>
         </div>
       </div>
     );
@@ -216,146 +108,159 @@ export default function CatalogTrendyPage() {
     <div className="min-h-screen bg-white font-['Pretendard']">
       <Header />
       
-      {/* Hero Section - Minimal */}
-      <section className="bg-white py-8">
+      {/* Hero Section */}
+      <section className="bg-white py-16">
         <div className="max-w-[120rem] mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#2E2E2E] mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#2E2E2E] mb-4">
             KCC 센스타일 트랜디 카탈로그
           </h1>
-          <p className="text-base text-gray-600">
-            STRICT LOCK MODE - 원본 14개 PNG 페이지 + 원본 PDF 다운로드
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            KCC 글라스의 프리미엄 센스타일 트랜디 제품군을 한눈에 확인하세요
           </p>
         </div>
       </section>
 
-      {/* STRICT LOCK MODE Catalog Slider - Original PNG Pages Only (Max 14) */}
-      <section className="py-8 bg-white">
+      {/* Catalog Slider Section */}
+      <section className="py-12 bg-white">
         <div className="max-w-[120rem] mx-auto px-4">
-          {/* STRICT LOCK: Slider Container - No modifications to original images */}
-          <div className="relative bg-white overflow-hidden">
+          {/* Slider Container */}
+          <div className="relative bg-white rounded-lg overflow-hidden shadow-lg">
             <div 
-              ref={sliderRef}
-              className="relative w-full overflow-hidden cursor-grab active:cursor-grabbing select-none"
+              className="relative w-full aspect-[4/3] overflow-hidden cursor-grab active:cursor-grabbing"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                // STRICT LOCK: Dynamic aspect ratio based on original image dimensions
-                aspectRatio: 'auto',
-                minHeight: '400px',
-                maxHeight: '80vh'
-              }}
             >
               <AnimatePresence mode="wait">
-                <motion.div
+                <motion.img
                   key={currentSlide}
-                  className="w-full h-full flex items-center justify-center bg-white"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4, ease: 'easeInOut' }}
-                >
-                  {catalogSlides[currentSlide]?.slideImage && (
-                    <Image
-                      src={catalogSlides[currentSlide].slideImage!}
-                      alt={`센스타일 트랜디 카탈로그 페이지 ${(catalogSlides[currentSlide].pageNumber || currentSlide + 1)} - 원본 PNG (STRICT LOCK)`}
-                      className="max-w-full max-h-full object-contain"
-                      style={{
-                        // STRICT LOCK: Preserve original aspect ratio, no cropping/scaling/modifications
-                        width: 'auto',
-                        height: 'auto',
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain', // STRICT LOCK: Never crop or distort
-                        objectPosition: 'center',
-                        // STRICT LOCK: Ensure high quality rendering of original PNG
-                        imageRendering: 'auto',
-                        // STRICT LOCK: No filters, effects, or modifications
-                        filter: 'none',
-                        transform: 'none',
-                        // STRICT LOCK: Prevent any browser optimizations that might alter the image
-                        imageOrientation: 'from-image'
-                      }}
-                      width={1200}
-                      loading="eager"
-                    />
-                  )}
-                </motion.div>
+                  src={catalogImages[currentSlide]}
+                  alt={`카탈로그 페이지 ${currentSlide + 1}`}
+                  className="w-full h-full object-contain bg-white"
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.3 }}
+                  draggable={false}
+                />
               </AnimatePresence>
 
-              {/* STRICT LOCK: Navigation Arrows - Limited to 14 slides */}
+              {/* Navigation Arrows */}
               <Button
                 onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/80 hover:bg-black text-white border-0 z-20 transition-all duration-200"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/90 text-white border-0 z-10"
                 disabled={currentSlide === 0}
-                style={{ 
-                  opacity: currentSlide === 0 ? 0.3 : 1,
-                  cursor: currentSlide === 0 ? 'not-allowed' : 'pointer'
-                }}
               >
                 <ChevronLeft className="h-6 w-6" />
               </Button>
 
               <Button
                 onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/80 hover:bg-black text-white border-0 z-20 transition-all duration-200"
-                disabled={currentSlide === Math.min(catalogSlides.length, 14) - 1}
-                style={{ 
-                  opacity: currentSlide === Math.min(catalogSlides.length, 14) - 1 ? 0.3 : 1,
-                  cursor: currentSlide === Math.min(catalogSlides.length, 14) - 1 ? 'not-allowed' : 'pointer'
-                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/90 text-white border-0 z-10"
+                disabled={currentSlide === catalogImages.length - 1}
               >
                 <ChevronRight className="h-6 w-6" />
               </Button>
 
-              {/* STRICT LOCK: Page Counter - Show exact page numbers (max 14) */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium z-20">
-                페이지 {catalogSlides[currentSlide]?.pageNumber || currentSlide + 1} / {Math.min(catalogSlides.length, 14)} (STRICT LOCK: 최대 14개)
+              {/* Slide Counter */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm">
+                {currentSlide + 1} / {catalogImages.length}
               </div>
             </div>
 
-            {/* STRICT LOCK: Page Indicators - Show exactly 14 pages maximum */}
-            <div className="flex justify-center space-x-2 py-6">
-              {catalogSlides.slice(0, 14).map((slide, index) => (
+            {/* Slide Indicators */}
+            <div className="flex justify-center space-x-2 py-6 bg-gray-50">
+              {catalogImages.map((_, index) => (
                 <button
-                  key={slide._id}
+                  key={index}
                   onClick={() => goToSlide(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
                     index === currentSlide 
-                      ? 'bg-[#1A1A1A] scale-150' 
-                      : 'bg-gray-400 hover:bg-gray-600'
+                      ? 'bg-[#1A1A1A] scale-125' 
+                      : 'bg-gray-300 hover:bg-gray-400'
                   }`}
-                  title={`원본 페이지 ${slide.pageNumber || index + 1} (STRICT LOCK)`}
                 />
               ))}
             </div>
           </div>
 
-          {/* STRICT LOCK: Direct PDF Download Button - Original PDF only */}
-          <div className="flex justify-center mt-6">
+          {/* Download Button */}
+          <div className="flex justify-center mt-8">
             <Button
               onClick={handleDownload}
-              className="px-8 py-3 bg-[#1A1A1A] hover:bg-[#333] text-white font-medium transition-colors duration-200 rounded-lg"
-              disabled={!catalogData?.pdfUrl}
+              className="w-[220px] h-[44px] bg-[#1A1A1A] hover:bg-[#333] text-white font-medium transition-colors duration-200"
+              style={{ borderRadius: '8px' }}
             >
-              <Download className="h-5 w-5 mr-2" />
-              {catalogData?.pdfUrl ? '최신 원본 PDF 다운로드 (STRICT LOCK)' : 'PDF 준비 중...'}
+              <Download className="h-4 w-4 mr-2" />
+              PDF 다운로드
             </Button>
           </div>
+
+          {/* Additional Info */}
+          {catalogData && (
+            <div className="mt-12 text-center">
+              <div className="max-w-2xl mx-auto bg-gray-50 rounded-lg p-8">
+                <h3 className="text-xl font-bold text-[#2E2E2E] mb-4">
+                  {catalogData.sampleName}
+                </h3>
+                {catalogData.description && (
+                  <p className="text-gray-600 mb-4">
+                    {catalogData.description}
+                  </p>
+                )}
+                <div className="text-sm text-gray-500">
+                  카테고리: {catalogData.category}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* STRICT LOCK Footer - No modifications */}
-      <footer className="bg-[#1A1A1A] text-white py-12 mt-8">
-        <div className="max-w-[120rem] mx-auto px-4 text-center">
-          <div className="text-sm text-gray-400">
-            <p className="mb-2">동경바닥재 | 데코타일/장판/마루/벽지 시공·자재 전문</p>
-            <p>전화: 02-487-9775 | 이메일: dongk3089@naver.com</p>
-            <p className="mt-4">ⓒ 2025 DongKyung Flooring. All rights reserved.</p>
-            <p className="mt-2 text-xs text-gray-500">STRICT LOCK MODE: 원본 파일만 사용</p>
+      {/* Footer */}
+      <footer className="bg-primary text-white py-16">
+        <div className="max-w-[120rem] mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-2xl font-heading font-bold mb-4">동경바닥재</h3>
+              <p className="font-paragraph text-gray-300 mb-4 text-sm">
+                데코타일/장판/마루/벽지<br />
+                시공·자재 전문
+              </p>
+            </div>
+            <div>
+              <h4 className="text-lg font-paragraph font-semibold mb-4">주요 서비스</h4>
+              <ul className="space-y-2 font-paragraph text-gray-300 text-sm">
+                <li><a href="/search" className="hover:text-white transition-colors">제품검색</a></li>
+                <li><a href="/quote" className="hover:text-white transition-colors">견적요청</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-lg font-paragraph font-semibold mb-4">고객센터</h4>
+              <div className="font-paragraph text-gray-300 text-sm space-y-1">
+                <p>전화: 02-487-9775</p>
+                <p>팩스: 02-487-9787</p>
+                <p>이메일: dongk3089@naver.com</p>
+                <p className="mt-3">
+                  운영시간:<br />
+                  평일 07:00~18:00<br />
+                  주말 07:00~12:00
+                </p>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-lg font-paragraph font-semibold mb-4">회사 정보</h4>
+              <div className="font-paragraph text-gray-300 text-sm space-y-1">
+                <p>주소: 경기 하남시 서하남로 37</p>
+                <p>사업자등록번호: 890-88-02243</p>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-600 mt-12 pt-8 text-center">
+            <p className="font-paragraph text-gray-400">
+              ⓒ 2025 DongKyung Flooring. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

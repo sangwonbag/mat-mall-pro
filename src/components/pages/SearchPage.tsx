@@ -376,7 +376,7 @@ export default function SearchPage() {
                   className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors duration-200"
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  카탈로그 보기
+                  KCC 센스타일 트랜디
                 </Button>
               </div>
 
