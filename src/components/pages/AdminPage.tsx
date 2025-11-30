@@ -1,122 +1,162 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Lock, User, Eye, EyeOff, LogIn, Shield, Menu, X, 
-  LayoutDashboard, Package, FileText, Image, Wrench, 
-  MessageSquare, Settings, Users, Download, BarChart3,
-  Home, Search, Calculator, Building, Phone, Globe,
-  Database, Key, UserPlus, FileSpreadsheet, History,
-  ChevronRight, Bell, Activity
-} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Upload, Plus, Save, Trash2, Edit, Eye, Home, FileText, Image as ImageIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { AdminUsers } from '@/entities';
+import { Products, ProductCategories, ConstructionCaseStudies } from '@/entities';
+import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/ui/header';
+import ChatSupport from '@/components/ui/chat-support';
 
-interface AdminAuth {
-  isAuthenticated: boolean;
-  adminUser: AdminUsers | null;
+interface ProductForm {
+  productName: string;
+  brandName: string;
+  specifications: string;
+  price: string;
+  category: string;
+  productImage: string;
 }
 
-type MenuSection = 
-  | 'dashboard' 
-  | 'materials' 
-  | 'pdf-management' 
-  | 'case-studies' 
-  | 'quotes' 
-  | 'chat' 
-  | 'site-content' 
-  | 'menu-routing' 
-  | 'system' 
-  | 'members';
+interface CaseStudyForm {
+  productName: string;
+  caseStudyTitle: string;
+  detailedDescription: string;
+  descriptionImage: string;
+  projectExampleImage: string;
+  productFeatures: string;
+  completionDate: string;
+}
+
+// 기본 규격 옵션들
+const DEFAULT_SPECIFICATIONS = [
+  '450*450*3',
+  '600*600*3',
+  '300*300*2',
+  '300*300*3'
+];
 
 export default function AdminPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [products, setProducts] = useState<Products[]>([]);
+  const [categories, setCategories] = useState<ProductCategories[]>([]);
+  const [caseStudies, setCaseStudies] = useState<ConstructionCaseStudies[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Products | null>(null);
+  const [editingCaseStudy, setEditingCaseStudy] = useState<ConstructionCaseStudies | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [descImagePreview, setDescImagePreview] = useState<string>('');
+  const [projectImagePreview, setProjectImagePreview] = useState<string>('');
   
-  const [auth, setAuth] = useState<AdminAuth>({
-    isAuthenticated: false,
-    adminUser: null
+  // 규격 관련 상태
+  const [customSpecifications, setCustomSpecifications] = useState<string[]>([]);
+  const [newSpecification, setNewSpecification] = useState<string>('');
+  const [showAddSpecification, setShowAddSpecification] = useState(false);
+  
+  const [formData, setFormData] = useState<ProductForm>({
+    productName: '',
+    brandName: '',
+    specifications: '',
+    price: '',
+    category: '',
+    productImage: ''
   });
-  
-  const [loginForm, setLoginForm] = useState({
-    email: '',
-    password: ''
-  });
-  
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState<MenuSection>('dashboard');
 
-  // 관리자 로그인
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [caseStudyFormData, setCaseStudyFormData] = useState<CaseStudyForm>({
+    productName: '',
+    caseStudyTitle: '',
+    detailedDescription: '',
+    descriptionImage: '',
+    projectExampleImage: '',
+    productFeatures: '',
+    completionDate: ''
+  });
+
+  // 카테고리 표시명 매핑 함수
+  const getCategoryDisplayName = (categorySlug: string) => {
+    const categoryMap: { [key: string]: string } = {
+      'deco-tile': '데코타일',
+      'flooring': '장판',
+      'wood-flooring': '마루',
+      'wallpaper': '벽지',
+      'vinyl': '장판',
+      'laminate': '마루',
+      'tile': '타일'
+    };
     
-    if (!loginForm.email || !loginForm.password) {
-      toast({
-        title: "입력 오류",
-        description: "이메일과 비밀번호를 모두 입력해 주세요.",
-        variant: "destructive",
-      });
-      return;
+    // 영어로 된 카테고리는 모두 '마루'로 표시
+    const mappedName = categoryMap[categorySlug];
+    if (mappedName) {
+      return mappedName;
     }
+    
+    // 영어 패턴 감지 (알파벳, 하이픈, 언더스코어 포함)
+    const isEnglish = /^[a-zA-Z\-_\s]+$/.test(categorySlug);
+    if (isEnglish) {
+      return '마루';
+    }
+    
+    return categorySlug;
+  };
 
+  // 규격 추가 함수
+  const addCustomSpecification = () => {
+    if (newSpecification.trim() && !customSpecifications.includes(newSpecification.trim())) {
+      setCustomSpecifications(prev => [...prev, newSpecification.trim()]);
+      setNewSpecification('');
+      setShowAddSpecification(false);
+      toast({
+        title: "성공",
+        description: "새 규격이 추가되었습니다.",
+      });
+    }
+  };
+
+  // 규격 삭제 함수
+  const removeCustomSpecification = (spec: string) => {
+    setCustomSpecifications(prev => prev.filter(s => s !== spec));
+    toast({
+      title: "성공",
+      description: "규격이 삭제되었습니다.",
+    });
+  };
+
+  // 전체 규격 목록 가져오기 (기본 + 커스텀)
+  const getAllSpecifications = () => {
+    return [...DEFAULT_SPECIFICATIONS, ...customSpecifications];
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
     try {
       setLoading(true);
-      
-      // 관리자 계정 조회
-      const { items } = await BaseCrudService.getAll<AdminUsers>('adminusers');
-      const adminUser = items.find(user => 
-        user.email === loginForm.email && 
-        user.isActive
-      );
+      const [productsResult, categoriesResult, caseStudiesResult] = await Promise.all([
+        BaseCrudService.getAll<Products>('products'),
+        BaseCrudService.getAll<ProductCategories>('productcategories'),
+        BaseCrudService.getAll<ConstructionCaseStudies>('constructioncasestudies')
+      ]);
 
-      if (!adminUser) {
-        toast({
-          title: "로그인 실패",
-          description: "존재하지 않거나 비활성화된 계정입니다.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // 비밀번호 검증 (실제 환경에서는 해시 비교)
-      if (adminUser.passwordHash !== loginForm.password) {
-        toast({
-          title: "로그인 실패",
-          description: "비밀번호가 올바르지 않습니다.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // 로그인 성공
-      setAuth({
-        isAuthenticated: true,
-        adminUser
-      });
-
-      // 마지막 로그인 시간 업데이트
-      await BaseCrudService.update('adminusers', {
-        ...adminUser,
-        lastLoginDate: new Date()
-      });
-
-      toast({
-        title: "로그인 성공",
-        description: `${adminUser.displayName || adminUser.email}님, 환영합니다!`,
-      });
-
+      setProducts(productsResult.items);
+      setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
+      setCaseStudies(caseStudiesResult.items);
     } catch (error) {
-      console.error('로그인 오류:', error);
+      console.error('Error loading data:', error);
       toast({
         title: "오류",
-        description: "로그인 중 오류가 발생했습니다.",
+        description: "데이터를 불러오는 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     } finally {
@@ -124,589 +164,929 @@ export default function AdminPage() {
     }
   };
 
-  // 로그아웃
-  const handleLogout = () => {
-    setAuth({
-      isAuthenticated: false,
-      adminUser: null
-    });
-    setLoginForm({ email: '', password: '' });
-    toast({
-      title: "로그아웃",
-      description: "성공적으로 로그아웃되었습니다.",
-    });
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'description' | 'project' = 'product') => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      
+      // 이미지 미리보기 생성
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        
+        if (type === 'product') {
+          setImagePreview(result);
+          setFormData(prev => ({ ...prev, productImage: result }));
+        } else if (type === 'description') {
+          setDescImagePreview(result);
+          setCaseStudyFormData(prev => ({ ...prev, descriptionImage: result }));
+        } else if (type === 'project') {
+          setProjectImagePreview(result);
+          setCaseStudyFormData(prev => ({ ...prev, projectExampleImage: result }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  // 사이드바 메뉴 구성
-  const menuItems = [
-    {
-      id: 'dashboard' as MenuSection,
-      label: '대시보드',
-      icon: LayoutDashboard,
-      description: '전체 현황 및 통계'
-    },
-    {
-      id: 'members' as MenuSection,
-      label: '멤버 관리',
-      icon: Users,
-      description: '관리자 계정 관리'
-    },
-    {
-      id: 'materials' as MenuSection,
-      label: '자재 관리',
-      icon: Package,
-      description: '자재코드, 브랜드, 분류, 가격 관리'
-    },
-    {
-      id: 'pdf-management' as MenuSection,
-      label: 'PDF·이미지 변환&슬라이더',
-      icon: FileText,
-      description: 'PDF 업로드, 이미지 추출, 슬라이더'
-    },
-    {
-      id: 'case-studies' as MenuSection,
-      label: '시공사례 관리',
-      icon: Building,
-      description: '시공사례 등록 및 관리'
-    },
-    {
-      id: 'quotes' as MenuSection,
-      label: '자동견적·문의 관리',
-      icon: Calculator,
-      description: '견적 요청 및 문의 관리'
-    },
-    {
-      id: 'chat' as MenuSection,
-      label: '채팅 상담 관리',
-      icon: MessageSquare,
-      description: '실시간 채팅 상담'
-    },
-    {
-      id: 'site-content' as MenuSection,
-      label: '사이트 텍스트·회사정보',
-      icon: Globe,
-      description: '회사정보, 운영시간, 텍스트'
-    },
-    {
-      id: 'menu-routing' as MenuSection,
-      label: '메뉴·링크 라우팅',
-      icon: Settings,
-      description: '서비스 카드, 빠른 링크'
-    },
-    {
-      id: 'system' as MenuSection,
-      label: '시스템 설정/백업',
-      icon: Database,
-      description: '비밀번호, 백업, 로그'
-    }
-  ];
+  const handleInputChange = (field: keyof ProductForm, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
-  // 권한별 접근 제어
-  const hasPermission = (section: MenuSection): boolean => {
-    const userRole = auth.adminUser?.role;
+  const handleCaseStudyInputChange = (field: keyof CaseStudyForm, value: string) => {
+    setCaseStudyFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      productName: '',
+      brandName: '',
+      specifications: '',
+      price: '',
+      category: '',
+      productImage: ''
+    });
+    setImageFile(null);
+    setImagePreview('');
+    setEditingProduct(null);
+  };
+
+  const resetCaseStudyForm = () => {
+    setCaseStudyFormData({
+      productName: '',
+      caseStudyTitle: '',
+      detailedDescription: '',
+      descriptionImage: '',
+      projectExampleImage: '',
+      productFeatures: '',
+      completionDate: ''
+    });
+    setDescImagePreview('');
+    setProjectImagePreview('');
+    setEditingCaseStudy(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    switch (userRole) {
-      case 'Super Admin':
-        return true;
-      case 'Staff':
-        return !['system', 'members'].includes(section);
-      case 'Editor':
-        return ['dashboard', 'materials', 'pdf-management', 'case-studies', 'site-content'].includes(section);
-      case 'Counselor':
-        return ['dashboard', 'quotes', 'chat'].includes(section);
-      default:
-        return false;
+    if (!formData.productName || !formData.brandName || !formData.category) {
+      toast({
+        title: "입력 오류",
+        description: "제품명, 브랜드명, 카테고리는 필수 입력 항목입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const productData = {
+        _id: editingProduct?._id || crypto.randomUUID(),
+        productName: formData.productName,
+        brandName: formData.brandName,
+        specifications: formData.specifications,
+        price: formData.price ? parseFloat(formData.price) : undefined,
+        category: formData.category,
+        productImage: formData.productImage
+      };
+
+      if (editingProduct) {
+        // 수정
+        await BaseCrudService.update('products', productData);
+        toast({
+          title: "성공",
+          description: "제품이 성공적으로 수정되었습니다.",
+        });
+      } else {
+        // 새로 추가
+        await BaseCrudService.create('products', productData);
+        toast({
+          title: "성공",
+          description: "제품이 성공적으로 등록되었습니다.",
+        });
+      }
+
+      resetForm();
+      loadData();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast({
+        title: "오류",
+        description: "제품 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  // 로그인 화면
-  if (!auth.isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardHeader className="text-center pb-6">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <Shield className="h-8 w-8 text-white" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              동경바닥재 통합 관리자
-            </CardTitle>
-            <p className="text-sm text-gray-600">관리자 계정으로 로그인하세요</p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="관리자 이메일"
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
+  const handleCaseStudySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!caseStudyFormData.productName || !caseStudyFormData.caseStudyTitle) {
+      toast({
+        title: "입력 오류",
+        description: "제품명과 케이스 스터디 제목은 필수 입력 항목입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-              <div className="space-y-2">
-                <Label htmlFor="password">비밀번호</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="비밀번호"
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
+    try {
+      setSaving(true);
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-              >
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    로그인 중...
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <LogIn className="h-4 w-4" />
-                    로그인
-                  </div>
-                )}
-              </Button>
-            </form>
+      const caseStudyData = {
+        _id: editingCaseStudy?._id || crypto.randomUUID(),
+        productName: caseStudyFormData.productName,
+        caseStudyTitle: caseStudyFormData.caseStudyTitle,
+        detailedDescription: caseStudyFormData.detailedDescription,
+        descriptionImage: caseStudyFormData.descriptionImage,
+        projectExampleImage: caseStudyFormData.projectExampleImage,
+        productFeatures: caseStudyFormData.productFeatures,
+        completionDate: caseStudyFormData.completionDate
+      };
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Button
-                onClick={() => navigate('/')}
-                variant="outline"
-                className="w-full"
-              >
-                메인 사이트로 돌아가기
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+      if (editingCaseStudy) {
+        // 수정
+        await BaseCrudService.update('constructioncasestudies', caseStudyData);
+        toast({
+          title: "성공",
+          description: "케이스 스터디가 성공적으로 수정되었습니다.",
+        });
+      } else {
+        // 새로 추가
+        await BaseCrudService.create('constructioncasestudies', caseStudyData);
+        toast({
+          title: "성공",
+          description: "케이스 스터디가 성공적으로 등록되었습니다.",
+        });
+      }
 
-  // 통합 관리자 대시보드
+      resetCaseStudyForm();
+      loadData();
+    } catch (error) {
+      console.error('Error saving case study:', error);
+      toast({
+        title: "오류",
+        description: "케이스 스터디 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (product: Products) => {
+    setEditingProduct(product);
+    setFormData({
+      productName: product.productName || '',
+      brandName: product.brandName || '',
+      specifications: product.specifications || '',
+      price: product.price?.toString() || '',
+      category: product.category || '',
+      productImage: product.productImage || ''
+    });
+    setImagePreview(product.productImage || '');
+  };
+
+  const handleEditCaseStudy = (caseStudy: ConstructionCaseStudies) => {
+    setEditingCaseStudy(caseStudy);
+    setCaseStudyFormData({
+      productName: caseStudy.productName || '',
+      caseStudyTitle: caseStudy.caseStudyTitle || '',
+      detailedDescription: caseStudy.detailedDescription || '',
+      descriptionImage: caseStudy.descriptionImage || '',
+      projectExampleImage: caseStudy.projectExampleImage || '',
+      productFeatures: caseStudy.productFeatures || '',
+      completionDate: caseStudy.completionDate?.toString().split('T')[0] || ''
+    });
+    setDescImagePreview(caseStudy.descriptionImage || '');
+    setProjectImagePreview(caseStudy.projectExampleImage || '');
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('정말로 이 제품을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await BaseCrudService.delete('products', productId);
+      toast({
+        title: "성공",
+        description: "제품이 성공적으로 삭제되었습니다.",
+      });
+      loadData();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "오류",
+        description: "제품 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteCaseStudy = async (caseStudyId: string) => {
+    if (!confirm('정말로 이 케이스 스터디를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await BaseCrudService.delete('constructioncasestudies', caseStudyId);
+      toast({
+        title: "성공",
+        description: "케이스 스터디가 성공적으로 삭제되었습니다.",
+      });
+      loadData();
+    } catch (error) {
+      console.error('Error deleting case study:', error);
+      toast({
+        title: "오류",
+        description: "케이스 스터디 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('ko-KR').format(price);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* 사이드바 */}
-      <div className={`bg-white shadow-lg transition-all duration-300 ${sidebarOpen ? 'w-80' : 'w-16'} flex flex-col`}>
-        {/* 사이드바 헤더 */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            {sidebarOpen && (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-gray-900">동경바닥재</h2>
-                  <p className="text-xs text-gray-600">통합 관리자</p>
-                </div>
-              </div>
-            )}
-            <Button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              variant="ghost"
-              size="sm"
-              className="p-2"
-            >
-              {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="max-w-[120rem] mx-auto px-4 py-8">
+        <Tabs defaultValue="products" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="products" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              제품 관리
+            </TabsTrigger>
+            <TabsTrigger value="casestudies" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              상세설명 & 시공사례 관리
+            </TabsTrigger>
+          </TabsList>
 
-        {/* 사용자 정보 */}
-        {sidebarOpen && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-gray-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {auth.adminUser?.displayName || auth.adminUser?.email}
-                </p>
-                <Badge variant="secondary" className="text-xs">
-                  {auth.adminUser?.role}
-                </Badge>
-              </div>
+          <TabsContent value="products" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 제품 등록/수정 폼 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-heading text-primary">
+                    {editingProduct ? '제품 수정' : '새 제품 등록'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* 이미지 업로드 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="image-upload" className="text-sm font-medium">
+                        제품 이미지
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                        {imagePreview ? (
+                          <div className="space-y-4">
+                            <div className="aspect-square max-w-xs mx-auto rounded-lg overflow-hidden">
+                              <Image src={imagePreview} alt="미리보기" className="w-full h-full object-cover" style={{ 
+                                  imageRendering: 'crisp-edges',
+                                  filter: 'none',
+                                  transform: 'none'
+                                }} />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setImagePreview('');
+                                setImageFile(null);
+                                setFormData(prev => ({ ...prev, productImage: '' }));
+                              }}
+                            >
+                              이미지 제거
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                클릭하여 이미지를 업로드하세요
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                PNG, JPG, JPEG 파일 지원
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, 'product')}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-4"
+                          onClick={() => document.getElementById('image-upload')?.click()}
+                        >
+                          이미지 선택
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* ... keep existing code (제품 정보 입력 폼) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="productName">제품명 *</Label>
+                        <Input
+                          id="productName"
+                          value={formData.productName}
+                          onChange={(e) => handleInputChange('productName', e.target.value)}
+                          placeholder="제품명을 입력하세요"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="brandName">브랜드명 *</Label>
+                        <Input
+                          id="brandName"
+                          value={formData.brandName}
+                          onChange={(e) => handleInputChange('brandName', e.target.value)}
+                          placeholder="브랜드명을 입력하세요"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="price">가격 (원)</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          value={formData.price}
+                          onChange={(e) => handleInputChange('price', e.target.value)}
+                          placeholder="가격을 입력하세요"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="category">카테고리 *</Label>
+                      <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="카테고리를 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category._id} value={category.categorySlug || ''}>
+                              {getCategoryDisplayName(category.categorySlug || '')}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* 규격 선택 섹션 */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="specifications">규격 선택</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAddSpecification(!showAddSpecification)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          규격 추가
+                        </Button>
+                      </div>
+                      
+                      <Select value={formData.specifications} onValueChange={(value) => handleInputChange('specifications', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="규격을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getAllSpecifications().map((spec) => (
+                            <SelectItem key={spec} value={spec}>
+                              {spec}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* 커스텀 규격 추가 폼 */}
+                      {showAddSpecification && (
+                        <div className="flex gap-2 p-3 bg-gray-50 rounded-lg">
+                          <Input
+                            placeholder="새 규격 입력 (예: 800*800*4)"
+                            value={newSpecification}
+                            onChange={(e) => setNewSpecification(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && addCustomSpecification()}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={addCustomSpecification}
+                          >
+                            추가
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setShowAddSpecification(false);
+                              setNewSpecification('');
+                            }}
+                          >
+                            취소
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* 커스텀 규격 목록 */}
+                      {customSpecifications.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="text-sm text-gray-600">추가된 규격:</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {customSpecifications.map((spec) => (
+                              <div
+                                key={spec}
+                                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm"
+                              >
+                                <span>{spec}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0 hover:bg-blue-200"
+                                  onClick={() => removeCustomSpecification(spec)}
+                                >
+                                  ×
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button
+                        type="submit"
+                        disabled={saving}
+                        className="flex-1"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {saving ? '저장 중...' : editingProduct ? '수정하기' : '등록하기'}
+                      </Button>
+                      {editingProduct && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={resetForm}
+                        >
+                          취소
+                        </Button>
+                      )}
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* 등록된 제품 목록 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-heading text-primary">
+                    등록된 제품 (<span className="font-roboto">{products.length}</span>개)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-sm text-gray-600">로딩 중...</p>
+                    </div>
+                  ) : products.length > 0 ? (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                      {products.map((product) => (
+                        <motion.div
+                          key={product._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                              {product.productImage ? (
+                                product.category === '데코타일' ? (
+                                  <Image src={product.productImage} alt={product.productName} className="w-full h-full object-cover" style={{ 
+                                      imageRendering: 'crisp-edges',
+                                      filter: 'none',
+                                      transform: 'none'
+                                    }} />
+                                ) : (
+                                  <Image
+                                    src={product.productImage}
+                                    alt={product.productName}
+                                    className="w-full h-full object-cover"
+                                    width={64}
+                                  />
+                                )
+                              ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">이미지 없음</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-primary truncate">
+                                {product.productName}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {product.brandName} • {getCategoryDisplayName(product.category || '')}
+                              </p>
+                              {product.price && (
+                                <p className="text-sm font-medium text-gray-900">
+                                  {formatPrice(product.price)}원
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(`/product/${product._id}`)}
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(product)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(product._id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Plus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">등록된 제품이 없습니다.</p>
+                      <p className="text-sm text-gray-500">왼쪽 폼을 사용해 새 제품을 등록해보세요.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        )}
+          </TabsContent>
 
-        {/* 메뉴 항목 */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            const hasAccess = hasPermission(item.id);
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => hasAccess && setActiveSection(item.id)}
-                disabled={!hasAccess}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                    : hasAccess
-                      ? 'hover:bg-gray-50 text-gray-700'
-                      : 'text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-blue-700' : ''}`} />
-                {sidebarOpen && (
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{item.label}</p>
-                    <p className="text-xs text-gray-500 truncate">{item.description}</p>
-                  </div>
-                )}
-                {sidebarOpen && isActive && (
-                  <ChevronRight className="h-4 w-4 text-blue-700" />
-                )}
-              </button>
-            );
-          })}
-        </nav>
+          <TabsContent value="casestudies" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 케이스 스터디 등록/수정 폼 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-heading text-primary">
+                    {editingCaseStudy ? '상세설명 수정' : '새 상세설명 & 시공사례 등록'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCaseStudySubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="caseStudyProductName">제품명 *</Label>
+                        <Select value={caseStudyFormData.productName} onValueChange={(value) => handleCaseStudyInputChange('productName', value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="제품을 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {products.map((product) => (
+                              <SelectItem key={product._id} value={product.productName || ''}>
+                                {product.productName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-        {/* 로그아웃 버튼 */}
-        <div className="p-4 border-t border-gray-200">
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className={`${sidebarOpen ? 'w-full' : 'w-full px-2'} flex items-center gap-2`}
-          >
-            <LogIn className="h-4 w-4" />
-            {sidebarOpen && '로그아웃'}
-          </Button>
-        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="caseStudyTitle">케이스 스터디 제목 *</Label>
+                        <Input
+                          id="caseStudyTitle"
+                          value={caseStudyFormData.caseStudyTitle}
+                          onChange={(e) => handleCaseStudyInputChange('caseStudyTitle', e.target.value)}
+                          placeholder="케이스 스터디 제목을 입력하세요"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="detailedDescription">상세 설명</Label>
+                      <Textarea
+                        id="detailedDescription"
+                        value={caseStudyFormData.detailedDescription}
+                        onChange={(e) => handleCaseStudyInputChange('detailedDescription', e.target.value)}
+                        placeholder="제품의 상세한 설명을 입력하세요"
+                        rows={4}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="productFeatures">제품 특징 (줄바꿈으로 구분)</Label>
+                      <Textarea
+                        id="productFeatures"
+                        value={caseStudyFormData.productFeatures}
+                        onChange={(e) => handleCaseStudyInputChange('productFeatures', e.target.value)}
+                        placeholder="뛰어난 내구성과 품질&#10;친환경 소재 사용&#10;간편한 설치 및 유지보수&#10;다양한 디자인 옵션"
+                        rows={4}
+                      />
+                    </div>
+
+                    {/* 설명 이미지 업로드 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="description-image-upload" className="text-sm font-medium">
+                        설명 이미지
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary transition-colors">
+                        {descImagePreview ? (
+                          <div className="space-y-4">
+                            <div className="aspect-video max-w-sm mx-auto rounded-lg overflow-hidden">
+                              <Image src={descImagePreview} alt="설명 이미지 미리보기" className="w-full h-full object-cover" />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setDescImagePreview('');
+                                setCaseStudyFormData(prev => ({ ...prev, descriptionImage: '' }));
+                              }}
+                            >
+                              이미지 제거
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <ImageIcon className="h-8 w-8 text-gray-400 mx-auto" />
+                            <p className="text-sm text-gray-600">설명 이미지 업로드</p>
+                          </div>
+                        )}
+                        <input
+                          id="description-image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, 'description')}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => document.getElementById('description-image-upload')?.click()}
+                        >
+                          이미지 선택
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* 프로젝트 예시 이미지 업로드 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="project-image-upload" className="text-sm font-medium">
+                        시공사례 이미지
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary transition-colors">
+                        {projectImagePreview ? (
+                          <div className="space-y-4">
+                            <div className="aspect-video max-w-sm mx-auto rounded-lg overflow-hidden">
+                              <Image src={projectImagePreview} alt="시공사례 이미지 미리보기" className="w-full h-full object-cover" />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setProjectImagePreview('');
+                                setCaseStudyFormData(prev => ({ ...prev, projectExampleImage: '' }));
+                              }}
+                            >
+                              이미지 제거
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <ImageIcon className="h-8 w-8 text-gray-400 mx-auto" />
+                            <p className="text-sm text-gray-600">시공사례 이미지 업로드</p>
+                          </div>
+                        )}
+                        <input
+                          id="project-image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, 'project')}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => document.getElementById('project-image-upload')?.click()}
+                        >
+                          이미지 선택
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="completionDate">완료일</Label>
+                      <Input
+                        id="completionDate"
+                        type="date"
+                        value={caseStudyFormData.completionDate}
+                        onChange={(e) => handleCaseStudyInputChange('completionDate', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button
+                        type="submit"
+                        disabled={saving}
+                        className="flex-1"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {saving ? '저장 중...' : editingCaseStudy ? '수정하기' : '등록하기'}
+                      </Button>
+                      {editingCaseStudy && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={resetCaseStudyForm}
+                        >
+                          취소
+                        </Button>
+                      )}
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* 등록된 케이스 스터디 목록 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-heading text-primary">
+                    등록된 상세설명 & 시공사례 (<span className="font-heading">{caseStudies.length}</span>개)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-sm text-gray-600">로딩 중...</p>
+                    </div>
+                  ) : caseStudies.length > 0 ? (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                      {caseStudies.map((caseStudy) => (
+                        <motion.div
+                          key={caseStudy._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                              {caseStudy.descriptionImage ? (
+                                <Image
+                                  src={caseStudy.descriptionImage}
+                                  alt={caseStudy.caseStudyTitle}
+                                  className="w-full h-full object-cover"
+                                  width={64}
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                  <FileText className="h-6 w-6 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-primary truncate">
+                                {caseStudy.caseStudyTitle}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                제품: {caseStudy.productName}
+                              </p>
+                              <p className="text-sm text-gray-500 line-clamp-2">
+                                {caseStudy.detailedDescription}
+                              </p>
+                              {caseStudy.completionDate && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  완료일: {new Date(caseStudy.completionDate).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditCaseStudy(caseStudy)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteCaseStudy(caseStudy._id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">등록된 상세설명이 없습니다.</p>
+                      <p className="text-sm text-gray-500">왼쪽 폼을 사용해 새 상세설명을 등록해보세요.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* 메인 콘텐츠 */}
-      <div className="flex-1 flex flex-col">
-        {/* 상단 헤더 */}
-        <header className="bg-white shadow-sm border-b border-gray-200 p-4">
-          <div className="flex items-center justify-between">
+      {/* Footer */}
+      <footer className="bg-primary text-white py-16">
+        <div className="max-w-[120rem] mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {menuItems.find(item => item.id === activeSection)?.label}
-              </h1>
-              <p className="text-sm text-gray-600">
-                {menuItems.find(item => item.id === activeSection)?.description}
+              <h3 className="text-2xl font-heading font-bold mb-4">동경바닥재</h3>
+              <p className="font-paragraph text-gray-300 mb-4 text-sm">
+                데코타일/장판/마루/벽지<br />
+                시공·자재 전문
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => navigate('/')}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                메인 사이트
-              </Button>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Activity className="h-4 w-4" />
-                {new Date().toLocaleString()}
+            <div>
+              <h4 className="text-lg font-paragraph font-semibold mb-4">주요 서비스</h4>
+              <ul className="space-y-2 font-paragraph text-gray-300 text-sm">
+                <li><Link to="/search" className="hover:text-white transition-colors">제품검색</Link></li>
+                <li><Link to="/quote" className="hover:text-white transition-colors">견적요청</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-lg font-paragraph font-semibold mb-4">고객센터</h4>
+              <div className="font-paragraph text-gray-300 text-sm space-y-1">
+                <p>전화: 02-487-9775</p>
+                <p>팩스: 02-487-9787</p>
+                <p>이메일: dongk3089@naver.com</p>
+                <p className="mt-3">
+                  운영시간:<br />
+                  평일 07:00~18:00<br />
+                  주말 07:00~12:00
+                </p>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-lg font-paragraph font-semibold mb-4">회사 정보</h4>
+              <div className="font-paragraph text-gray-300 text-sm space-y-1">
+                <p>주소: 경기 하남시 서하남로 37</p>
+                <p>사업자등록번호: 890-88-02243</p>
               </div>
             </div>
           </div>
-        </header>
+          <div className="border-t border-gray-600 mt-12 pt-8 text-center">
+            <p className="font-paragraph text-gray-400">
+              ⓒ 2025 DongKyung Flooring. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
 
-        {/* 콘텐츠 영역 */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          {activeSection === 'dashboard' && <DashboardContent />}
-          {activeSection === 'members' && <MembersContent />}
-          {activeSection === 'materials' && <MaterialsContent />}
-          {activeSection === 'pdf-management' && <PdfManagementContent />}
-          {activeSection === 'case-studies' && <CaseStudiesContent />}
-          {activeSection === 'quotes' && <QuotesContent />}
-          {activeSection === 'chat' && <ChatContent />}
-          {activeSection === 'site-content' && <SiteContentContent />}
-          {activeSection === 'menu-routing' && <MenuRoutingContent />}
-          {activeSection === 'system' && <SystemContent />}
-        </main>
-      </div>
-    </div>
-  );
-}
-
-// 대시보드 콘텐츠
-function DashboardContent() {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">총 자재</p>
-                <p className="text-2xl font-bold text-gray-900">1,247</p>
-              </div>
-              <Package className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">견적 요청</p>
-                <p className="text-2xl font-bold text-gray-900">89</p>
-              </div>
-              <Calculator className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">시공사례</p>
-                <p className="text-2xl font-bold text-gray-900">156</p>
-              </div>
-              <Building className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">활성 채팅</p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
-              </div>
-              <MessageSquare className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>최근 활동</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <p className="text-sm text-gray-600">새로운 견적 요청이 등록되었습니다.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <p className="text-sm text-gray-600">PDF 샘플이 업데이트되었습니다.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <p className="text-sm text-gray-600">새로운 채팅 상담이 시작되었습니다.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>빠른 작업</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <Package className="h-6 w-6" />
-                <span className="text-sm">자재 추가</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <FileText className="h-6 w-6" />
-                <span className="text-sm">PDF 업로드</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <Building className="h-6 w-6" />
-                <span className="text-sm">사례 등록</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2">
-                <Download className="h-6 w-6" />
-                <span className="text-sm">데이터 백업</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-// 멤버 관리 콘텐츠
-function MembersContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>관리자 계정 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">관리자 계정 추가, 수정, 삭제 및 권한 관리 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 자재 관리 콘텐츠
-function MaterialsContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>자재 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">자재코드 자동증가, 브랜드/분류/시리즈 관리 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// PDF 관리 콘텐츠
-function PdfManagementContent() {
-  const navigate = useNavigate();
-  
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>PDF·이미지 변환&슬라이더 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600 mb-4">PDF 업로드, 페이지별 이미지 추출, 슬라이더 관리 기능입니다.</p>
-          <Button onClick={() => navigate('/admin-pdf')}>
-            PDF 관리 페이지로 이동
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 시공사례 관리 콘텐츠
-function CaseStudiesContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>시공사례 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">시공사례 등록, 수정, 삭제 및 자재 연동 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 견적 관리 콘텐츠
-function QuotesContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>자동견적·문의 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">견적 요청 및 문의 관리, 자재 검색 연동 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 채팅 관리 콘텐츠
-function ChatContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>채팅 상담 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">실시간 채팅 상담 관리, 상담사 답변 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 사이트 콘텐츠 관리
-function SiteContentContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>사이트 텍스트·회사정보 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">회사정보, 운영시간, 사업자정보, 푸터 레이아웃 관리 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 메뉴 라우팅 관리
-function MenuRoutingContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>메뉴·링크 라우팅 관리</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">서비스 카드 노출/링크/레이아웃, 빠른 링크 토글 관리 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// 시스템 설정 관리
-function SystemContent() {
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>시스템 설정/백업</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">비밀번호 변경, 관리자 초대, 데이터 백업, 로그 관리 기능이 여기에 구현됩니다.</p>
-        </CardContent>
-      </Card>
+      {/* 채팅상담 컴포넌트 */}
+      <ChatSupport />
     </div>
   );
 }

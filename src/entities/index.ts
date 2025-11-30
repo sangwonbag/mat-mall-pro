@@ -27,31 +27,6 @@ export interface AdminUsers {
 
 
 /**
- * Collection ID: brandsamplepdfs
- * Interface for BrandSamplePDFs
- */
-export interface BrandSamplePDFs {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  brandName?: string;
-  /** @wixFieldType number */
-  displayOrder?: number;
-  /** @wixFieldType boolean */
-  isActive?: boolean;
-  /** @wixFieldType text */
-  category?: string;
-  /** @wixFieldType image */
-  thumbnailImage?: string;
-  /** @wixFieldType url */
-  pdfUrl?: string;
-  /** @wixFieldType text */
-  sampleBookDescription?: string;
-}
-
-
-/**
  * Collection ID: chatconsultations
  * Interface for ChatConsultations
  */
@@ -188,71 +163,67 @@ export interface Products {
 
 
 /**
- * Collection ID: samplebooksandcatalogs
- * Interface for SampleBooksandCatalogs
+ * Collection ID: chatconsultations
+ * Interface for ChatConsultations
  */
-export interface SampleBooksandCatalogs {
+export interface ChatConsultations {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
   /** @wixFieldType text */
-  title?: string;
+  visitorName?: string;
   /** @wixFieldType text */
-  type?: string;
+  visitorContact?: string;
   /** @wixFieldType text */
-  brand?: string;
+  initialInquiry?: string;
   /** @wixFieldType text */
-  materialCategory?: string;
+  status?: string;
   /** @wixFieldType text */
-  description?: string;
+  sessionId?: string;
+  /** @wixFieldType datetime */
+  startTime?: Date | string;
+}
+
+
+/**
+ * Collection ID: chatmessages
+ * Interface for ChatMessages
+ */
+export interface ChatMessages {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  consultationSessionId?: string;
+  /** @wixFieldType text */
+  senderType?: string;
+  /** @wixFieldType text */
+  messageContent?: string;
+  /** @wixFieldType datetime */
+  sentAt?: Date | string;
+  /** @wixFieldType boolean */
+  isRead?: boolean;
+}
+
+
+/**
+ * Collection ID: adminusers
+ * Interface for AdminUsers
+ */
+export interface AdminUsers {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType text */
+  passwordHash?: string;
+  /** @wixFieldType text */
+  displayName?: string;
+  /** @wixFieldType text */
+  role?: string;
   /** @wixFieldType boolean */
   isActive?: boolean;
-  /** @wixFieldType number */
-  sortOrder?: number;
-  /** @wixFieldType text */
-  pageImageUrls?: string;
-  /** @wixFieldType url */
-  pdfFileUrl?: string;
-}
-
-
-/**
- * Collection ID: trendycatalogslides
- * Interface for TrendyCatalogSlides
- */
-export interface TrendyCatalogSlides {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType number */
-  pageNumber?: number;
-  /** @wixFieldType image */
-  slideImage?: string;
-  /** @wixFieldType text */
-  pageTitle?: string;
-  /** @wixFieldType text */
-  pageContentSummary?: string;
-  /** @wixFieldType url */
-  pdfSourceUrl?: string;
-}
-
-
-/**
- * Collection ID: wallpaperpdfsamples
- * Interface for WallpaperPDFSamples
- */
-export interface WallpaperPDFSamples {
-  _id: string;
-  _createdDate?: Date;
-  _updatedDate?: Date;
-  /** @wixFieldType text */
-  sampleName?: string;
-  /** @wixFieldType url */
-  pdfUrl?: string;
-  /** @wixFieldType text */
-  category?: string;
-  /** @wixFieldType text */
-  description?: string;
-  /** @wixFieldType image */
-  thumbnailImage?: string;
+  /** @wixFieldType datetime */
+  lastLoginDate?: Date | string;
 }
