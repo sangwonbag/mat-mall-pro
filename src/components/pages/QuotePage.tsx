@@ -632,9 +632,7 @@ export default function QuotePage() {
                     </div>
 
                     <div>
-                      <label className="block font-paragraph font-semibold mb-2">
-                        성명 *
-                      </label>
+                      <label className="block font-paragraph font-semibold mb-2">{"성명 또는 업체명 *"}</label>
                       <Input
                         type="text"
                         placeholder="홍길동"
