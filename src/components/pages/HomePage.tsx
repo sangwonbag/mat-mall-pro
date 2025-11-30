@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/ui/header';
 import { ChatWidget } from '@/components/ui/chat-widget';
-import { PdfSamplesSlider } from '@/components/ui/pdf-samples-slider';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -301,9 +300,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      {/* PDF 샘플북 슬라이더 섹션 */}
-      <PdfSamplesSlider />
 
       {/* 채팅상담 위젯 */}
       <ChatWidget />

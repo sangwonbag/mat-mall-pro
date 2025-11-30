@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download, ChevronLeft } from 'lucide-react';
+import { Search, Filter, Home, Menu, X, ChevronDown, ChevronRight, Eye, FileText, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, SampleBooksandCatalogs, WallpaperPDFSamples, BrandSamplePDFs } from '@/entities';
+import { Products, ProductCategories, WallpaperPDFSamples } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/ui/header';
 import { ChatWidget } from '@/components/ui/chat-widget';
-import { SampleBookSlider } from '@/components/ui/sample-book-slider';
-import { PdfSamplesSlider } from '@/components/ui/pdf-samples-slider';
 
 // 브랜드 사이드바 구조 정의
 const brandStructure = {
@@ -47,34 +45,10 @@ export default function SearchPage() {
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
-  const [sampleBooks, setSampleBooks] = useState<SampleBooksandCatalogs[]>([]);
   const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
-  const [brandSamplePDFs, setBrandSamplePDFs] = useState<BrandSamplePDFs[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
-
-  // 슬라이더 관련 상태 추가
-  const [brandSamples, setBrandSamples] = useState<any[]>([]);
-  const slidesPerView = 4;
-
-  // 슬라이더 함수들 추가
-  const nextSlide = () => {
-    setCurrentSlide(prev => 
-      prev >= brandSamples.length - slidesPerView ? 0 : prev + 1
-    );
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide(prev => 
-      prev <= 0 ? Math.max(0, brandSamples.length - slidesPerView) : prev - 1
-    );
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index * slidesPerView);
-  };
 
 
   // 브랜드 메뉴 스타일 CSS
@@ -106,31 +80,15 @@ export default function SearchPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult, sampleBooksResult, pdfSamplesResult, brandSamplePDFsResult] = await Promise.all([
+      const [productsResult, categoriesResult, pdfSamplesResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
         BaseCrudService.getAll<ProductCategories>('productcategories'),
-        BaseCrudService.getAll<SampleBooksandCatalogs>('samplebooksandcatalogs'),
-        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples'),
-        BaseCrudService.getAll<BrandSamplePDFs>('brandsamplepdfs')
+        BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples')
       ]);
 
       setProducts(productsResult.items);
       setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
-      
-      // 활성화된 샘플북만 필터링하고 정렬순서대로 정렬
-      const activeSampleBooks = sampleBooksResult.items
-        .filter(book => book.isActive)
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-      setSampleBooks(activeSampleBooks);
-
-      // PDF 샘플 설정
       setPdfSamples(pdfSamplesResult.items);
-
-      // 브랜드 샘플 PDF 설정 (활성화된 것만)
-      const activeBrandSamplePDFs = brandSamplePDFsResult.items
-        .filter(sample => sample.isActive)
-        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-      setBrandSamplePDFs(activeBrandSamplePDFs);
 
       // Extract unique brands
       const uniqueBrands = [...new Set(productsResult.items
@@ -239,17 +197,9 @@ export default function SearchPage() {
     filterProducts();
   };
 
-  // 카탈로그 기능 비활성화됨
+  // 센스타일 트랜디 카탈로그 페이지로 이동
   const goToCatalogPage = () => {
-    // 카탈로그 페이지가 삭제되어 더 이상 사용할 수 없습니다
-    console.log('카탈로그 페이지가 삭제되었습니다');
-  };
-
-  // 브랜드별 샘플 PDF 그룹화
-  const getBrandSamplePDFs = (brandName: string) => {
-    return brandSamplePDFs.filter(sample => 
-      sample.brandName === brandName && sample.isActive
-    );
+    navigate('/catalog-trendy');
   };
 
   // 브랜드 사이드바 컴포넌트
@@ -303,60 +253,20 @@ export default function SearchPage() {
               <AnimatePresence>
                 {expandedCategories.includes(category) && brands.length > 0 && (
                   <div className="overflow-hidden">
-                    <div className="ml-6 space-y-3 mt-2">
-                      {brands.map((brand) => {
-                        const brandSamples = getBrandSamplePDFs(brand);
-                        return (
-                          <div key={brand} className="space-y-2">
-                            <div
-                              className={`brand-sub-menu-item cursor-pointer transition-colors duration-200 ${
-                                selectedBrand === brand 
-                                  ? 'text-[#B89C7D] font-medium' 
-                                  : 'hover:text-[#B89C7D]'
-                              }`}
-                              onClick={() => handleBrandSelect(brand, category)}
-                            >
-                              <span>{brand}</span>
-                            </div>
-                            
-                            {/* 브랜드별 샘플 이미지 표시 */}
-                            {brandSamples.length > 0 && (
-                              <div className="ml-4 grid grid-cols-2 gap-2">
-                                {brandSamples.slice(0, 4).map((sample, index) => (
-                                  <div
-                                    key={sample._id}
-                                    className="relative aspect-square bg-gray-100 rounded-md overflow-hidden hover:ring-2 hover:ring-[#B89C7D] transition-all duration-200 cursor-pointer"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (sample.pdfUrl) {
-                                        window.open(sample.pdfUrl, '_blank');
-                                      }
-                                    }}
-                                  >
-                                    <Image
-                                      src={sample.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_6c15f0a2e52e4ca3a2ac05b3c747dadb~mv2.png?originWidth=384&originHeight=256'}
-                                      alt={sample.brandName || '브랜드 샘플'}
-                                      className="w-full h-full object-cover"
-                                      width={80}
-                                    />
-                                    {/* PDF 아이콘 오버레이 */}
-                                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
-                                      <FileText className="h-4 w-4 text-white" />
-                                    </div>
-                                  </div>
-                                ))}
-                                {brandSamples.length > 4 && (
-                                  <div className="col-span-2 text-center">
-                                    <span className="text-xs text-gray-500">
-                                      +{brandSamples.length - 4}개 더
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                    <div className="ml-6 space-y-1 mt-2">
+                      {brands.map((brand) => (
+                        <div
+                          key={brand}
+                          className={`brand-sub-menu-item cursor-pointer transition-colors duration-200 ${
+                            selectedBrand === brand 
+                              ? 'text-[#B89C7D] font-medium' 
+                              : 'hover:text-[#B89C7D]'
+                          }`}
+                          onClick={() => handleBrandSelect(brand, category)}
+                        >
+                          <span>{brand}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -375,22 +285,6 @@ export default function SearchPage() {
   const handleQuoteRequest = (product: Products) => {
     navigate('/quote', { state: { selectedProduct: product } });
   };
-
-  // 브랜드별 샘플북 그룹화
-  const groupSampleBooksByBrand = () => {
-    const grouped: { [brand: string]: SampleBooksandCatalogs[] } = {};
-    sampleBooks.forEach(book => {
-      if (book.brand) {
-        if (!grouped[book.brand]) {
-          grouped[book.brand] = [];
-        }
-        grouped[book.brand].push(book);
-      }
-    });
-    return grouped;
-  };
-
-  const sampleBooksByBrand = groupSampleBooksByBrand();
 
   return (
     <div className="min-h-screen bg-white font-['Pretendard']">
@@ -475,6 +369,17 @@ export default function SearchPage() {
                 </Button>
               </div>
 
+              {/* 센스타일 트랜디 카탈로그 버튼 */}
+              <div className="max-w-2xl mx-auto mb-6">
+                <Button
+                  onClick={goToCatalogPage}
+                  className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors duration-200"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  카탈로그 보기
+                </Button>
+              </div>
+
               {/* 선택된 필터 표시 - 브랜드만 */}
               {selectedBrand ? (
                 <div className="flex items-center justify-center gap-4 mb-6">
@@ -491,65 +396,6 @@ export default function SearchPage() {
                   </Button>
                 </div>
               ) : null}
-            </div>
-          </section>
-
-          {/* 브랜드 샘플북 PDF 슬라이더 섹션 */}
-          <section className="py-16 bg-black">
-            <div className="max-w-[120rem] mx-auto px-4">
-              {/* 섹션 헤더 */}
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-roboto">
-                  브랜드 샘플북(PDF)
-                </h2>
-                <p className="text-lg text-gray-300 font-roboto">
-                  각 브랜드별 제품 샘플을 PDF로 확인하세요
-                </p>
-              </div>
-
-              {/* 샘플북 그리드 */}
-              {Object.keys(sampleBooksByBrand).length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {Object.entries(sampleBooksByBrand).map(([brand, books]) => (
-                    <div key={brand} className="bg-gray-900 rounded-lg overflow-hidden hover:bg-gray-800 transition-colors duration-300">
-                      <div className="p-6">
-                        <h3 className="text-xl font-bold text-white mb-4 font-roboto">
-                          {brand}
-                        </h3>
-                        
-                        {/* 브랜드의 첫 번째 샘플북 표시 */}
-                        {books.length > 0 && (
-                          <SampleBookSlider
-                            title={books[0].title || ''}
-                            pageImages={books[0].pageImageUrls ? 
-                              (typeof books[0].pageImageUrls === 'string' ? 
-                                JSON.parse(books[0].pageImageUrls) : 
-                                books[0].pageImageUrls
-                              ) : []
-                            }
-                            pdfUrl={books[0].pdfFileUrl}
-                            className="bg-gray-800"
-                          />
-                        )}
-                        
-                        {/* 추가 샘플북이 있는 경우 개수 표시 */}
-                        {books.length > 1 && (
-                          <div className="mt-4 text-center">
-                            <p className="text-sm text-gray-400 font-roboto">
-                              +{books.length - 1}개의 추가 샘플북
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400 font-roboto">브랜드 샘플북을 준비 중입니다.</p>
-                </div>
-              )}
             </div>
           </section>
 
@@ -751,10 +597,6 @@ export default function SearchPage() {
           </section>
         </div>
       </div>
-
-      {/* PDF 샘플북 슬라이더 섹션 */}
-      <PdfSamplesSlider />
-
       {/* Footer */}
       <footer className="bg-primary text-white py-16">
         <div className="max-w-[120rem] mx-auto px-4">
