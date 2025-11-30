@@ -27,6 +27,31 @@ export interface AdminUsers {
 
 
 /**
+ * Collection ID: brandsamplepdfs
+ * Interface for BrandSamplePDFs
+ */
+export interface BrandSamplePDFs {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  brandName?: string;
+  /** @wixFieldType number */
+  displayOrder?: number;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType text */
+  category?: string;
+  /** @wixFieldType image */
+  thumbnailImage?: string;
+  /** @wixFieldType url */
+  pdfUrl?: string;
+  /** @wixFieldType text */
+  sampleBookDescription?: string;
+}
+
+
+/**
  * Collection ID: chatconsultations
  * Interface for ChatConsultations
  */
@@ -159,6 +184,56 @@ export interface Products {
   materialCode?: string;
   /** @wixFieldType text */
   category?: string;
+}
+
+
+/**
+ * Collection ID: samplebooksandcatalogs
+ * Interface for SampleBooksandCatalogs
+ */
+export interface SampleBooksandCatalogs {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType text */
+  type?: string;
+  /** @wixFieldType text */
+  brand?: string;
+  /** @wixFieldType text */
+  materialCategory?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType number */
+  sortOrder?: number;
+  /** @wixFieldType text */
+  pageImageUrls?: string;
+  /** @wixFieldType url */
+  pdfFileUrl?: string;
+}
+
+
+/**
+ * Collection ID: trendycatalogslides
+ * Interface for TrendyCatalogSlides
+ */
+export interface TrendyCatalogSlides {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType number */
+  pageNumber?: number;
+  /** @wixFieldType image */
+  slideImage?: string;
+  /** @wixFieldType text */
+  pageTitle?: string;
+  /** @wixFieldType text */
+  pageContentSummary?: string;
+  /** @wixFieldType url */
+  pdfSourceUrl?: string;
 }
 
 

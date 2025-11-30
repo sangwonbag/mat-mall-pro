@@ -386,6 +386,77 @@ export default function ProductDetailPage() {
               ))}
             </div>
           </div>
+
+          {/* Catalog Thumbnails Section */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">카탈로그 미리보기</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div 
+                className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/catalog-trendy')}
+              >
+                <div className="aspect-[3/4] overflow-hidden">
+                  <Image
+                    src="https://static.wixstatic.com/media/9f8727_c36878e83e0b40f2a6268dec84d9cf66~mv2.png?originWidth=192&originHeight=256"
+                    alt="카탈로그 페이지 1"
+                    className="w-full h-full object-contain"
+                    width={200}
+                  />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold text-gray-900">페이지 1</h3>
+                </div>
+              </div>
+              <div 
+                className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/catalog-trendy')}
+              >
+                <div className="aspect-[3/4] overflow-hidden">
+                  <Image
+                    src="https://static.wixstatic.com/media/9f8727_6e63855fbcad4be5bcfbae0b494e635f~mv2.png?originWidth=192&originHeight=256"
+                    alt="카탈로그 페이지 2"
+                    className="w-full h-full object-contain"
+                    width={200}
+                  />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold text-gray-900">페이지 2</h3>
+                </div>
+              </div>
+              <div 
+                className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/catalog-trendy')}
+              >
+                <div className="aspect-[3/4] overflow-hidden">
+                  <Image
+                    src="https://static.wixstatic.com/media/9f8727_53156884348843598cd72a7ddb773d4d~mv2.png?originWidth=192&originHeight=256"
+                    alt="카탈로그 페이지 3"
+                    className="w-full h-full object-contain"
+                    width={200}
+                  />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold text-gray-900">페이지 3</h3>
+                </div>
+              </div>
+              <div 
+                className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300 cursor-pointer"
+                onClick={() => navigate('/catalog-trendy')}
+              >
+                <div className="aspect-[3/4] overflow-hidden">
+                  <Image
+                    src="https://static.wixstatic.com/media/9f8727_df3d8843ce1a4f8cbe849250cbe5c64f~mv2.png?originWidth=192&originHeight=256"
+                    alt="카탈로그 페이지 4"
+                    className="w-full h-full object-contain"
+                    width={200}
+                  />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold text-gray-900">페이지 4</h3>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
