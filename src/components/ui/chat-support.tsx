@@ -3,7 +3,6 @@ import { MessageCircle, X, Send, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 interface ChatMessage {
   id: string;
@@ -18,18 +17,12 @@ export default function ChatSupport() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: '안녕하세요! 동경바닥재 상담센터입니다. 무엇을 도와드릴까요?',
+      text: '안녕하세요! 동경바닥재 상담센터입니다. 무엇을 도와드릴까요?\n바로 메시지를 입력하시면 상담을 시작할 수 있습니다.',
       isUser: false,
       timestamp: new Date()
     }
   ]);
   const [newMessage, setNewMessage] = useState('');
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    phone: '',
-    inquiry: ''
-  });
-  const [showContactForm, setShowContactForm] = useState(false);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -54,34 +47,6 @@ export default function ChatSupport() {
       };
       setMessages(prev => [...prev, autoReply]);
     }, 1000);
-  };
-
-  const handleContactSubmit = () => {
-    if (!customerInfo.name || !customerInfo.phone || !customerInfo.inquiry) {
-      alert('모든 필드를 입력해주세요.');
-      return;
-    }
-
-    const contactMessage: ChatMessage = {
-      id: Date.now().toString(),
-      text: `상담 요청이 접수되었습니다.\n성함: ${customerInfo.name}\n연락처: ${customerInfo.phone}\n문의내용: ${customerInfo.inquiry}`,
-      isUser: true,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, contactMessage]);
-    setCustomerInfo({ name: '', phone: '', inquiry: '' });
-    setShowContactForm(false);
-
-    setTimeout(() => {
-      const confirmMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        text: '상담 요청이 정상적으로 접수되었습니다. 담당자가 확인 후 연락드리겠습니다.',
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, confirmMessage]);
-    }, 500);
   };
 
   return (
@@ -187,88 +152,35 @@ export default function ChatSupport() {
                   </div>
                 </div>
 
-                {/* 상담 요청 폼 */}
-                {showContactForm && (
-                  <div className="p-4 border-t border-gray-200 bg-gray-50">
-                    <div className="space-y-3">
-                      <Input
-                        placeholder="성함"
-                        value={customerInfo.name}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                        className="text-sm"
-                      />
-                      <Input
-                        placeholder="연락처"
-                        value={customerInfo.phone}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                        className="text-sm"
-                      />
-                      <Textarea
-                        placeholder="문의내용"
-                        value={customerInfo.inquiry}
-                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, inquiry: e.target.value }))}
-                        className="text-sm min-h-[60px]"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => setShowContactForm(false)}
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-xs"
-                        >
-                          취소
-                        </Button>
-                        <Button
-                          onClick={handleContactSubmit}
-                          size="sm"
-                          className="flex-1 text-xs bg-[#B89C7D] hover:bg-[#A98D6A]"
-                        >
-                          상담요청
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* 입력 영역 */}
-                {!showContactForm && (
-                  <div className="p-4 border-t border-gray-200">
-                    <div className="flex gap-2 mb-3">
-                      <Button
-                        onClick={() => setShowContactForm(true)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-xs border-[#B89C7D] text-[#B89C7D] hover:bg-[#B89C7D] hover:text-white"
-                      >
-                        상담요청
-                      </Button>
-                      <Button
-                        onClick={() => window.open('tel:02-487-9775')}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-xs border-[#B89C7D] text-[#B89C7D] hover:bg-[#B89C7D] hover:text-white"
-                      >
-                        전화상담
-                      </Button>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="메시지를 입력하세요..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        className="flex-1 text-sm"
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        size="sm"
-                        className="px-3 bg-[#B89C7D] hover:bg-[#A98D6A]"
-                      >
-                        <Send className="h-3 w-3" />
-                      </Button>
-                    </div>
+                <div className="p-4 border-t border-gray-200">
+                  <div className="flex gap-2 mb-3">
+                    <Button
+                      onClick={() => window.open('tel:02-487-9775')}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs border-[#B89C7D] text-[#B89C7D] hover:bg-[#B89C7D] hover:text-white"
+                    >
+                      전화상담
+                    </Button>
                   </div>
-                )}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="메시지를 입력하세요..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      className="flex-1 text-sm"
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      size="sm"
+                      className="px-3 bg-[#B89C7D] hover:bg-[#A98D6A]"
+                    >
+                      <Send className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
               </>
             )}
           </motion.div>
