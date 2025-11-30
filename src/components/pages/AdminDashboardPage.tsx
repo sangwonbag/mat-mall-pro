@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
     // Check admin authentication
     const adminData = localStorage.getItem('adminUser');
     if (!adminData) {
-      navigate('/admin/login');
+      navigate('/admin');
       return;
     }
 
@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('adminUser');
-    navigate('/admin/login');
+    navigate('/admin');
   };
 
   const formatTime = (date: Date) => {

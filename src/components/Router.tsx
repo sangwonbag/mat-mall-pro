@@ -2,13 +2,16 @@ import { MemberProvider } from '@/integrations';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
+import HomePage from '@/components/pages/HomePage';
 import SearchPage from '@/components/pages/SearchPage';
 import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import QuotePage from '@/components/pages/QuotePage';
 import AdminPage from '@/components/pages/AdminPage';
 import ProfilePage from '@/components/pages/ProfilePage';
-import AdminLoginPage from '@/components/pages/AdminLoginPage';
+
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
+import AdminPdfPage from '@/components/pages/AdminPdfPage';
+
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
 // Layout component that includes ScrollToTop
@@ -32,6 +35,10 @@ const router = createBrowserRouter([
         element: <SearchPage />,
       },
       {
+        path: "home",
+        element: <HomePage />,
+      },
+      {
         path: "search",
         element: <SearchPage />,
       },
@@ -47,14 +54,16 @@ const router = createBrowserRouter([
         path: "admin",
         element: <AdminPage />,
       },
-      {
-        path: "admin/login",
-        element: <AdminLoginPage />,
-      },
+
       {
         path: "admin/dashboard",
         element: <AdminDashboardPage />,
       },
+      {
+        path: "admin-pdf",
+        element: <AdminPdfPage />,
+      },
+
       {
         path: "profile",
         element: (
