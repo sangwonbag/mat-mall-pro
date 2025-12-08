@@ -111,7 +111,7 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
             
             {/* 샘플북 버튼 */}
             <Button
-              onClick={() => navigate('/catalog-trendy')}
+              onClick={() => navigate('/sample-books')}
               className="bg-black text-white hover:bg-gray-800"
               size="sm"
             >
@@ -268,7 +268,7 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
               {/* 모바일 샘플북 버튼 */}
               <button
                 onClick={() => {
-                  navigate('/catalog-trendy');
+                  navigate('/sample-books');
                   setIsMobileMenuOpen(false);
                 }}
                 className="block w-full text-left py-2 text-gray-700 hover:text-black transition-colors"

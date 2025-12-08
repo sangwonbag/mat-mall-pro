@@ -188,6 +188,33 @@ export interface Products {
 
 
 /**
+ * Collection ID: samplebooks
+ * Interface for SampleBooks
+ */
+export interface SampleBooks {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType text */
+  brand?: string;
+  /** @wixFieldType text */
+  materialCategory?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType image */
+  thumbnailImage?: string;
+  /** @wixFieldType url */
+  pdfUrl?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType number */
+  sortOrder?: number;
+}
+
+
+/**
  * Collection ID: samplebooksandcatalogs
  * Interface for SampleBooksandCatalogs
  */
@@ -259,4 +286,31 @@ export interface WallpaperPDFSamples {
   description?: string;
   /** @wixFieldType image */
   thumbnailImage?: string;
+}
+
+
+/**
+ * Collection ID: samplebooks
+ * Interface for SampleBooks
+ */
+export interface SampleBooks {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  title?: string;
+  /** @wixFieldType text */
+  brand?: string;
+  /** @wixFieldType text */
+  materialCategory?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType image */
+  thumbnailImage?: string;
+  /** @wixFieldType url */
+  pdfUrl?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType number */
+  sortOrder?: number;
 }
