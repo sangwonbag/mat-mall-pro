@@ -109,6 +109,15 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
               견적요청
             </Link>
             
+            {/* 샘플북 버튼 */}
+            <Button
+              onClick={() => navigate('/catalog-trendy')}
+              className="bg-black text-white hover:bg-gray-800"
+              size="sm"
+            >
+              샘플북
+            </Button>
+            
             {/* 관리자 버튼 - dongk3089@naver.com만 표시 */}
             {isAdmin && (
               <Link to="/admin" className="text-gray-700 hover:text-black transition-colors">
@@ -255,6 +264,17 @@ export default function Header({ showSearch = false, onSearchChange, searchValue
               >
                 견적요청
               </Link>
+              
+              {/* 모바일 샘플북 버튼 */}
+              <button
+                onClick={() => {
+                  navigate('/catalog-trendy');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left py-2 text-gray-700 hover:text-black transition-colors"
+              >
+                샘플북
+              </button>
               
               {/* 모바일 관리자 버튼 - dongk3089@naver.com만 표시 */}
               {isAdmin && (
