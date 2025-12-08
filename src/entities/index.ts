@@ -196,6 +196,10 @@ export interface SampleBooksandCatalogs {
   _createdDate?: Date;
   _updatedDate?: Date;
   /** @wixFieldType text */
+  brandFilter?: string;
+  /** @wixFieldType text */
+  materialTypeFilter?: string;
+  /** @wixFieldType text */
   title?: string;
   /** @wixFieldType text */
   type?: string;

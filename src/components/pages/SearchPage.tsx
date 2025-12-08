@@ -347,9 +347,30 @@ export default function SearchPage() {
           {/* Search Section */}
           <section className="bg-white py-12">
             <div className="max-w-[120rem] mx-auto px-4">
-              <h1 className="text-3xl font-bold text-[#2E2E2E] text-center mb-8">
-                제품 검색
-              </h1>
+              <div className="flex items-center justify-between mb-8 gap-4">
+                {/* 왼쪽: 샘플북창 버튼 */}
+                <Button
+                  onClick={goToCatalogPage}
+                  className="h-12 px-6 bg-[#2E2E2E] hover:bg-[#B89C7D] text-white font-medium transition-colors duration-200"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  샘플북창
+                </Button>
+                
+                {/* 중앙: 제목 */}
+                <h1 className="text-3xl font-bold text-[#2E2E2E] flex-1 text-center">
+                  제품 검색
+                </h1>
+                
+                {/* 오른쪽: 제품검색 버튼 */}
+                <Button
+                  onClick={handleSearch}
+                  className="h-12 px-6 bg-[#2E2E2E] hover:bg-[#B89C7D] text-white font-medium transition-colors duration-200"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  제품검색
+                </Button>
+              </div>
               
               {/* Search Bar */}
               <div className="relative mb-6 max-w-2xl mx-auto">
@@ -366,17 +387,6 @@ export default function SearchPage() {
                   className="absolute right-2 top-2 h-10 w-10 rounded-full bg-[#2E2E2E] hover:bg-[#B89C7D]"
                 >
                   <Search className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* 센스타일 트랜디 카탈로그 버튼 */}
-              <div className="max-w-2xl mx-auto mb-6">
-                <Button
-                  onClick={goToCatalogPage}
-                  className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors duration-200"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  카탈로그 보기
                 </Button>
               </div>
 
