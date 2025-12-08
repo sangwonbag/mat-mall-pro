@@ -197,25 +197,9 @@ export default function SearchPage() {
     filterProducts();
   };
 
-  // 센스타일 트랜디 카탈로그 PDF 열기 함수
-  const openSenstyleCatalog = async () => {
-    try {
-      // wallpaperpdfsamples에서 센스타일 트랜디 카탈로그 찾기
-      const { items } = await BaseCrudService.getAll<WallpaperPDFSamples>('wallpaperpdfsamples');
-      const senstyleCatalog = items.find(item => 
-        item.sampleName?.includes('센스타일 트랜디') || 
-        item.category?.includes('KCC 글라스')
-      );
-      
-      if (senstyleCatalog && senstyleCatalog.pdfUrl) {
-        window.open(senstyleCatalog.pdfUrl, '_blank');
-      } else {
-        // 백업 URL 또는 알림
-        console.warn('센스타일 트랜디 카탈로그를 찾을 수 없습니다.');
-      }
-    } catch (error) {
-      console.error('카탈로그 로딩 중 오류:', error);
-    }
+  // 센스타일 트랜디 카탈로그 페이지로 이동
+  const goToCatalogPage = () => {
+    navigate('/catalog-trendy');
   };
 
   // 브랜드 사이드바 컴포넌트
@@ -290,21 +274,6 @@ export default function SearchPage() {
             </div>
           ))}
         </div>
-      </div>
-      
-      {/* 센스타일 트랜디 카탈로그 고정 버튼 */}
-      <div className="p-6 border-t border-gray-200">
-        <button
-          onClick={openSenstyleCatalog}
-          className="w-full h-12 bg-[#111111] text-white rounded-xl flex flex-col items-center justify-center transition-all duration-180 hover:bg-[#333333] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#333333] focus:ring-offset-2"
-        >
-          <div className="text-sm font-medium leading-tight">
-            센스타일 트랜디 카탈로그 보기
-          </div>
-          <div className="text-xs text-gray-300 leading-tight">
-            KCC 글라스 공식 PDF
-          </div>
-        </button>
       </div>
     </div>
   );
@@ -397,6 +366,17 @@ export default function SearchPage() {
                   className="absolute right-2 top-2 h-10 w-10 rounded-full bg-[#2E2E2E] hover:bg-[#B89C7D]"
                 >
                   <Search className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* 센스타일 트랜디 카탈로그 버튼 */}
+              <div className="max-w-2xl mx-auto mb-6">
+                <Button
+                  onClick={goToCatalogPage}
+                  className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors duration-200"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  카탈로그 보기
                 </Button>
               </div>
 
