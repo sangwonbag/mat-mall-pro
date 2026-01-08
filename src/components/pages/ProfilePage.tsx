@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Calendar, LogOut } from 'lucide-react';
 import Header from '@/components/ui/header';
-import ChatSupport from '@/components/ui/chat-support';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -176,9 +175,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-
-      {/* 채팅상담 컴포넌트 */}
-      <ChatSupport />
     </div>
   );
 }

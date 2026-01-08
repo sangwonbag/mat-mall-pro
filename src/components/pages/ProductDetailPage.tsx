@@ -7,7 +7,6 @@ import { Products, ConstructionCaseStudies } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
-import ChatSupport from '@/components/ui/chat-support';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -516,9 +515,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </footer>
-
-      {/* 채팅상담 컴포넌트 */}
-      <ChatSupport />
     </div>
   );
 }

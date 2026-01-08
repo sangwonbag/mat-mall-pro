@@ -8,7 +8,6 @@ import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/ui/header';
-import { ChatWidget } from '@/components/ui/chat-widget';
 
 // 자재 종류 구조 정의
 const materialStructure = {
@@ -523,9 +522,6 @@ export default function SampleBooksPage() {
           </div>
         </div>
       </footer>
-
-      {/* 채팅상담 위젯 */}
-      <ChatWidget />
     </div>
   );
 }
