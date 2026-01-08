@@ -38,8 +38,10 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '전체');
-  const [selectedBrand, setSelectedBrand] = useState('');
+  // 기본값: '데코타일' 카테고리 선택
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '데코타일');
+  // 기본값: 'KCC' 브랜드 선택 (데코타일 진입 시)
+  const [selectedBrand, setSelectedBrand] = useState('KCC');
   const [products, setProducts] = useState<Products[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
@@ -47,7 +49,7 @@ export default function SearchPage() {
   const [pdfSamples, setPdfSamples] = useState<WallpaperPDFSamples[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['데코타일']);
 
 
   // 브랜드 메뉴 스타일 CSS
@@ -127,7 +129,7 @@ export default function SearchPage() {
       filtered = filtered.filter(product => product.category === categoryToMatch);
     }
 
-    // Filter by brand
+    // Filter by brand - 선택된 브랜드가 있을 때만 필터링
     if (selectedBrand && selectedBrand !== '전체') {
       filtered = filtered.filter(product => product.brandName === selectedBrand);
     }
@@ -165,6 +167,7 @@ export default function SearchPage() {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
+    // 카테고리 변경 시 브랜드 필터 초기화
     setSelectedBrand('');
     // 페이지 이동 없이 현재 데이터셋 필터만 업데이트
     if (category !== '전체') {
@@ -190,8 +193,9 @@ export default function SearchPage() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedCategory('');
-    setSelectedBrand('');
+    // 필터 초기화 시에도 기본값으로 데코타일 + KCC 유지
+    setSelectedCategory('데코타일');
+    setSelectedBrand('KCC');
     // URL 업데이트 없이 필터 초기화
     filterProducts();
   };
@@ -370,7 +374,7 @@ export default function SearchPage() {
               </div>
 
               {/* 선택된 필터 표시 - 브랜드만 */}
-              {selectedBrand ? (
+              {selectedBrand && selectedBrand !== '전체' ? (
                 <div className="flex items-center justify-center gap-4 mb-6">
                   <div className="bg-[#8B7355] text-white px-4 py-2 rounded-full text-sm">
                     브랜드: {selectedBrand}
