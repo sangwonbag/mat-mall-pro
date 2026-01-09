@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, Plus, Save, Trash2, Edit, Eye, Home, FileText, Image as ImageIcon } from 'lucide-react';
+import { Upload, Plus, Save, Trash2, Edit, Eye, Home, FileText, Image as ImageIcon, File } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ProductCategories, ConstructionCaseStudies } from '@/entities';
+import { Products, ProductCategories, ConstructionCaseStudies, SampleBooks } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,17 @@ interface CaseStudyForm {
   completionDate: string;
 }
 
+interface SampleBookForm {
+  title: string;
+  brand: string;
+  materialCategory: string;
+  description: string;
+  thumbnailImage: string;
+  pdfUrl: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
 // 기본 규격 옵션들
 const DEFAULT_SPECIFICATIONS = [
   '450*450*3',
@@ -48,14 +59,17 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [caseStudies, setCaseStudies] = useState<ConstructionCaseStudies[]>([]);
+  const [sampleBooks, setSampleBooks] = useState<SampleBooks[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Products | null>(null);
   const [editingCaseStudy, setEditingCaseStudy] = useState<ConstructionCaseStudies | null>(null);
+  const [editingSampleBook, setEditingSampleBook] = useState<SampleBooks | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [descImagePreview, setDescImagePreview] = useState<string>('');
   const [projectImagePreview, setProjectImagePreview] = useState<string>('');
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   
   // 규격 관련 상태
   const [customSpecifications, setCustomSpecifications] = useState<string[]>([]);
@@ -81,6 +95,17 @@ export default function AdminPage() {
     completionDate: ''
   });
 
+  const [sampleBookFormData, setSampleBookFormData] = useState<SampleBookForm>({
+    title: '',
+    brand: '',
+    materialCategory: '',
+    description: '',
+    thumbnailImage: '',
+    pdfUrl: '',
+    isActive: true,
+    sortOrder: 1
+  });
+
   // 카테고리 표시명 매핑 함수
   const getCategoryDisplayName = (categorySlug: string) => {
     const categoryMap: { [key: string]: string } = {
@@ -93,13 +118,11 @@ export default function AdminPage() {
       'tile': '타일'
     };
     
-    // 영어로 된 카테고리는 모두 '마루'로 표시
     const mappedName = categoryMap[categorySlug];
     if (mappedName) {
       return mappedName;
     }
     
-    // 영어 패턴 감지 (알파벳, 하이픈, 언더스코어 포함)
     const isEnglish = /^[a-zA-Z\-_\s]+$/.test(categorySlug);
     if (isEnglish) {
       return '마루';
@@ -142,15 +165,17 @@ export default function AdminPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsResult, categoriesResult, caseStudiesResult] = await Promise.all([
+      const [productsResult, categoriesResult, caseStudiesResult, sampleBooksResult] = await Promise.all([
         BaseCrudService.getAll<Products>('products'),
         BaseCrudService.getAll<ProductCategories>('productcategories'),
-        BaseCrudService.getAll<ConstructionCaseStudies>('constructioncasestudies')
+        BaseCrudService.getAll<ConstructionCaseStudies>('constructioncasestudies'),
+        BaseCrudService.getAll<SampleBooks>('samplebooks')
       ]);
 
       setProducts(productsResult.items);
       setCategories(categoriesResult.items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)));
       setCaseStudies(caseStudiesResult.items);
+      setSampleBooks(sampleBooksResult.items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)));
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -163,12 +188,11 @@ export default function AdminPage() {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'description' | 'project' = 'product') => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'description' | 'project' | 'thumbnail' = 'product') => {
     const file = event.target.files?.[0];
     if (file) {
       setImageFile(file);
       
-      // 이미지 미리보기 생성
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -182,6 +206,9 @@ export default function AdminPage() {
         } else if (type === 'project') {
           setProjectImagePreview(result);
           setCaseStudyFormData(prev => ({ ...prev, projectExampleImage: result }));
+        } else if (type === 'thumbnail') {
+          setThumbnailPreview(result);
+          setSampleBookFormData(prev => ({ ...prev, thumbnailImage: result }));
         }
       };
       reader.readAsDataURL(file);
@@ -225,6 +252,21 @@ export default function AdminPage() {
     setEditingCaseStudy(null);
   };
 
+  const resetSampleBookForm = () => {
+    setSampleBookFormData({
+      title: '',
+      brand: '',
+      materialCategory: '',
+      description: '',
+      thumbnailImage: '',
+      pdfUrl: '',
+      isActive: true,
+      sortOrder: sampleBooks.length + 1
+    });
+    setThumbnailPreview('');
+    setEditingSampleBook(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -251,14 +293,12 @@ export default function AdminPage() {
       };
 
       if (editingProduct) {
-        // 수정
         await BaseCrudService.update('products', productData);
         toast({
           title: "성공",
           description: "제품이 성공적으로 수정되었습니다.",
         });
       } else {
-        // 새로 추가
         await BaseCrudService.create('products', productData);
         toast({
           title: "성공",
@@ -307,14 +347,12 @@ export default function AdminPage() {
       };
 
       if (editingCaseStudy) {
-        // 수정
         await BaseCrudService.update('constructioncasestudies', caseStudyData);
         toast({
           title: "성공",
           description: "케이스 스터디가 성공적으로 수정되었습니다.",
         });
       } else {
-        // 새로 추가
         await BaseCrudService.create('constructioncasestudies', caseStudyData);
         toast({
           title: "성공",
@@ -408,6 +446,98 @@ export default function AdminPage() {
     }
   };
 
+  const handleSampleBookSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!sampleBookFormData.title || !sampleBookFormData.brand || !sampleBookFormData.materialCategory) {
+      toast({
+        title: "입력 오류",
+        description: "제목, 브랜드, 자재 종류는 필수 입력 항목입니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const sampleBookData = {
+        _id: editingSampleBook?._id || crypto.randomUUID(),
+        title: sampleBookFormData.title,
+        brand: sampleBookFormData.brand,
+        materialCategory: sampleBookFormData.materialCategory,
+        description: sampleBookFormData.description,
+        thumbnailImage: sampleBookFormData.thumbnailImage,
+        pdfUrl: sampleBookFormData.pdfUrl,
+        isActive: sampleBookFormData.isActive,
+        sortOrder: sampleBookFormData.sortOrder
+      };
+
+      if (editingSampleBook) {
+        await BaseCrudService.update('samplebooks', sampleBookData);
+        toast({
+          title: "성공",
+          description: "샘플북이 성공적으로 수정되었습니다.",
+        });
+      } else {
+        await BaseCrudService.create('samplebooks', sampleBookData);
+        toast({
+          title: "성공",
+          description: "샘플북이 성공적으로 등록되었습니다.",
+        });
+      }
+
+      resetSampleBookForm();
+      loadData();
+    } catch (error) {
+      console.error('Error saving sample book:', error);
+      toast({
+        title: "오류",
+        description: "샘플북 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditSampleBook = (sampleBook: SampleBooks) => {
+    setEditingSampleBook(sampleBook);
+    setSampleBookFormData({
+      title: sampleBook.title || '',
+      brand: sampleBook.brand || '',
+      materialCategory: sampleBook.materialCategory || '',
+      description: sampleBook.description || '',
+      thumbnailImage: sampleBook.thumbnailImage || '',
+      pdfUrl: sampleBook.pdfUrl || '',
+      isActive: sampleBook.isActive ?? true,
+      sortOrder: sampleBook.sortOrder || 1
+    });
+    setThumbnailPreview(sampleBook.thumbnailImage || '');
+  };
+
+  const handleDeleteSampleBook = async (sampleBookId: string) => {
+    if (!confirm('정말로 이 샘플북을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await BaseCrudService.delete('samplebooks', sampleBookId);
+      toast({
+        title: "성공",
+        description: "샘플북이 성공적으로 삭제되었습니다.",
+      });
+      loadData();
+    } catch (error) {
+      console.error('Error deleting sample book:', error);
+      toast({
+        title: "오류",
+        description: "샘플북 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ko-KR').format(price);
   };
@@ -417,7 +547,7 @@ export default function AdminPage() {
       <Header />
       <div className="max-w-[120rem] mx-auto px-4 py-8">
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               제품 관리
@@ -425,6 +555,10 @@ export default function AdminPage() {
             <TabsTrigger value="casestudies" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               상세설명 & 시공사례 관리
+            </TabsTrigger>
+            <TabsTrigger value="samplebooks" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              샘플북 관리
             </TabsTrigger>
           </TabsList>
 
@@ -497,7 +631,6 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* ... keep existing code (제품 정보 입력 폼) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="productName">제품명 *</Label>
@@ -577,7 +710,6 @@ export default function AdminPage() {
                         </SelectContent>
                       </Select>
 
-                      {/* 커스텀 규격 추가 폼 */}
                       {showAddSpecification && (
                         <div className="flex gap-2 p-3 bg-gray-50 rounded-lg">
                           <Input
@@ -607,7 +739,6 @@ export default function AdminPage() {
                         </div>
                       )}
 
-                      {/* 커스텀 규격 목록 */}
                       {customSpecifications.length > 0 && (
                         <div className="space-y-2">
                           <Label className="text-sm text-gray-600">추가된 규격:</Label>
@@ -682,20 +813,7 @@ export default function AdminPage() {
                           <div className="flex items-start gap-4">
                             <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                               {product.productImage ? (
-                                product.category === '데코타일' ? (
-                                  <Image src={product.productImage} alt={product.productName} className="w-full h-full object-cover" style={{ 
-                                      imageRendering: 'crisp-edges',
-                                      filter: 'none',
-                                      transform: 'none'
-                                    }} />
-                                ) : (
-                                  <Image
-                                    src={product.productImage}
-                                    alt={product.productName}
-                                    className="w-full h-full object-cover"
-                                    width={64}
-                                  />
-                                )
+                                <Image src={product.productImage} alt={product.productName} className="w-full h-full object-cover" width={64} />
                               ) : (
                                 <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                                   <span className="text-xs text-gray-500">이미지 없음</span>
@@ -1029,6 +1147,261 @@ export default function AdminPage() {
                       <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-600">등록된 상세설명이 없습니다.</p>
                       <p className="text-sm text-gray-500">왼쪽 폼을 사용해 새 상세설명을 등록해보세요.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="samplebooks" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 샘플북 등록/수정 폼 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-heading text-primary">
+                    {editingSampleBook ? '샘플북 수정' : '새 샘플북 등록'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSampleBookSubmit} className="space-y-6">
+                    {/* 썸네일 이미지 업로드 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="thumbnail-upload" className="text-sm font-medium">
+                        썸네일 이미지
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                        {thumbnailPreview ? (
+                          <div className="space-y-4">
+                            <div className="aspect-square max-w-xs mx-auto rounded-lg overflow-hidden">
+                              <Image src={thumbnailPreview} alt="미리보기" className="w-full h-full object-cover" width={200} />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setThumbnailPreview('');
+                                setSampleBookFormData(prev => ({ ...prev, thumbnailImage: '' }));
+                              }}
+                            >
+                              이미지 제거
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <ImageIcon className="h-12 w-12 text-gray-400 mx-auto" />
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                클릭하여 이미지를 업로드하세요
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                PNG, JPG, JPEG 파일 지원
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <input
+                          id="thumbnail-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, 'thumbnail')}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-4"
+                          onClick={() => document.getElementById('thumbnail-upload')?.click()}
+                        >
+                          이미지 선택
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* 기본 정보 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="sampleBookTitle">제목 *</Label>
+                        <Input
+                          id="sampleBookTitle"
+                          value={sampleBookFormData.title}
+                          onChange={(e) => setSampleBookFormData(prev => ({ ...prev, title: e.target.value }))}
+                          placeholder="샘플북 제목을 입력하세요"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="sampleBookBrand">브랜드 *</Label>
+                        <Input
+                          id="sampleBookBrand"
+                          value={sampleBookFormData.brand}
+                          onChange={(e) => setSampleBookFormData(prev => ({ ...prev, brand: e.target.value }))}
+                          placeholder="브랜드명을 입력하세요"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="sampleBookCategory">자재 종류 *</Label>
+                        <Input
+                          id="sampleBookCategory"
+                          value={sampleBookFormData.materialCategory}
+                          onChange={(e) => setSampleBookFormData(prev => ({ ...prev, materialCategory: e.target.value }))}
+                          placeholder="예: 데코타일, 장판, 마루"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="sampleBookSortOrder">정렬 순서</Label>
+                        <Input
+                          id="sampleBookSortOrder"
+                          type="number"
+                          value={sampleBookFormData.sortOrder}
+                          onChange={(e) => setSampleBookFormData(prev => ({ ...prev, sortOrder: parseInt(e.target.value) || 1 }))}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="sampleBookDescription">설명</Label>
+                      <Textarea
+                        id="sampleBookDescription"
+                        value={sampleBookFormData.description}
+                        onChange={(e) => setSampleBookFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="샘플북 설명을 입력하세요"
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* PDF URL 입력 */}
+                    <div className="space-y-2">
+                      <Label htmlFor="sampleBookPdfUrl">PDF URL</Label>
+                      <Input
+                        id="sampleBookPdfUrl"
+                        type="url"
+                        value={sampleBookFormData.pdfUrl}
+                        onChange={(e) => setSampleBookFormData(prev => ({ ...prev, pdfUrl: e.target.value }))}
+                        placeholder="https://example.com/sample.pdf"
+                      />
+                      <p className="text-xs text-gray-500">
+                        PDF 파일의 직접 링크를 입력하세요. 파일 업로드 기능은 별도로 제공됩니다.
+                      </p>
+                    </div>
+
+                    {/* 사용 여부 */}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        id="sampleBookActive"
+                        type="checkbox"
+                        checked={sampleBookFormData.isActive}
+                        onChange={(e) => setSampleBookFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                        className="rounded"
+                      />
+                      <Label htmlFor="sampleBookActive">활성화</Label>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button
+                        type="submit"
+                        disabled={saving}
+                        className="flex-1"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {saving ? '저장 중...' : editingSampleBook ? '수정하기' : '등록하기'}
+                      </Button>
+                      {editingSampleBook && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={resetSampleBookForm}
+                        >
+                          취소
+                        </Button>
+                      )}
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* 등록된 샘플북 목록 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-heading text-primary">
+                    등록된 샘플북 (<span className="font-roboto">{sampleBooks.length}</span>개)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-sm text-gray-600">로딩 중...</p>
+                    </div>
+                  ) : sampleBooks.length > 0 ? (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                      {sampleBooks.map((book) => (
+                        <motion.div
+                          key={book._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                              {book.thumbnailImage ? (
+                                <Image src={book.thumbnailImage} alt={book.title} className="w-full h-full object-cover" width={64} />
+                              ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                  <FileText className="h-6 w-6 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-primary truncate">
+                                {book.title}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {book.brand} • {book.materialCategory}
+                              </p>
+                              <p className="text-sm text-gray-500 line-clamp-2">
+                                {book.description}
+                              </p>
+                              {book.pdfUrl && (
+                                <p className="text-xs text-blue-600 mt-1 truncate">
+                                  {book.pdfUrl}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditSampleBook(book)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteSampleBook(book._id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">등록된 샘플북이 없습니다.</p>
+                      <p className="text-sm text-gray-500">왼쪽 폼을 사용해 새 샘플북을 등록해보세요.</p>
                     </div>
                   )}
                 </CardContent>
