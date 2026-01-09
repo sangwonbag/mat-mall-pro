@@ -11,7 +11,6 @@ import Header from '@/components/ui/header';
 
 // 자재 종류 구조 정의
 const materialStructure = {
-  '전체': [],
   '데코타일': ['KCC', '동신', 'LX', '녹수', '재영', '현대'],
   '카페트타일': ['스완', '코오롱'],
   '장판': ['LX 1.8T', 'LX 2.0T', 'LX 3.0T', 'LX 4.0T', 'LX 5.0T'],
@@ -22,14 +21,14 @@ const materialStructure = {
 export default function SampleBooksPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState('전체');
+  const [selectedMaterial, setSelectedMaterial] = useState('데코타일');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [sampleBooks, setSampleBooks] = useState<SampleBooks[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<SampleBooks[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Products[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['전체']);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['데코타일']);
 
   useEffect(() => {
     loadData();
@@ -72,12 +71,12 @@ export default function SampleBooksPage() {
     }
 
     // Filter by material category
-    if (selectedMaterial && selectedMaterial !== '전체') {
+    if (selectedMaterial) {
       filtered = filtered.filter(book => book.materialCategory === selectedMaterial);
     }
 
     // Filter by brand
-    if (selectedBrand && selectedBrand !== '전체') {
+    if (selectedBrand) {
       filtered = filtered.filter(book => book.brand === selectedBrand);
     }
 
@@ -98,11 +97,9 @@ export default function SampleBooksPage() {
   const handleMaterialSelect = (material: string) => {
     setSelectedMaterial(material);
     setSelectedBrand('');
-    if (material !== '전체') {
-      setExpandedCategories(prev =>
-        prev.includes(material) ? prev : [...prev, material]
-      );
-    }
+    setExpandedCategories(prev =>
+      prev.includes(material) ? prev : [...prev, material]
+    );
   };
 
   const handleBrandSelect = (brand: string, material: string) => {
@@ -116,7 +113,7 @@ export default function SampleBooksPage() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedMaterial('전체');
+    setSelectedMaterial('데코타일');
     setSelectedBrand('');
   };
 
