@@ -10,14 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/ui/header';
 
-// 브랜드 사이드바 구조 정의
+// 브랜드 사이드바 구조 정의 - 카테고리 순서: 데코타일, 장판, 마루, 벽지, 카페트타일
 const brandStructure = {
   '전체': [],
   '데코타일': ['KCC', '동신', 'LX', '녹수', '재영', '현대'],
-  '카페트타일': [],
   '장판': ['LX 1.8T', 'LX 2.0T', 'LX 3.0T', 'LX 4.0T', 'LX 5.0T'],
   '마루': ['이건', '동화', '구정'],
-  '벽지': ['LX', '개나리', '서울', '제일', '디아이디', '신한(KCC)']
+  '벽지': ['LX', '개나리', '서울', '제일', '디아이디', '신한(KCC)'],
+  '카페트타일': ['스완', '어반']
 };
 
 // 카테고리 표시명 매핑
