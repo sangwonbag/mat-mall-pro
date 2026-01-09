@@ -14,6 +14,7 @@ import Header from '@/components/ui/header';
 const brandStructure = {
   '전체': [],
   '데코타일': ['KCC', '동신', 'LX', '녹수', '재영', '현대'],
+  '카페트타일': [],
   '장판': ['LX 1.8T', 'LX 2.0T', 'LX 3.0T', 'LX 4.0T', 'LX 5.0T'],
   '마루': ['이건', '동화', '구정'],
   '벽지': ['LX', '개나리', '서울', '제일', '디아이디', '신한(KCC)']
@@ -23,6 +24,7 @@ const brandStructure = {
 const getCategoryDisplayName = (categorySlug: string) => {
   const categoryMap: { [key: string]: string } = {
     'deco-tile': '데코타일',
+    'carpet-tile': '카페트타일',
     'flooring': '장판',
     'wood-flooring': '마루',
     'wallpaper': '벽지',
@@ -122,6 +124,7 @@ export default function SearchPage() {
       // 카테고리 매핑 처리
       let categoryToMatch = selectedCategory;
       if (selectedCategory === '데코타일') categoryToMatch = 'deco-tile';
+      else if (selectedCategory === '카페트타일') categoryToMatch = 'carpet-tile';
       else if (selectedCategory === '장판') categoryToMatch = 'flooring';
       else if (selectedCategory === '마루') categoryToMatch = 'wood-flooring';
       else if (selectedCategory === '벽지') categoryToMatch = 'wallpaper';
