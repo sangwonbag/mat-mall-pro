@@ -482,27 +482,21 @@ export default function AdminPage() {
 
       if (sampleBookFormData.pdfFile) {
         // PDF 파일을 base64로 변환하여 저장
-        const reader = new FileReader();
-        pdfFileUrl = await new Promise((resolve) => {
+        pdfFileUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
           reader.onload = (e) => {
-            resolve(e.target?.result as string);
+            const result = e.target?.result as string;
+            resolve(result);
+          };
+          reader.onerror = () => {
+            reject(new Error('PDF 파일 읽기 실패'));
           };
           reader.readAsDataURL(sampleBookFormData.pdfFile!);
         });
 
-        // 썸네일 생성 시도 (PDF 첫 페이지)
-        try {
-          // coverImage가 제공되었으면 사용, 없으면 빈 값으로 저장
-          if (sampleBookFormData.coverImage) {
-            coverImageUrl = sampleBookFormData.coverImage;
-          }
-        } catch (error) {
-          console.error('Error generating thumbnail:', error);
-          toast({
-            title: "경고",
-            description: "썸네일 생성에 실패했습니다. 계속 진행합니다.",
-            variant: "destructive",
-          });
+        // coverImage가 제공되었으면 사용
+        if (sampleBookFormData.coverImage) {
+          coverImageUrl = sampleBookFormData.coverImage;
         }
       }
 
