@@ -8,7 +8,6 @@ import ProductDetailPage from '@/components/pages/ProductDetailPage';
 import QuotePage from '@/components/pages/QuotePage';
 import AdminPage from '@/components/pages/AdminPage';
 import ProfilePage from '@/components/pages/ProfilePage';
-import CatalogTrendyPage from '@/components/pages/CatalogTrendyPage';
 import SampleBooksPage from '@/components/pages/SampleBooksPage';
 import { MemberProtectedRoute } from '@/components/ui/member-protected-route';
 
@@ -51,11 +50,6 @@ const router = createBrowserRouter([
       {
         path: "admin",
         element: <AdminPage />,
-      },
-
-      {
-        path: "catalog-trendy",
-        element: <CatalogTrendyPage />,
       },
       {
         path: "sample-books",
