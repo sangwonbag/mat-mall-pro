@@ -80,7 +80,7 @@ export default function SampleBooksPage() {
       filtered = filtered.filter(book => book.brand === selectedBrand);
     }
 
-    // Filter by active status
+    // Filter by active status - include items where isActive is true or undefined
     filtered = filtered.filter(book => book.isActive !== false);
 
     setFilteredBooks(filtered);

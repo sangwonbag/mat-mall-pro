@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart, Share2, Star, Truck, Shield, Award, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { Products, ConstructionCaseStudies } from '@/entities';
+import { Products, ConstructionCaseStudies, SampleBooks } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/ui/header';
@@ -18,6 +18,7 @@ export default function ProductDetailPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Products[]>([]);
   const [caseStudy, setCaseStudy] = useState<ConstructionCaseStudies | null>(null);
+  const [relatedSampleBooks, setRelatedSampleBooks] = useState<SampleBooks[]>([]);
 
   // 썸네일 이미지들 (실제로는 같은 이미지를 여러 각도로 보여주는 것처럼 구성)
   const thumbnailImages = [
@@ -33,6 +34,7 @@ export default function ProductDetailPage() {
       loadProduct();
       loadRelatedProducts();
       loadCaseStudy();
+      loadRelatedSampleBooks();
     }
   }, [id]);
 
@@ -69,6 +71,33 @@ export default function ProductDetailPage() {
       setCaseStudy(matchingCaseStudy || null);
     } catch (error) {
       console.error('Error loading case study:', error);
+    }
+  };
+
+  const loadRelatedSampleBooks = async () => {
+    try {
+      const { items } = await BaseCrudService.getAll<SampleBooks>('samplebooks');
+      // 현재 제품의 카테고리와 일치하는 샘플북 찾기
+      const categoryMap: { [key: string]: string } = {
+        'deco-tile': '데코타일',
+        'carpet-tile': '카페트타일',
+        'flooring': '장판',
+        'wood-flooring': '마루',
+        'wallpaper': '벽지'
+      };
+      
+      const productCategory = categoryMap[product?.category || ''] || product?.category;
+      
+      const related = items
+        .filter(book => 
+          book.materialCategory === productCategory && 
+          book.isActive !== false
+        )
+        .slice(0, 4);
+      
+      setRelatedSampleBooks(related);
+    } catch (error) {
+      console.error('Error loading related sample books:', error);
     }
   };
 
@@ -385,6 +414,44 @@ export default function ProductDetailPage() {
               ))}
             </div>
           </div>
+
+          {/* Related Sample Books Section */}
+          {relatedSampleBooks.length > 0 && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">관련 샘플북</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {relatedSampleBooks.map((book) => (
+                  <motion.div
+                    key={book._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl shadow-md overflow-hidden border hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    onClick={() => {
+                      if (book.pdfUrl) {
+                        window.open(book.pdfUrl, '_blank');
+                      }
+                    }}
+                  >
+                    <div className="aspect-[3/4] overflow-hidden bg-gray-50">
+                      <Image
+                        src={book.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=300&originHeight=300'}
+                        alt={book.title || '샘플북'}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        width={200}
+                      />
+                    </div>
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
+                        {book.title}
+                      </h3>
+                      <p className="text-xs text-gray-600 mb-1">{book.brand}</p>
+                      <p className="text-xs text-gray-500">{book.materialCategory}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Catalog Thumbnails Section */}
           <div className="mt-12">
