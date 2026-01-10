@@ -204,9 +204,9 @@ export interface SampleBooks {
   /** @wixFieldType text */
   description?: string;
   /** @wixFieldType image */
-  thumbnailImage?: string;
-  /** @wixFieldType url */
-  pdfUrl?: string;
+  coverImage?: string;
+  /** @wixFieldType document */
+  pdfFile?: string;
   /** @wixFieldType boolean */
   isActive?: boolean;
   /** @wixFieldType number */

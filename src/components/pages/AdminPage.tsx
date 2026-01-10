@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, Plus, Save, Trash2, Edit, Eye, Home, FileText, Image as ImageIcon, File } from 'lucide-react';
+import { Upload, Plus, Save, Trash2, Edit, Eye, FileText, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
+import { useMember } from '@/integrations';
 import { Products, ProductCategories, ConstructionCaseStudies, SampleBooks } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
@@ -39,8 +40,8 @@ interface SampleBookForm {
   brand: string;
   materialCategory: string;
   description: string;
-  thumbnailImage: string;
-  pdfUrl: string;
+  coverImage: string;
+  pdfFile: File | null;
   isActive: boolean;
   sortOrder: number;
 }
@@ -56,6 +57,8 @@ const DEFAULT_SPECIFICATIONS = [
 export default function AdminPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useMember();
+  
   const [products, setProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
   const [caseStudies, setCaseStudies] = useState<ConstructionCaseStudies[]>([]);
@@ -69,7 +72,7 @@ export default function AdminPage() {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [descImagePreview, setDescImagePreview] = useState<string>('');
   const [projectImagePreview, setProjectImagePreview] = useState<string>('');
-  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
+  const [coverImagePreview, setCoverImagePreview] = useState<string>('');
   
   // 규격 관련 상태
   const [customSpecifications, setCustomSpecifications] = useState<string[]>([]);
@@ -100,8 +103,8 @@ export default function AdminPage() {
     brand: '',
     materialCategory: '',
     description: '',
-    thumbnailImage: '',
-    pdfUrl: '',
+    coverImage: '',
+    pdfFile: null,
     isActive: true,
     sortOrder: 1
   });
@@ -159,8 +162,13 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    // 로그인 확인
+    if (!isLoading && !isAuthenticated) {
+      navigate('/');
+      return;
+    }
     loadData();
-  }, []);
+  }, [isAuthenticated, isLoading, navigate]);
 
   const loadData = async () => {
     try {
@@ -188,7 +196,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'description' | 'project' | 'thumbnail' = 'product') => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'description' | 'project' | 'coverImage' = 'product') => {
     const file = event.target.files?.[0];
     if (file) {
       setImageFile(file);
@@ -206,12 +214,25 @@ export default function AdminPage() {
         } else if (type === 'project') {
           setProjectImagePreview(result);
           setCaseStudyFormData(prev => ({ ...prev, projectExampleImage: result }));
-        } else if (type === 'thumbnail') {
-          setThumbnailPreview(result);
-          setSampleBookFormData(prev => ({ ...prev, thumbnailImage: result }));
+        } else if (type === 'coverImage') {
+          setCoverImagePreview(result);
+          setSampleBookFormData(prev => ({ ...prev, coverImage: result }));
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePdfUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setSampleBookFormData(prev => ({ ...prev, pdfFile: file }));
+    } else {
+      toast({
+        title: "파일 오류",
+        description: "PDF 파일만 업로드 가능합니다.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -258,12 +279,12 @@ export default function AdminPage() {
       brand: '',
       materialCategory: '',
       description: '',
-      thumbnailImage: '',
-      pdfUrl: '',
+      coverImage: '',
+      pdfFile: null,
       isActive: true,
       sortOrder: sampleBooks.length + 1
     });
-    setThumbnailPreview('');
+    setCoverImagePreview('');
     setEditingSampleBook(null);
   };
 
@@ -449,10 +470,11 @@ export default function AdminPage() {
   const handleSampleBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!sampleBookFormData.title || !sampleBookFormData.brand || !sampleBookFormData.materialCategory) {
+    // 필수값 검증
+    if (!sampleBookFormData.title || !sampleBookFormData.brand || !sampleBookFormData.materialCategory || !sampleBookFormData.pdfFile) {
       toast({
         title: "입력 오류",
-        description: "제목, 브랜드, 자재 종류는 필수 입력 항목입니다.",
+        description: "제목, 브랜드, 자재 종류, PDF 파일은 필수 입력 항목입니다.",
         variant: "destructive",
       });
       return;
@@ -461,14 +483,44 @@ export default function AdminPage() {
     try {
       setSaving(true);
 
+      // PDF 파일 업로드 (base64로 변환)
+      let pdfFileUrl = '';
+      let coverImageUrl = '';
+
+      if (sampleBookFormData.pdfFile) {
+        // PDF 파일을 base64로 변환하여 저장
+        const reader = new FileReader();
+        pdfFileUrl = await new Promise((resolve) => {
+          reader.onload = (e) => {
+            resolve(e.target?.result as string);
+          };
+          reader.readAsDataURL(sampleBookFormData.pdfFile!);
+        });
+
+        // 썸네일 생성 시도 (PDF 첫 페이지)
+        try {
+          // coverImage가 제공되었으면 사용, 없으면 빈 값으로 저장
+          if (sampleBookFormData.coverImage) {
+            coverImageUrl = sampleBookFormData.coverImage;
+          }
+        } catch (error) {
+          console.error('Error generating thumbnail:', error);
+          toast({
+            title: "경고",
+            description: "썸네일 생성에 실패했습니다. 계속 진행합니다.",
+            variant: "destructive",
+          });
+        }
+      }
+
       const sampleBookData = {
         _id: editingSampleBook?._id || crypto.randomUUID(),
         title: sampleBookFormData.title,
         brand: sampleBookFormData.brand,
         materialCategory: sampleBookFormData.materialCategory,
         description: sampleBookFormData.description,
-        thumbnailImage: sampleBookFormData.thumbnailImage,
-        pdfUrl: sampleBookFormData.pdfUrl,
+        coverImage: coverImageUrl,
+        pdfFile: pdfFileUrl,
         isActive: sampleBookFormData.isActive,
         sortOrder: sampleBookFormData.sortOrder
       };
@@ -508,12 +560,12 @@ export default function AdminPage() {
       brand: sampleBook.brand || '',
       materialCategory: sampleBook.materialCategory || '',
       description: sampleBook.description || '',
-      thumbnailImage: sampleBook.thumbnailImage || '',
-      pdfUrl: sampleBook.pdfUrl || '',
+      coverImage: sampleBook.coverImage || '',
+      pdfFile: null,
       isActive: sampleBook.isActive ?? true,
       sortOrder: sampleBook.sortOrder || 1
     });
-    setThumbnailPreview(sampleBook.thumbnailImage || '');
+    setCoverImagePreview(sampleBook.coverImage || '');
   };
 
   const handleDeleteSampleBook = async (sampleBookId: string) => {
@@ -564,7 +616,7 @@ export default function AdminPage() {
 
           <TabsContent value="products" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 제품 등록/수정 폼 */}
+              {/* ... 제품 관리 탭 내용 (기존 코드 유지) ... */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-2xl font-heading text-primary">
@@ -1165,23 +1217,23 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSampleBookSubmit} className="space-y-6">
-                    {/* 썸네일 이미지 업로드 */}
+                    {/* 커버 이미지 업로드 */}
                     <div className="space-y-2">
-                      <Label htmlFor="thumbnail-upload" className="text-sm font-medium">
-                        썸네일 이미지
+                      <Label htmlFor="cover-image-upload" className="text-sm font-medium">
+                        커버 이미지
                       </Label>
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
-                        {thumbnailPreview ? (
+                        {coverImagePreview ? (
                           <div className="space-y-4">
                             <div className="aspect-square max-w-xs mx-auto rounded-lg overflow-hidden">
-                              <Image src={thumbnailPreview} alt="미리보기" className="w-full h-full object-cover" width={200} />
+                              <Image src={coverImagePreview} alt="커버 이미지 미리보기" className="w-full h-full object-cover" width={200} />
                             </div>
                             <Button
                               type="button"
                               variant="outline"
                               onClick={() => {
-                                setThumbnailPreview('');
-                                setSampleBookFormData(prev => ({ ...prev, thumbnailImage: '' }));
+                                setCoverImagePreview('');
+                                setSampleBookFormData(prev => ({ ...prev, coverImage: '' }));
                               }}
                             >
                               이미지 제거
@@ -1192,7 +1244,7 @@ export default function AdminPage() {
                             <ImageIcon className="h-12 w-12 text-gray-400 mx-auto" />
                             <div>
                               <p className="text-sm text-gray-600">
-                                클릭하여 이미지를 업로드하세요
+                                클릭하여 커버 이미지를 업로드하세요
                               </p>
                               <p className="text-xs text-gray-500">
                                 PNG, JPG, JPEG 파일 지원
@@ -1201,17 +1253,17 @@ export default function AdminPage() {
                           </div>
                         )}
                         <input
-                          id="thumbnail-upload"
+                          id="cover-image-upload"
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleImageUpload(e, 'thumbnail')}
+                          onChange={(e) => handleImageUpload(e, 'coverImage')}
                           className="hidden"
                         />
                         <Button
                           type="button"
                           variant="outline"
                           className="mt-4"
-                          onClick={() => document.getElementById('thumbnail-upload')?.click()}
+                          onClick={() => document.getElementById('cover-image-upload')?.click()}
                         >
                           이미지 선택
                         </Button>
@@ -1276,19 +1328,60 @@ export default function AdminPage() {
                       />
                     </div>
 
-                    {/* PDF URL 입력 */}
+                    {/* PDF 파일 업로드 */}
                     <div className="space-y-2">
-                      <Label htmlFor="sampleBookPdfUrl">PDF URL</Label>
-                      <Input
-                        id="sampleBookPdfUrl"
-                        type="url"
-                        value={sampleBookFormData.pdfUrl}
-                        onChange={(e) => setSampleBookFormData(prev => ({ ...prev, pdfUrl: e.target.value }))}
-                        placeholder="https://example.com/sample.pdf"
-                      />
-                      <p className="text-xs text-gray-500">
-                        PDF 파일의 직접 링크를 입력하세요. 파일 업로드 기능은 별도로 제공됩니다.
-                      </p>
+                      <Label htmlFor="pdf-file-upload" className="text-sm font-medium">
+                        PDF 파일 *
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                        {sampleBookFormData.pdfFile ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-center">
+                              <FileText className="h-12 w-12 text-primary mr-4" />
+                              <div className="text-left">
+                                <p className="font-semibold text-gray-900">{sampleBookFormData.pdfFile.name}</p>
+                                <p className="text-sm text-gray-600">
+                                  {(sampleBookFormData.pdfFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setSampleBookFormData(prev => ({ ...prev, pdfFile: null }))}
+                            >
+                              파일 제거
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                클릭하여 PDF 파일을 업로드하세요
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                PDF 파일만 지원됩니다
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <input
+                          id="pdf-file-upload"
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handlePdfUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-4"
+                          onClick={() => document.getElementById('pdf-file-upload')?.click()}
+                        >
+                          파일 선택
+                        </Button>
+                      </div>
                     </div>
 
                     {/* 사용 여부 */}
@@ -1350,8 +1443,8 @@ export default function AdminPage() {
                         >
                           <div className="flex items-start gap-4">
                             <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                              {book.thumbnailImage ? (
-                                <Image src={book.thumbnailImage} alt={book.title} className="w-full h-full object-cover" width={64} />
+                              {book.coverImage ? (
+                                <Image src={book.coverImage} alt={book.title} className="w-full h-full object-cover" width={64} />
                               ) : (
                                 <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                                   <FileText className="h-6 w-6 text-gray-400" />
@@ -1369,11 +1462,6 @@ export default function AdminPage() {
                               <p className="text-sm text-gray-500 line-clamp-2">
                                 {book.description}
                               </p>
-                              {book.pdfUrl && (
-                                <p className="text-xs text-blue-600 mt-1 truncate">
-                                  {book.pdfUrl}
-                                </p>
-                              )}
                             </div>
 
                             <div className="flex gap-2">
