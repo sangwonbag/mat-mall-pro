@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Save, Trash2, Edit, Eye, EyeOff, ArrowUp, ArrowDown, FileText, Settings, Lock, Loader, Image as ImageIcon } from 'lucide-react';
+import { Upload, Save, Trash2, Edit, Eye, EyeOff, ArrowUp, ArrowDown, FileText, Settings, Lock, Loader } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { BrandSamplePDFs } from '@/entities';
 import { Image } from '@/components/ui/image';
@@ -135,52 +135,7 @@ export default function AdminPdfPage() {
     });
   };
 
-  // 썸네일 이미지 업로드
-  const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // 파일 형식 검증
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "파일 형식 오류",
-        description: "이미지 파일만 업로드 가능합니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // 파일 크기 검증 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "파일 크기 오류",
-        description: "이미지 크기는 5MB 이하여야 합니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setThumbnailPreview(result);
-        setFormData(prev => ({ ...prev, thumbnailImage: result }));
-        toast({
-          title: "성공",
-          description: "썸네일 이미지가 업로드되었습니다.",
-        });
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('썸네일 업로드 실패:', error);
-      toast({
-        title: "오류",
-        description: "썸네일 업로드 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    }
-  };
+  // 썸네일 이미지 업로드 함수 제거 - PDF 업로드 시 자동 생성으로 대체됨
 
   // 폼 제출
   const handleSubmit = async (e: React.FormEvent) => {
@@ -547,64 +502,26 @@ export default function AdminPdfPage() {
                     </div>
                   </div>
 
-                  {/* 썸네일 이미지 업로드 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="thumbnail-upload" className="text-sm font-medium">
-                      썸네일 이미지 업로드
-                    </Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
-                      {thumbnailPreview ? (
-                        <div className="space-y-3">
-                          <div className="aspect-video max-w-xs mx-auto rounded-lg overflow-hidden">
-                            <Image 
-                              src={thumbnailPreview} 
-                              alt="썸네일 미리보기" 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setThumbnailPreview('');
-                              setFormData(prev => ({ ...prev, thumbnailImage: '' }));
-                            }}
-                          >
-                            이미지 제거
-                          </Button>
+                  {/* 자동 생성된 썸네일 미리보기 */}
+                  {thumbnailPreview && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">
+                        자동 생성된 썸네일 (첫 페이지)
+                      </Label>
+                      <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                        <div className="aspect-video max-w-xs mx-auto rounded-lg overflow-hidden">
+                          <Image 
+                            src={thumbnailPreview} 
+                            alt="자동 생성된 썸네일" 
+                            className="w-full h-full object-cover" 
+                          />
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <ImageIcon className="h-10 w-10 text-gray-400 mx-auto" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">
-                              썸네일 이미지 선택
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              최대 5MB, JPG, PNG 형식 지원
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      <input
-                        id="thumbnail-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleThumbnailUpload}
-                        className="hidden"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-3"
-                        onClick={() => document.getElementById('thumbnail-upload')?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        이미지 선택
-                      </Button>
+                        <p className="text-xs text-gray-600 mt-2 text-center">
+                          PDF 첫 페이지에서 자동 생성되었습니다
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* 기본 정보 */}
                   <div className="grid grid-cols-1 gap-4">
