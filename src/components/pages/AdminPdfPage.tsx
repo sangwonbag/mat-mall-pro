@@ -39,9 +39,11 @@ export default function AdminPdfPage() {
     password: ''
   });
   
+  // 통합 로딩 상태
+  const [isLoading, setIsLoading] = useState(false);
+  
   // 데이터 상태
   const [pdfSamples, setPdfSamples] = useState<BrandSamplePDFs[]>([]);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // 편집 상태
@@ -62,11 +64,12 @@ export default function AdminPdfPage() {
     displayOrder: 1
   });
 
-  // 관리자 인증
-  const handleLogin = () => {
+  // 관리자 인증 및 자동 데이터 로드
+  const handleLogin = async () => {
     if (auth.password === 'pwj110800*') {
       setAuth({ ...auth, isAuthenticated: true });
-      loadData();
+      // 로그인 성공 후 자동으로 데이터 로드
+      await loadData();
       toast({
         title: "로그인 성공",
         description: "PDF 샘플북 관리 시스템에 접속했습니다.",
@@ -83,7 +86,7 @@ export default function AdminPdfPage() {
   // 데이터 로딩
   const loadData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const { items } = await BaseCrudService.getAll<BrandSamplePDFs>('brandsamplepdfs');
       const sortedItems = items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       setPdfSamples(sortedItems);
@@ -95,15 +98,16 @@ export default function AdminPdfPage() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // 이미지 업로드 핸들러
+  // 이미지 업로드 핸들러 - 보완된 로직
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
+    // 파일 크기 검증
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "파일 크기 오류",
@@ -113,6 +117,7 @@ export default function AdminPdfPage() {
       return;
     }
     
+    // 파일 형식 검증
     if (!file.type.startsWith('image/')) {
       toast({
         title: "파일 형식 오류",
@@ -122,11 +127,30 @@ export default function AdminPdfPage() {
       return;
     }
     
+    // FileReader를 사용하여 이미지 읽기
     const reader = new FileReader();
     reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setThumbnailPreview(result);
-      setFormData(prev => ({ ...prev, thumbnailImage: result }));
+      try {
+        const result = e.target?.result as string;
+        if (result) {
+          setThumbnailPreview(result);
+          setFormData(prev => ({ ...prev, thumbnailImage: result }));
+        }
+      } catch (error) {
+        console.error('이미지 읽기 실패:', error);
+        toast({
+          title: "오류",
+          description: "이미지를 읽는 중 오류가 발생했습니다.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.onerror = () => {
+      toast({
+        title: "오류",
+        description: "이미지 파일을 읽을 수 없습니다.",
+        variant: "destructive",
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -273,9 +297,11 @@ export default function AdminPdfPage() {
     }
   };
 
-  // 순서 변경
+  // 순서 변경 - 안정화된 로직
   const moveItem = async (item: BrandSamplePDFs, direction: 'up' | 'down') => {
     const currentIndex = pdfSamples.findIndex(p => p._id === item._id);
+    
+    // 범위 검증
     if (
       (direction === 'up' && currentIndex === 0) ||
       (direction === 'down' && currentIndex === pdfSamples.length - 1)
@@ -287,15 +313,20 @@ export default function AdminPdfPage() {
     const targetItem = pdfSamples[newIndex];
 
     try {
-      // 순서 교체
+      setSaving(true);
+      
+      // 순서 교체 - 안정화된 로직
+      const currentOrder = item.displayOrder || currentIndex;
+      const targetOrder = targetItem.displayOrder || newIndex;
+      
       await Promise.all([
         BaseCrudService.update('brandsamplepdfs', {
           ...item,
-          displayOrder: targetItem.displayOrder
+          displayOrder: targetOrder
         }),
         BaseCrudService.update('brandsamplepdfs', {
           ...targetItem,
-          displayOrder: item.displayOrder
+          displayOrder: currentOrder
         })
       ]);
 
@@ -303,6 +334,8 @@ export default function AdminPdfPage() {
         title: "성공",
         description: "순서가 변경되었습니다.",
       });
+      
+      // 데이터 새로고침
       await loadData();
     } catch (error) {
       console.error('순서 변경 실패:', error);
@@ -311,6 +344,8 @@ export default function AdminPdfPage() {
         description: "순서 변경 중 오류가 발생했습니다.",
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -554,7 +589,7 @@ export default function AdminPdfPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {isLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                   <p className="mt-2 text-sm text-gray-600">로딩 중...</p>
