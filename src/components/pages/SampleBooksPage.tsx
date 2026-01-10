@@ -323,15 +323,15 @@ export default function SampleBooksPage() {
                         className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-gray-300 cursor-pointer flex flex-col"
                         onClick={() => {
                           // 상세 정보 표시 또는 PDF 다운로드
-                          if (book.pdfFile) {
-                            window.open(book.pdfFile, '_blank');
+                          if (book.pdfUrl) {
+                            window.open(book.pdfUrl, '_blank');
                           }
                         }}
                       >
                         {/* 썸네일 이미지 */}
                         <div className="w-full aspect-square bg-gray-50 relative overflow-hidden">
                           <Image
-                            src={book.coverImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=300&originHeight=300'}
+                            src={book.thumbnailImage || 'https://static.wixstatic.com/media/9f8727_1063d6b92f31473b8249f4c10cc74041~mv2.png?originWidth=300&originHeight=300'}
                             alt={book.title || '샘플북 이미지'}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             width={300}
@@ -367,8 +367,8 @@ export default function SampleBooksPage() {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (book.pdfFile) {
-                                  window.open(book.pdfFile, '_blank');
+                                if (book.pdfUrl) {
+                                  window.open(book.pdfUrl, '_blank');
                                 }
                               }}
                               size="sm"

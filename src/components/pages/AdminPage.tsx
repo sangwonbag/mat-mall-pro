@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Upload, Plus, Save, Trash2, Edit, Eye, FileText, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BaseCrudService } from '@/integrations';
-import { useMember } from '@/integrations';
 import { Products, ProductCategories, ConstructionCaseStudies, SampleBooks } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,6 @@ const DEFAULT_SPECIFICATIONS = [
 export default function AdminPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useMember();
   
   const [products, setProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<ProductCategories[]>([]);
@@ -162,13 +160,8 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    // 로그인 확인
-    if (!isLoading && !isAuthenticated) {
-      navigate('/');
-      return;
-    }
     loadData();
-  }, [isAuthenticated, isLoading, navigate]);
+  }, []);
 
   const loadData = async () => {
     try {
@@ -519,8 +512,8 @@ export default function AdminPage() {
         brand: sampleBookFormData.brand,
         materialCategory: sampleBookFormData.materialCategory,
         description: sampleBookFormData.description,
-        coverImage: coverImageUrl,
-        pdfFile: pdfFileUrl,
+        thumbnailImage: coverImageUrl,
+        pdfUrl: pdfFileUrl,
         isActive: sampleBookFormData.isActive,
         sortOrder: sampleBookFormData.sortOrder
       };
@@ -560,12 +553,12 @@ export default function AdminPage() {
       brand: sampleBook.brand || '',
       materialCategory: sampleBook.materialCategory || '',
       description: sampleBook.description || '',
-      coverImage: sampleBook.coverImage || '',
+      coverImage: sampleBook.thumbnailImage || '',
       pdfFile: null,
       isActive: sampleBook.isActive ?? true,
       sortOrder: sampleBook.sortOrder || 1
     });
-    setCoverImagePreview(sampleBook.coverImage || '');
+    setCoverImagePreview(sampleBook.thumbnailImage || '');
   };
 
   const handleDeleteSampleBook = async (sampleBookId: string) => {
@@ -1443,8 +1436,8 @@ export default function AdminPage() {
                         >
                           <div className="flex items-start gap-4">
                             <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                              {book.coverImage ? (
-                                <Image src={book.coverImage} alt={book.title} className="w-full h-full object-cover" width={64} />
+                              {book.thumbnailImage ? (
+                                <Image src={book.thumbnailImage} alt={book.title} className="w-full h-full object-cover" width={64} />
                               ) : (
                                 <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                                   <FileText className="h-6 w-6 text-gray-400" />
