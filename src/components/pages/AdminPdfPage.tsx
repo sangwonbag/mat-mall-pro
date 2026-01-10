@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Save, Trash2, Edit, Eye, EyeOff, ArrowUp, ArrowDown, FileText, Image as ImageIcon, Settings, Lock } from 'lucide-react';
+import { Upload, Save, Trash2, Edit, Eye, EyeOff, ArrowUp, ArrowDown, FileText, Settings, Lock, Loader, Image as ImageIcon } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import { BrandSamplePDFs } from '@/entities';
 import { Image } from '@/components/ui/image';
@@ -23,7 +23,7 @@ interface PDFSampleForm {
   brandName: string;
   category: string;
   thumbnailImage: string;
-  pdfUrl: string;
+  pdfFile: File | null;
   sampleBookDescription: string;
   isActive: boolean;
   displayOrder: number;
@@ -52,13 +52,14 @@ export default function AdminPdfPage() {
   
   // 이미지 미리보기
   const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   
   // 폼 데이터
   const [formData, setFormData] = useState<PDFSampleForm>({
     brandName: '',
     category: '',
     thumbnailImage: '',
-    pdfUrl: '',
+    pdfFile: null,
     sampleBookDescription: '',
     isActive: true,
     displayOrder: 1
@@ -102,21 +103,43 @@ export default function AdminPdfPage() {
     }
   };
 
-  // 이미지 업로드 핸들러 - 보완된 로직
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // PDF 파일 업로드
+  const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
-    // 파일 크기 검증
-    if (file.size > 10 * 1024 * 1024) {
+
+    // 파일 형식 검증
+    if (file.type !== 'application/pdf') {
       toast({
-        title: "파일 크기 오류",
-        description: "파일 크기는 10MB 이하여야 합니다.",
+        title: "파일 형식 오류",
+        description: "PDF 파일만 업로드 가능합니다.",
         variant: "destructive",
       });
       return;
     }
-    
+
+    // 파일 크기 검증 (50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "파일 크기 오류",
+        description: "파일 크기는 50MB 이하여야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPdfFile(file);
+    toast({
+      title: "성공",
+      description: "PDF 파일이 업로드되었습니다.",
+    });
+  };
+
+  // 썸네일 이미지 업로드
+  const handleThumbnailUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
     // 파일 형식 검증
     if (!file.type.startsWith('image/')) {
       toast({
@@ -126,33 +149,37 @@ export default function AdminPdfPage() {
       });
       return;
     }
-    
-    // FileReader를 사용하여 이미지 읽기
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const result = e.target?.result as string;
-        if (result) {
-          setThumbnailPreview(result);
-          setFormData(prev => ({ ...prev, thumbnailImage: result }));
-        }
-      } catch (error) {
-        console.error('이미지 읽기 실패:', error);
-        toast({
-          title: "오류",
-          description: "이미지를 읽는 중 오류가 발생했습니다.",
-          variant: "destructive",
-        });
-      }
-    };
-    reader.onerror = () => {
+
+    // 파일 크기 검증 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
       toast({
-        title: "오류",
-        description: "이미지 파일을 읽을 수 없습니다.",
+        title: "파일 크기 오류",
+        description: "이미지 크기는 5MB 이하여야 합니다.",
         variant: "destructive",
       });
-    };
-    reader.readAsDataURL(file);
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setThumbnailPreview(result);
+        setFormData(prev => ({ ...prev, thumbnailImage: result }));
+        toast({
+          title: "성공",
+          description: "썸네일 이미지가 업로드되었습니다.",
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('썸네일 업로드 실패:', error);
+      toast({
+        title: "오류",
+        description: "썸네일 업로드 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   // 폼 제출
@@ -168,10 +195,10 @@ export default function AdminPdfPage() {
       return;
     }
     
-    if (!formData.pdfUrl?.trim()) {
+    if (!pdfFile && !editingItem) {
       toast({
         title: "입력 오류",
-        description: "PDF URL을 입력해 주세요.",
+        description: "PDF 파일을 업로드해 주세요.",
         variant: "destructive",
       });
       return;
@@ -180,12 +207,28 @@ export default function AdminPdfPage() {
     try {
       setSaving(true);
 
+      // PDF 파일을 Base64로 변환
+      let pdfBase64 = '';
+      if (pdfFile) {
+        pdfBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            resolve(result);
+          };
+          reader.onerror = () => {
+            reject(new Error('PDF 파일 읽기 실패'));
+          };
+          reader.readAsDataURL(pdfFile);
+        });
+      }
+
       const sampleData = {
         _id: editingItem?._id || crypto.randomUUID(),
         brandName: formData.brandName.trim(),
         category: formData.category?.trim() || '',
         thumbnailImage: formData.thumbnailImage || '',
-        pdfUrl: formData.pdfUrl.trim(),
+        pdfUrl: pdfBase64 || editingItem?.pdfUrl || '',
         sampleBookDescription: formData.sampleBookDescription?.trim() || '',
         isActive: formData.isActive,
         displayOrder: formData.displayOrder
@@ -225,12 +268,13 @@ export default function AdminPdfPage() {
       brandName: '',
       category: '',
       thumbnailImage: '',
-      pdfUrl: '',
+      pdfFile: null,
       sampleBookDescription: '',
       isActive: true,
       displayOrder: pdfSamples.length + 1
     });
     setThumbnailPreview('');
+    setPdfFile(null);
     setEditingItem(null);
     setShowAddForm(false);
   };
@@ -242,12 +286,13 @@ export default function AdminPdfPage() {
       brandName: item.brandName || '',
       category: item.category || '',
       thumbnailImage: item.thumbnailImage || '',
-      pdfUrl: item.pdfUrl || '',
+      pdfFile: null,
       sampleBookDescription: item.sampleBookDescription || '',
       isActive: item.isActive ?? true,
       displayOrder: item.displayOrder || 1
     });
     setThumbnailPreview(item.thumbnailImage || '');
+    setPdfFile(null);
     setShowAddForm(true);
   };
 
@@ -441,12 +486,75 @@ export default function AdminPdfPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* PDF 파일 업로드 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="pdf-upload" className="text-sm font-medium">
+                      PDF 파일 업로드 *
+                    </Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                      {pdfFile ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-center">
+                            <FileText className="h-12 w-12 text-blue-600 mr-3" />
+                            <div className="text-left">
+                              <p className="font-semibold text-gray-900">{pdfFile.name}</p>
+                              <p className="text-sm text-gray-600">
+                                {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setPdfFile(null);
+                              setFormData(prev => ({ ...prev, pdfFile: null }));
+                            }}
+                          >
+                            파일 제거
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Upload className="h-12 w-12 text-gray-400 mx-auto" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              최대 50MB, PDF 형식만 지원
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      <input
+                        id="pdf-upload"
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handlePdfUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-3"
+                        onClick={() => document.getElementById('pdf-upload')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        PDF 선택
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* 썸네일 이미지 업로드 */}
                   <div className="space-y-2">
-                    <Label htmlFor="thumbnail-upload">썸네일 이미지</Label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <Label htmlFor="thumbnail-upload" className="text-sm font-medium">
+                      썸네일 이미지 업로드
+                    </Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
                       {thumbnailPreview ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <div className="aspect-video max-w-xs mx-auto rounded-lg overflow-hidden">
                             <Image 
                               src={thumbnailPreview} 
@@ -467,25 +575,32 @@ export default function AdminPdfPage() {
                           </Button>
                         </div>
                       ) : (
-                        <div className="space-y-2">
-                          <ImageIcon className="h-8 w-8 text-gray-400 mx-auto" />
-                          <p className="text-sm text-gray-600">썸네일 이미지 업로드</p>
+                        <div className="space-y-3">
+                          <ImageIcon className="h-10 w-10 text-gray-400 mx-auto" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              썸네일 이미지 선택
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              최대 5MB, JPG, PNG 형식 지원
+                            </p>
+                          </div>
                         </div>
                       )}
                       <input
                         id="thumbnail-upload"
                         type="file"
                         accept="image/*"
-                        onChange={handleImageUpload}
+                        onChange={handleThumbnailUpload}
                         className="hidden"
                       />
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
-                        className="mt-2"
+                        className="mt-3"
                         onClick={() => document.getElementById('thumbnail-upload')?.click()}
                       >
+                        <Upload className="h-4 w-4 mr-2" />
                         이미지 선택
                       </Button>
                     </div>
@@ -511,18 +626,6 @@ export default function AdminPdfPage() {
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                         placeholder="카테고리 입력"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="pdfUrl">PDF URL *</Label>
-                      <Input
-                        id="pdfUrl"
-                        type="url"
-                        value={formData.pdfUrl}
-                        onChange={(e) => setFormData(prev => ({ ...prev, pdfUrl: e.target.value }))}
-                        placeholder="https://..."
-                        required
                       />
                     </div>
 
@@ -637,9 +740,6 @@ export default function AdminPdfPage() {
                           </p>
                           <p className="text-sm text-gray-500 line-clamp-2">
                             {sample.sampleBookDescription}
-                          </p>
-                          <p className="text-xs text-blue-600 mt-1 truncate">
-                            {sample.pdfUrl}
                           </p>
                         </div>
 
